@@ -440,13 +440,28 @@ export class GitHubAPI implements GitProvider {
 }
 ```
 
-- [ ] **Step 2: Update github.ts to re-export for backward compatibility**
+- [ ] **Step 2: Export parseGitHubRepoFromUrl utility from github-provider.ts**
+
+Add this function at the end of github-provider.ts (before the closing brace):
+
+```typescript
+// Export utility function for backward compatibility
+export function parseGitHubRepoFromUrl(url: string): { owner: string; repo: string } | null {
+  const match = url.match(/github\.com[:/]([^/]+)\/([^/]+)/);
+  if (!match) return null;
+  return { owner: match[1], repo: match[2].replace('.git', '') };
+}
+```
+
+- [ ] **Step 3: Update github.ts to re-export for backward compatibility**
 
 ```typescript
 // src/lib/github.ts
 // Backward compatibility exports - re-export from new location
 export { GitHubAPI, parseGitHubRepoFromUrl } from './git/github-provider';
-export type { GitHubCommit, GitHubBranch, GitHubRepoInfo } from './git/github-provider';
+
+// Re-export shared types for convenience
+export type { GitCommit as GitHubCommit, GitBranch as GitHubBranch, GitRepoInfo as GitHubRepoInfo } from './git/provider';
 ```
 
 - [ ] **Step 3: Commit**
@@ -649,18 +664,9 @@ export class BitbucketAPI implements GitProvider {
     }
   }
 
-  // Note: Bitbucket doesn't have a simple branch count endpoint
-  // We count by fetching branches (which has a default pagelen of 50)
-  async getBranchCommitCount?(): Promise<number> {
-    // Not implemented for Bitbucket - out of scope
-    return 0;
-  }
-
-  // Note: Webhooks are out of scope for Bitbucket
-  async setupWebhook?(): Promise<void> {
-    // Not implemented for Bitbucket - out of scope
-    return;
-  }
+  // Note: getBranchCommitCount and setupWebhook are optional in GitProvider interface
+  // Bitbucket provider doesn't implement them (out of scope)
+}
 }
 ```
 
@@ -787,11 +793,13 @@ Replace the imports at the top:
 
 ```typescript
 import { NextRequest, NextResponse } from 'next/server';
-import { getRepos, createRepo, upsertCommit, upsertBranch, updateRepoLastSynced, updateRepoError, getPendingCommitsForDiffstat, updateCommitLines } from '@/lib/db';
+import { getRepos, createRepo, upsertCommit, upsertBranch, updateRepoLastSynced, updateRepoError, getPendingCommitsForDiffstat, updateCommitLines, updateCommitAIDetection, updateBranchAIDetection } from '@/lib/db';
 import { createProvider, parseRepoUrl, getEnvVarName } from '@/lib/git';
 import { AIDetector } from '@/lib/ai-detector';
 import type { GitProviderType } from '@/types';
 ```
+
+Note: We now import `updateCommitAIDetection` and `updateBranchAIDetection` from `@/lib/db` instead of redefining them locally.
 
 - [ ] **Step 2: Update the POST handler**
 
@@ -861,7 +869,7 @@ export async function POST(req: NextRequest) {
       if (dbCommit.is_ai_detected === null) {
         const detection = detector.detectFromCommitMessage(commit.message);
         if (detection.confidence > 0.5) {
-          await updateCommitAIDetection(repo.id, dbCommit.id, detection.isAI, detection.confidence);
+          await updateCommitAIDetection(dbCommit.id, detection.isAI, detection.confidence);
         }
       }
     }
@@ -880,7 +888,7 @@ export async function POST(req: NextRequest) {
       if (dbBranch.is_ai_detected === null) {
         const detection = detector.detectFromBranchName(branch.name);
         if (detection.confidence > 0.5) {
-          await updateBranchAIDetection(repo.id, dbBranch.id, detection.isAI);
+          await updateBranchAIDetection(dbBranch.id, detection.isAI);
         }
       }
     }
@@ -912,20 +920,6 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-async function updateCommitAIDetection(repoId: number, commitId: number, isAI: boolean, confidence: number) {
-  const { sql } = await import('@vercel/postgres');
-  await sql`UPDATE commits SET is_ai_detected = ${isAI} WHERE id = ${commitId}`;
-  await sql`
-    INSERT INTO ai_detections (commit_id, is_ai, confidence_score)
-    VALUES (${commitId}, ${isAI}, ${confidence})
-  `;
-}
-
-async function updateBranchAIDetection(repoId: number, branchId: number, isAI: boolean) {
-  const { sql } = await import('@vercel/postgres');
-  await sql`UPDATE branches SET is_ai_detected = ${isAI} WHERE id = ${branchId}`;
 }
 
 async function fetchDiffstatInBackground(
@@ -1201,10 +1195,10 @@ interface Repo {
   name: string;
   url: string;
   owner: string;
-  provider?: string;
+  provider: string;
   last_synced: Date | null;
   created_at: Date;
-  sync_error?: string | null;
+  sync_error: string | null;
 }
 ```
 
@@ -1278,10 +1272,10 @@ interface Repo {
   name: string;
   url: string;
   owner: string;
-  provider?: string;
+  provider: string;
   last_synced: Date | null;
   created_at: Date;
-  sync_error?: string | null;
+  sync_error: string | null;
 }
 ```
 
