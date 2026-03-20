@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
 import { Shield, RefreshCw } from 'lucide-react';
-import { toast } from 'sonner';
 import AdminTabs from '@/components/admin/admin-tabs';
 
 export default function AdminPage() {
