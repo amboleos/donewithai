@@ -442,7 +442,7 @@ export class GitHubAPI implements GitProvider {
 
 - [ ] **Step 2: Export parseGitHubRepoFromUrl utility from github-provider.ts**
 
-Add this function at the end of github-provider.ts (before the closing brace):
+Add this function AFTER the GitHubAPI class (at the end of the file, after the class closing brace):
 
 ```typescript
 // Export utility function for backward compatibility
@@ -464,7 +464,7 @@ export { GitHubAPI, parseGitHubRepoFromUrl } from './git/github-provider';
 export type { GitCommit as GitHubCommit, GitBranch as GitHubBranch, GitRepoInfo as GitHubRepoInfo } from './git/provider';
 ```
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
 git add src/lib/git/github-provider.ts src/lib/github.ts
@@ -666,7 +666,6 @@ export class BitbucketAPI implements GitProvider {
 
   // Note: getBranchCommitCount and setupWebhook are optional in GitProvider interface
   // Bitbucket provider doesn't implement them (out of scope)
-}
 }
 ```
 
@@ -1311,7 +1310,8 @@ npm run dev
 
 1. Click the sync button on the repository card
 2. Verify commits and branches are fetched
-3. Check that lines_added/lines_removed have values
+3. Click "View Details" on the repository card
+4. Verify the analytics table shows non-zero values for lines added/removed
 
 Expected: GitHub functionality works exactly as before
 
