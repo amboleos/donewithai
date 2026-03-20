@@ -24,7 +24,10 @@ export interface Repo {
   name: string;
   url: string;
   owner: string;
+  provider: string;
+  token_env_var: string | null;
   last_synced: string | null;
+  sync_error: string | null;
   created_at: string;
 }
 
@@ -195,10 +198,20 @@ export async function initDb() {
 }
 
 // Repo operations
-export async function createRepo(name: string, url: string, owner: string) {
+export async function createRepo(
+  name: string,
+  url: string,
+  owner: string,
+  provider: string = 'github',
+  token_env_var: string | null = null
+) {
   const result = await client.execute({
-    sql: `INSERT INTO repos (name, url, owner) VALUES (?, ?, ?) RETURNING *`,
-    args: [name, url, owner],
+    sql: `
+      INSERT INTO repos (name, url, owner, provider, token_env_var)
+      VALUES (?, ?, ?, ?, ?)
+      RETURNING *
+    `,
+    args: [name, url, owner, provider, token_env_var],
   });
   return result.rows[0] as unknown as Repo;
 }
@@ -228,6 +241,13 @@ export async function updateRepoLastSynced(id: number) {
   await client.execute({
     sql: `UPDATE repos SET last_synced = CURRENT_TIMESTAMP WHERE id = ?`,
     args: [id],
+  });
+}
+
+export async function updateRepoError(id: number, error: string | null) {
+  await client.execute({
+    sql: `UPDATE repos SET sync_error = ? WHERE id = ?`,
+    args: [error, id],
   });
 }
 
@@ -285,6 +305,34 @@ export async function updateCommitAIDetection(commitId: number, isAI: boolean, c
     sql: `INSERT INTO ai_detections (commit_id, is_ai, confidence_score) VALUES (?, ?, ?)`,
     args: [commitId, isAI ? 1 : 0, confidence],
   });
+}
+
+export async function updateCommitLines(
+  repoId: number,
+  sha: string,
+  linesAdded: number,
+  linesRemoved: number
+) {
+  await client.execute({
+    sql: `
+      UPDATE commits
+      SET lines_added = ?, lines_removed = ?
+      WHERE repo_id = ? AND sha = ?
+    `,
+    args: [linesAdded, linesRemoved, repoId, sha],
+  });
+}
+
+export async function getPendingCommitsForDiffstat(repoId: number) {
+  const result = await client.execute({
+    sql: `
+      SELECT sha FROM commits
+      WHERE repo_id = ? AND lines_added = 0 AND lines_removed = 0
+      ORDER BY date DESC
+    `,
+    args: [repoId],
+  });
+  return result.rows as unknown as Array<{ sha: string }>;
 }
 
 // Branch operations
