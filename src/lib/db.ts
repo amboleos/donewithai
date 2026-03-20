@@ -490,3 +490,60 @@ export async function getDeveloperStats(repoId: number) {
   });
   return result.rows;
 }
+
+export async function getMappedAuthor(repoId: number, githubAuthor: string): Promise<string> {
+  const result = await client.execute({
+    sql: `
+      SELECT u.name
+      FROM user_mappings um
+      JOIN users u ON um.user_id = u.id
+      WHERE um.repo_id = ? AND LOWER(um.github_username) = LOWER(?)
+    `,
+    args: [repoId, githubAuthor],
+  });
+
+  if (result.rows.length > 0) {
+    return (result.rows[0] as any).name;
+  }
+
+  // Return with (unmapped) suffix
+  return `${githubAuthor} (unmapped)`;
+}
+
+export async function getDeveloperStatsWithMappings(repoId: number) {
+  const result = await client.execute({
+    sql: `
+      SELECT
+        author,
+        COUNT(*) as total_commits,
+        SUM(lines_added) as total_lines_added,
+        SUM(lines_removed) as total_lines_removed,
+        SUM(CASE WHEN is_ai_detected = 1 THEN 1 ELSE 0 END) as ai_commits,
+        ROUND(
+          100.0 * SUM(CASE WHEN is_ai_detected = 1 THEN 1 ELSE 0 END) / CAST(COUNT(*) AS REAL),
+          1
+        ) as ai_percentage
+      FROM commits
+      WHERE repo_id = ?
+      GROUP BY author
+      ORDER BY total_commits DESC
+    `,
+    args: [repoId],
+  });
+
+  const rows = result.rows as any[];
+
+  // Apply mappings
+  const stats = await Promise.all(
+    rows.map(async (row) => {
+      const mappedName = await getMappedAuthor(repoId, row.author);
+      return {
+        ...row,
+        author: mappedName,
+        originalAuthor: row.author,
+      };
+    })
+  );
+
+  return stats;
+}
