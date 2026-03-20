@@ -12,6 +12,13 @@ export const client = createClient({
   authToken: tursoAuthToken,
 });
 
+export const ROLES = {
+  ADMIN: 'admin',
+  DEVELOPER: 'developer',
+} as const;
+
+export type Role = typeof ROLES[keyof typeof ROLES];
+
 export interface Repo {
   id: number;
   name: string;
@@ -52,6 +59,14 @@ export interface User {
   role: string;
   github_username: string | null;
   created_at: string;
+}
+
+export interface PublicUser {
+  id: number;
+  name: string;
+  email: string;
+  github_username: string | null;
+  role: string;
 }
 
 export interface AIDetection {
@@ -127,21 +142,26 @@ export async function initDb() {
   // Add role and github_username if they don't exist (for existing DBs)
   try {
     await client.execute(`ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'developer'`);
-  } catch (e) {
-    // Column might already exist
+  } catch (e: any) {
+    // Ignore "duplicate column name" error only
+    if (!e.message?.includes('duplicate column') && !e.message?.includes('already exists')) {
+      throw e;
+    }
   }
 
   try {
     await client.execute(`ALTER TABLE users ADD COLUMN github_username TEXT`);
-  } catch (e) {
-    // Column might already exist
+  } catch (e: any) {
+    if (!e.message?.includes('duplicate column') && !e.message?.includes('already exists')) {
+      throw e;
+    }
   }
 
   // Set first user as admin if no admin exists
-  await client.execute(`
-    UPDATE users SET role = 'admin'
-    WHERE id = 1 AND role = 'developer'
-  `);
+  await client.execute({
+    sql: `UPDATE users SET role = ? WHERE id = 1 AND role = ?`,
+    args: [ROLES.ADMIN, ROLES.DEVELOPER],
+  });
 
   await client.execute(`
     CREATE TABLE IF NOT EXISTS user_mappings (
@@ -348,7 +368,7 @@ export async function upsertUser(
   return result.rows[0] as unknown as User;
 }
 
-export async function getUserByEmail(email: string) {
+export async function getUserByEmail(email: string): Promise<User | undefined> {
   const result = await client.execute({
     sql: `SELECT * FROM users WHERE email = ?`,
     args: [email],
@@ -420,11 +440,11 @@ export async function getGithubUsersByRepo(repoId: number) {
   return result.rows.map((row: any) => row.author) as string[];
 }
 
-export async function getAllUsers() {
+export async function getAllUsers(): Promise<PublicUser[]> {
   const result = await client.execute({
     sql: `SELECT id, name, email, github_username, role FROM users ORDER BY name`,
   });
-  return result.rows as unknown as User[];
+  return result.rows as unknown as PublicUser[];
 }
 
 // Analytics queries
