@@ -13,8 +13,10 @@ interface Repo {
   name: string;
   url: string;
   owner: string;
+  provider: string;
   last_synced: Date | null;
   created_at: Date;
+  sync_error: string | null;
 }
 
 export default function ReposTab() {
