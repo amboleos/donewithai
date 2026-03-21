@@ -5,8 +5,8 @@ import type { GitProvider } from './provider';
 import type { GitProviderType, ParsedRepoUrl } from '@/types';
 
 // URL patterns for provider detection
-const GITHUB_PATTERN = /github\.com[:/]([^/]+)\/([^/.]+?)(\.git)?$/;
-const BITBUCKET_PATTERN = /bitbucket\.org[:/]([^/]+)\/([^/.]+?)(\.git)?$/;
+const GITHUB_PATTERN = /github\.com[:/]([^/]+)\/([^/]+?)(\.git)?$/;
+const BITBUCKET_PATTERN = /bitbucket\.org[:/]([^/]+)\/([^/.]+?)(?:\.git)?\/?(?:\?.*)?$/;
 
 export function detectProvider(url: string): GitProviderType {
   if (GITHUB_PATTERN.test(url)) return 'github';
