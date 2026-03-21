@@ -92,15 +92,43 @@ export class GitHubAPI implements GitProvider {
 
   async getBranches(url: string): Promise<GitBranch[]> {
     const { owner, repo } = this.parseRepoUrl(url);
-    const { data } = await this.octokit.rest.repos.listBranches({
-      owner,
-      repo,
-    });
+    const branches: GitBranch[] = [];
+    let page = 1;
+    const perPage = 100;
+    const MAX_PAGES = 100; // Safety limit: max 100 pages = 10,000 branches
 
-    return data.map((branch) => ({
-      name: branch.name,
-      commit: { sha: branch.commit.sha },
-    }));
+    while (page <= MAX_PAGES) {
+      console.log(`[GitHubAPI] Fetching branches page ${page}`);
+
+      const { data } = await this.octokit.rest.repos.listBranches({
+        owner,
+        repo,
+        per_page: perPage,
+        page,
+      });
+
+      console.log(`[GitHubAPI] Page ${page} has ${data.length} branches`);
+
+      if (data.length === 0) break;
+
+      for (const branch of data) {
+        branches.push({
+          name: branch.name,
+          commit: { sha: branch.commit.sha },
+        });
+      }
+
+      // If we got less than per_page, we're done
+      if (data.length < perPage) break;
+
+      page++;
+    }
+
+    if (page > MAX_PAGES) {
+      console.warn('[GitHubAPI] Reached maximum pages limit for branches, truncating results');
+    }
+
+    return branches;
   }
 
   async getBranchCommitCount(
