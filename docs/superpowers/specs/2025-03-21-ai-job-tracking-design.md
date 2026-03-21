@@ -32,6 +32,59 @@ Points = floor((lines_added + lines_removed) / 200)
 - Example: 615 lines changed = 3 points
 - Master commits and branch commits tracked separately
 
+## Period Calculation
+
+Period is determined by the commit's `date` field (or branch's `created_at`):
+
+```typescript
+function getPeriod(date: Date): string {
+  const year = date.getFullYear();
+  const month = date.getMonth(); // 0-11
+
+  if (month < 3) return `${year}-Q1`;  // Jan 1 - Mar 31
+  if (month < 6) return `${year}-Q2`;  // Apr 1 - Jun 30
+  if (month < 9) return `${year}-Q3`;  // Jul 1 - Sep 30
+  return `${year}-Q4`;                 // Oct 1 - Dec 31
+}
+```
+
+For branches spanning multiple quarters: use the branch creation date.
+
+## User Resolution
+
+Before creating `ai_job`, resolve commit author to internal user ID:
+
+```typescript
+async function resolveUserId(repoId: number, githubAuthor: string): Promise<number | null> {
+  // Check user_mappings table
+  const mapping = await client.execute(`
+    SELECT user_id FROM user_mappings
+    WHERE repo_id = ? AND LOWER(github_username) = LOWER(?)
+  `, [repoId, githubAuthor]);
+
+  if (mapping.rows.length > 0) {
+    return mapping.rows[0].user_id;
+  }
+
+  // No mapping found - create ai_job with user_id = NULL (unassigned)
+  // Admin can manually assign via user_mappings
+  return null;
+}
+```
+
+If `user_id` is NULL, the job is tracked but not assigned to any developer until mapping is created.
+
+## Branch Handling
+
+When a branch is marked as AI:
+1. Fetch all commits belonging to the branch
+2. Aggregate total lines changed across all commits
+3. Calculate points from aggregated total
+4. Create ONE `ai_job` entry with `source_type='branch'`, `source_id=branch.id`
+5. Individual commits within the branch are NOT separately tracked
+
+For manual branch tagging, the job uses branch creation date for period calculation.
+
 ## Database Schema
 
 ### New Tables
@@ -44,10 +97,12 @@ CREATE TABLE ai_detection_queue (
   commit_id INTEGER,
   branch_id INTEGER,
   status TEXT DEFAULT 'pending', -- pending, processing, completed, failed
+  retry_count INTEGER DEFAULT 0,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   started_at TEXT,
   completed_at TEXT,
-  error TEXT
+  error TEXT,
+  FOREIGN KEY (repo_id) REFERENCES repos(id) ON DELETE CASCADE
 );
 
 -- Confirmed AI jobs (counts toward bonus)
@@ -60,8 +115,11 @@ CREATE TABLE ai_jobs (
   source_id INTEGER NOT NULL, -- commit.id or branch.id
   points INTEGER NOT NULL,
   detection_method TEXT NOT NULL, -- 'keyword', 'llm', 'manual'
+  period_date TEXT NOT NULL, -- The date used for period calculation
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(repo_id, source_type, source_id) -- Prevent duplicates
+  UNIQUE(repo_id, source_type, source_id), -- Prevent duplicates
+  FOREIGN KEY (repo_id) REFERENCES repos(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- Admin-manageable AI keywords
@@ -73,12 +131,18 @@ CREATE TABLE ai_keywords (
 );
 
 -- Indexes
-CREATE INDEX idx_ai_queue_status ON ai_detection_queue(status);
+CREATE INDEX idx_ai_queue_status ON ai_detection_queue(status, retry_count);
 CREATE INDEX idx_ai_queue_repo ON ai_detection_queue(repo_id);
 CREATE INDEX idx_ai_jobs_period ON ai_jobs(period);
 CREATE INDEX idx_ai_jobs_user ON ai_jobs(user_id);
 CREATE INDEX idx_ai_jobs_repo ON ai_jobs(repo_id);
+CREATE INDEX idx_ai_jobs_user_repo_period ON ai_jobs(user_id, repo_id, period);
 ```
+
+### Notes on Existing Tables
+
+The system uses existing `user_mappings` table to resolve GitHub usernames to internal user IDs.
+The existing `ai_detections` table is retained for backward compatibility but not used for job calculations.
 
 ## API Routes
 
@@ -131,11 +195,19 @@ Returns report with:
 ### Modified: POST /api/ai-toggle
 
 For branches:
-- When marking branch as AI → All commits in branch get ai_job entries
+- When marking branch as AI → Aggregate all commit lines, create ONE ai_job entry
 - detection_method: 'manual'
+- Check queue: remove any pending items for this branch's commits
+- Update existing ai_jobs: if job exists with different detection_method, update it
 
 For commits:
 - Single commit gets ai_job entry
+- Remove from queue if pending
+- Update existing if exists (preserve points, change detection_method to 'manual')
+
+**Race Condition Handling:**
+- Manual toggle always wins over pending queue items
+- If item is 'processing' in queue, allow LLM to complete but prefer manual result in reports
 
 ## Rate Limiting
 
@@ -148,6 +220,62 @@ For commits:
   ```
 - If affected_rows = 0, another process has it, skip
 - 1 second delay between requests
+
+## Retry Logic
+
+Queue items that fail get retried with exponential backoff:
+
+- Max 3 retries per queue item
+- Retry delays: 1s, 5s, 30s (after each failure)
+- After 3 failures: status = 'failed', requires manual review
+- Retry count tracked in `retry_count` column
+
+```typescript
+async function processQueueItem(item: QueueItem) {
+  try {
+    // ... LLM call ...
+    await markCompleted(item.id);
+  } catch (error) {
+    if (item.retry_count < 3) {
+      await updateRetryCount(item.id);
+      await sleep([1000, 5000, 30000][item.retry_count]);
+      // Re-queue for retry
+    } else {
+      await markFailed(item.id, error.message);
+    }
+  }
+}
+```
+
+## SSE Authentication
+
+`GET /api/events` requires valid session:
+
+```typescript
+// Server-side: Check session before streaming
+export async function GET(req: NextRequest) {
+  const session = await getServerSession();
+  if (!session) {
+    return new Response('Unauthorized', { status: 401 });
+  }
+
+  // Stream events...
+}
+```
+
+All logged-in users see all sync events (no filtering by repo access).
+
+## Data Retention
+
+Clean up old queue items weekly:
+
+```sql
+DELETE FROM ai_detection_queue
+WHERE status IN ('completed', 'failed')
+AND completed_at < datetime('now', '-7 days');
+```
+
+`ai_jobs` are retained permanently for audit purposes (bonus calculations).
 
 ## Cooldown
 
