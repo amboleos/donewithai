@@ -90,6 +90,39 @@ export interface UserMapping {
   created_at: string;
 }
 
+export interface AIJob {
+  id: number;
+  repo_id: number;
+  user_id: number | null;  // null = unmapped author
+  period: string;  // '2025-Q1', '2025-Q2', etc.
+  source_type: 'commit' | 'branch';
+  source_id: number;  // commit.id or branch.id
+  points: number;
+  detection_method: 'keyword' | 'llm' | 'manual';
+  period_date: string;  // The date used for period calculation
+  created_at: string;
+}
+
+export interface AIDetectionQueue {
+  id: number;
+  repo_id: number;
+  commit_id: number | null;
+  branch_id: number | null;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  retry_count: number;
+  created_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+  error: string | null;
+}
+
+export interface AIKeyword {
+  id: number;
+  keyword: string;
+  is_active: number;  // 0 or 1
+  created_at: string;
+}
+
 // Create tables
 export async function initDb() {
   await client.execute(`
@@ -224,6 +257,71 @@ export async function initDb() {
     )
   `);
 
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS ai_detection_queue (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      repo_id INTEGER NOT NULL,
+      commit_id INTEGER,
+      branch_id INTEGER,
+      status TEXT DEFAULT 'pending',
+      retry_count INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      started_at TEXT,
+      completed_at TEXT,
+      error TEXT,
+      FOREIGN KEY (repo_id) REFERENCES repos(id) ON DELETE CASCADE
+    )
+  `);
+
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS ai_jobs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      repo_id INTEGER NOT NULL,
+      user_id INTEGER,
+      period TEXT NOT NULL,
+      source_type TEXT NOT NULL,
+      source_id INTEGER NOT NULL,
+      points INTEGER NOT NULL,
+      detection_method TEXT NOT NULL,
+      period_date TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(repo_id, source_type, source_id),
+      FOREIGN KEY (repo_id) REFERENCES repos(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS ai_keywords (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      keyword TEXT UNIQUE NOT NULL,
+      is_active INTEGER DEFAULT 1,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // Insert default keywords
+  await client.execute(`
+    INSERT OR IGNORE INTO ai_keywords (keyword) VALUES
+      ('auto-claude'), ('copilot'), ('ai-generated'), ('gpt'), ('llm'),
+      ('claude'), ('chatgpt'), ('gemini'), ('openai'), ('ai assist'),
+      ('ai assisted')
+  `);
+
+  // Junction table to track which commits belong to which branches
+  // This is needed for branch aggregation AI job calculation
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS branch_commits (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      branch_id INTEGER NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
+      commit_id INTEGER NOT NULL REFERENCES commits(id) ON DELETE CASCADE,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(branch_id, commit_id),
+      FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE CASCADE,
+      FOREIGN KEY (commit_id) REFERENCES commits(id) ON DELETE CASCADE
+    )
+  `);
+
   // Create indexes
   await client.execute(`CREATE INDEX IF NOT EXISTS idx_commits_repo_id ON commits(repo_id)`);
   await client.execute(`CREATE INDEX IF NOT EXISTS idx_commits_date ON commits(date)`);
@@ -231,6 +329,16 @@ export async function initDb() {
   await client.execute(`CREATE INDEX IF NOT EXISTS idx_user_mappings_repo ON user_mappings(repo_id)`);
   await client.execute(`CREATE INDEX IF NOT EXISTS idx_user_mappings_github ON user_mappings(github_username)`);
   await client.execute(`CREATE INDEX IF NOT EXISTS idx_repos_provider ON repos(provider)`);
+
+  // AI job tracking indexes
+  await client.execute(`CREATE INDEX IF NOT EXISTS idx_ai_queue_status ON ai_detection_queue(status, retry_count)`);
+  await client.execute(`CREATE INDEX IF NOT EXISTS idx_ai_queue_repo ON ai_detection_queue(repo_id)`);
+  await client.execute(`CREATE INDEX IF NOT EXISTS idx_ai_jobs_period ON ai_jobs(period)`);
+  await client.execute(`CREATE INDEX IF NOT EXISTS idx_ai_jobs_user ON ai_jobs(user_id)`);
+  await client.execute(`CREATE INDEX IF NOT EXISTS idx_ai_jobs_repo ON ai_jobs(repo_id)`);
+  await client.execute(`CREATE INDEX IF NOT EXISTS idx_ai_jobs_user_repo_period ON ai_jobs(user_id, repo_id, period)`);
+  await client.execute(`CREATE INDEX IF NOT EXISTS idx_branch_commits_branch ON branch_commits(branch_id)`);
+  await client.execute(`CREATE INDEX IF NOT EXISTS idx_branch_commits_commit ON branch_commits(commit_id)`);
 }
 
 // Repo operations
@@ -630,4 +738,283 @@ export async function getDeveloperStatsWithMappings(repoId: number) {
   );
 
   return stats;
+}
+
+// AI Job operations
+export async function createAIJob(
+  repoId: number,
+  userId: number | null,
+  period: string,
+  sourceType: 'commit' | 'branch',
+  sourceId: number,
+  points: number,
+  detectionMethod: 'keyword' | 'llm' | 'manual',
+  periodDate: string
+) {
+  const result = await client.execute({
+    sql: `
+      INSERT INTO ai_jobs (repo_id, user_id, period, source_type, source_id, points, detection_method, period_date)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT (repo_id, source_type, source_id) DO UPDATE SET
+        user_id = excluded.user_id,
+        points = excluded.points,
+        detection_method = excluded.detection_method
+      RETURNING *
+    `,
+    args: [repoId, userId, period, sourceType, sourceId, points, detectionMethod, periodDate],
+  });
+  return result.rows[0] as unknown as AIJob;
+}
+
+export async function getAIJobs(filters: { repoId?: number; period?: string; userId?: number } = {}) {
+  let sql = `SELECT aj.*, r.name as repo_name, u.name as user_name FROM ai_jobs aj LEFT JOIN repos r ON aj.repo_id = r.id LEFT JOIN users u ON aj.user_id = u.id WHERE 1=1`;
+  const args: any[] = [];
+
+  if (filters.repoId) {
+    sql += ` AND aj.repo_id = ?`;
+    args.push(filters.repoId);
+  }
+  if (filters.period) {
+    sql += ` AND aj.period = ?`;
+    args.push(filters.period);
+  }
+  if (filters.userId) {
+    sql += ` AND aj.user_id = ?`;
+    args.push(filters.userId);
+  }
+
+  sql += ` ORDER BY aj.created_at DESC`;
+  const result = await client.execute({ sql, args });
+  return result.rows as unknown as (AIJob & { repo_name: string; user_name: string | null })[];
+}
+
+export async function getAIJobsReport(period: string) {
+  // Period summary
+  const summaryResult = await client.execute({
+    sql: `
+      SELECT
+        COUNT(*) as total_jobs,
+        SUM(points) as total_points,
+        COUNT(DISTINCT user_id) as total_developers
+      FROM ai_jobs
+      WHERE period = ?
+    `,
+    args: [period],
+  });
+
+  // Top contributor
+  const topResult = await client.execute({
+    sql: `
+      SELECT u.name, SUM(aj.points) as total_points
+      FROM ai_jobs aj
+      JOIN users u ON aj.user_id = u.id
+      WHERE aj.period = ?
+      GROUP BY u.id
+      ORDER BY total_points DESC
+      LIMIT 1
+    `,
+    args: [period],
+  });
+
+  // By developer breakdown
+  const byDeveloperResult = await client.execute({
+    sql: `
+      SELECT
+        u.id as user_id,
+        u.name as user_name,
+        COUNT(*) as total_jobs,
+        SUM(aj.points) as total_points
+      FROM ai_jobs aj
+      JOIN users u ON aj.user_id = u.id
+      WHERE aj.period = ?
+      GROUP BY u.id
+      ORDER BY total_points DESC
+    `,
+    args: [period],
+  });
+
+  return {
+    summary: summaryResult.rows[0] as any,
+    topContributor: topResult.rows[0] as any,
+    byDeveloper: byDeveloperResult.rows,
+  };
+}
+
+// AI Queue operations
+export async function enqueueForAIDetection(
+  repoId: number,
+  commitId: number | null,
+  branchId: number | null
+) {
+  const result = await client.execute({
+    sql: `
+      INSERT INTO ai_detection_queue (repo_id, commit_id, branch_id)
+      VALUES (?, ?, ?)
+      RETURNING *
+    `,
+    args: [repoId, commitId, branchId],
+  });
+  return result.rows[0] as unknown as AIDetectionQueue;
+}
+
+export async function acquireQueueItem(itemId: number): Promise<AIDetectionQueue | null> {
+  const result = await client.execute({
+    sql: `
+      UPDATE ai_detection_queue
+      SET status = 'processing', started_at = CURRENT_TIMESTAMP
+      WHERE id = ? AND status = 'pending'
+      RETURNING *
+    `,
+    args: [itemId],
+  });
+  return result.rows[0] as unknown as AIDetectionQueue | null;
+}
+
+export async function markQueueCompleted(itemId: number) {
+  await client.execute({
+    sql: `
+      UPDATE ai_detection_queue
+      SET status = 'completed', completed_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `,
+    args: [itemId],
+  });
+}
+
+export async function markQueueFailed(itemId: number, error: string) {
+  await client.execute({
+    sql: `
+      UPDATE ai_detection_queue
+      SET status = 'failed', completed_at = CURRENT_TIMESTAMP, error = ?
+      WHERE id = ?
+    `,
+    args: [error, itemId],
+  });
+}
+
+export async function incrementQueueRetry(itemId: number) {
+  await client.execute({
+    sql: `
+      UPDATE ai_detection_queue
+      SET retry_count = retry_count + 1, status = 'pending'
+      WHERE id = ?
+    `,
+    args: [itemId],
+  });
+}
+
+export async function getPendingQueueItems(limit: number = 10) {
+  const result = await client.execute({
+    sql: `
+      SELECT q.*, c.message, c.author, c.sha, b.name as branch_name
+      FROM ai_detection_queue q
+      LEFT JOIN commits c ON q.commit_id = c.id
+      LEFT JOIN branches b ON q.branch_id = b.id
+      WHERE q.status = 'pending'
+      ORDER BY q.created_at ASC
+      LIMIT ?
+    `,
+    args: [limit],
+  });
+  return result.rows;
+}
+
+export async function cleanupOldQueueItems() {
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  await client.execute({
+    sql: `
+      DELETE FROM ai_detection_queue
+      WHERE status IN ('completed', 'failed') AND completed_at < ?
+    `,
+    args: [sevenDaysAgo],
+  });
+}
+
+// AI Keyword operations
+export async function getAIKeywords() {
+  const result = await client.execute({
+    sql: `SELECT * FROM ai_keywords ORDER BY created_at DESC`,
+  });
+  return result.rows as unknown as AIKeyword[];
+}
+
+export async function createAIKeyword(keyword: string) {
+  const result = await client.execute({
+    sql: `INSERT INTO ai_keywords (keyword) VALUES (?) RETURNING *`,
+    args: [keyword.toLowerCase()],
+  });
+  return result.rows[0] as unknown as AIKeyword;
+}
+
+export async function deleteAIKeyword(id: number) {
+  await client.execute({
+    sql: `DELETE FROM ai_keywords WHERE id = ?`,
+    args: [id],
+  });
+}
+
+export async function toggleAIKeyword(id: number, isActive: boolean) {
+  await client.execute({
+    sql: `UPDATE ai_keywords SET is_active = ? WHERE id = ?`,
+    args: [isActive ? 1 : 0, id],
+  });
+}
+
+// Helper functions for AI job and queue management
+export async function hasExistingJob(sourceType: 'commit' | 'branch', sourceId: number): Promise<boolean> {
+  const result = await client.execute({
+    sql: `SELECT 1 FROM ai_jobs WHERE source_type = ? AND source_id = ? LIMIT 1`,
+    args: [sourceType, sourceId],
+  });
+  return result.rows.length > 0;
+}
+
+export async function deleteQueueItemsForSource(sourceType: 'commit' | 'branch', sourceId: number) {
+  if (sourceType === 'commit') {
+    await client.execute({
+      sql: `DELETE FROM ai_detection_queue WHERE commit_id = ?`,
+      args: [sourceId],
+    });
+  } else {
+    await client.execute({
+      sql: `DELETE FROM ai_detection_queue WHERE branch_id = ?`,
+      args: [sourceId],
+    });
+  }
+}
+
+export async function getBranchById(branchId: number) {
+  const result = await client.execute({
+    sql: `SELECT * FROM branches WHERE id = ?`,
+    args: [branchId],
+  });
+  return result.rows[0] as unknown as Branch | undefined;
+}
+
+export async function getCommitById(commitId: number) {
+  const result = await client.execute({
+    sql: `SELECT * FROM commits WHERE id = ?`,
+    args: [commitId],
+  });
+  return result.rows[0] as unknown as Commit | undefined;
+}
+
+export async function linkCommitToBranch(branchId: number, commitId: number) {
+  await client.execute({
+    sql: `INSERT OR IGNORE INTO branch_commits (branch_id, commit_id) VALUES (?, ?)`,
+    args: [branchId, commitId],
+  });
+}
+
+export async function getCommitsByBranchId(branchId: number): Promise<Commit[]> {
+  const result = await client.execute({
+    sql: `
+      SELECT c.* FROM commits c
+      JOIN branch_commits bc ON c.id = bc.commit_id
+      WHERE bc.branch_id = ?
+      ORDER BY c.date DESC
+    `,
+    args: [branchId],
+  });
+  return result.rows as unknown as Commit[];
 }
