@@ -3,7 +3,7 @@ import { getServerSession } from '@/lib/server-auth';
 import { ROLES, getAIJobs, getAIJobsReport } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
-  const session = await getServerSession();
+  const session = await getServerSession(req);
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

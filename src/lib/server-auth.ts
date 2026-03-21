@@ -7,10 +7,25 @@ export interface Session {
   user: PublicUser & { role: string };
 }
 
-export async function getServerSession(req?: { cookies: { get: (name: string) => { value: string } | undefined } }): Promise<Session | null> {
+// Helper to extract token from either cookie or Authorization header
+function extractToken(req: { cookies: { get: (name: string) => { value: string } | undefined }, headers: { get: (name: string) => string | null } }): string | null {
+  // First try cookie
+  const cookieToken = req.cookies.get('auth_token')?.value;
+  if (cookieToken) return cookieToken;
+
+  // Then try Authorization header
+  const authHeader = req.headers.get('authorization');
+  if (authHeader?.startsWith('Bearer ')) {
+    return authHeader.substring(7);
+  }
+
+  return null;
+}
+
+export async function getServerSession(req?: { cookies: { get: (name: string) => { value: string } | undefined }, headers: { get: (name: string) => string | null } }): Promise<Session | null> {
   if (!req) return null;
 
-  const token = req.cookies.get('auth_token')?.value;
+  const token = extractToken(req);
   if (!token) return null;
 
   const payload = verifyToken(token);
