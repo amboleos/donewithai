@@ -97,8 +97,10 @@ export class GitHubAPI implements GitProvider {
     const perPage = 100;
     const MAX_PAGES = 100; // Safety limit: max 100 pages = 10,000 branches
 
+    console.log(`[GitHubAPI] Starting branch fetch for ${owner}/${repo}`);
+
     while (page <= MAX_PAGES) {
-      console.log(`[GitHubAPI] Fetching branches page ${page}`);
+      console.log(`[GitHubAPI] Fetching branches page ${page} (per_page: ${perPage})`);
 
       const { data } = await this.octokit.rest.repos.listBranches({
         owner,
@@ -107,9 +109,12 @@ export class GitHubAPI implements GitProvider {
         page,
       });
 
-      console.log(`[GitHubAPI] Page ${page} has ${data.length} branches`);
+      console.log(`[GitHubAPI] Page ${page} returned ${data.length} branches`);
 
-      if (data.length === 0) break;
+      if (data.length === 0) {
+        console.log(`[GitHubAPI] No branches on page ${page}, stopping pagination`);
+        break;
+      }
 
       for (const branch of data) {
         branches.push({
@@ -119,7 +124,10 @@ export class GitHubAPI implements GitProvider {
       }
 
       // If we got less than per_page, we're done
-      if (data.length < perPage) break;
+      if (data.length < perPage) {
+        console.log(`[GitHubAPI] Got ${data.length} < ${perPage} branches, pagination complete`);
+        break;
+      }
 
       page++;
     }
@@ -127,6 +135,8 @@ export class GitHubAPI implements GitProvider {
     if (page > MAX_PAGES) {
       console.warn('[GitHubAPI] Reached maximum pages limit for branches, truncating results');
     }
+
+    console.log(`[GitHubAPI] Total branches fetched: ${branches.length}`);
 
     return branches;
   }

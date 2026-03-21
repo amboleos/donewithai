@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, GitBranch, RefreshCw, Calendar, Container, AlertTriangle } from 'lucide-react';
+import { Trash2, GitBranch, RefreshCw, Calendar, Container, AlertTriangle, RotateCcw } from 'lucide-react';
 
 interface Repo {
   id: number;
@@ -21,10 +21,12 @@ interface RepoListProps {
   repos: Repo[];
   onDelete?: (id: number) => void;
   onSync: (url: string) => void;
+  onFullSync?: (url: string) => void;
   canSync?: boolean;
+  isAdmin?: boolean;
 }
 
-export default function RepoList({ repos, onDelete, onSync, canSync = true }: RepoListProps) {
+export default function RepoList({ repos, onDelete, onSync, onFullSync, canSync = true, isAdmin = false }: RepoListProps) {
   const getProviderIcon = (provider?: string) => {
     if (provider === 'bitbucket') {
       return <Container className="h-4 w-4 text-blue-600" />;
@@ -72,12 +74,23 @@ export default function RepoList({ repos, onDelete, onSync, canSync = true }: Re
                 variant="ghost"
                 size="sm"
                 onClick={() => onSync(repo.url)}
-                title={canSync ? 'Sync repository' : 'Sync is on cooldown'}
+                title={canSync ? 'Sync repository (incremental)' : 'Sync is on cooldown'}
                 disabled={!canSync}
                 className={!canSync ? 'opacity-50 cursor-not-allowed' : ''}
               >
-                <RefreshCw className={`h-4 w-4 ${!canSync ? '' : ''}`} />
+                <RefreshCw className="h-4 w-4" />
               </Button>
+              {isAdmin && onFullSync && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onFullSync(repo.url)}
+                  title="Full sync (re-fetch all commits)"
+                  className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              )}
               {onDelete && (
                 <Button
                   variant="ghost"

@@ -509,6 +509,14 @@ export async function getBranchesByRepo(repoId: number) {
   return result.rows as unknown as Branch[];
 }
 
+export async function getBranchNamesByRepo(repoId: number): Promise<string[]> {
+  const result = await client.execute({
+    sql: `SELECT name FROM branches WHERE repo_id = ?`,
+    args: [repoId],
+  });
+  return result.rows.map((row: any) => row.name) as string[];
+}
+
 export async function updateBranchAIDetection(branchId: number, isAI: boolean) {
   await client.execute({
     sql: `UPDATE branches SET is_ai_detected = ? WHERE id = ?`,

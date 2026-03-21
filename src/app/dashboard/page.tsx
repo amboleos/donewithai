@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import RepoList from '@/components/dashboard/repo-list';
 import AddRepoDialog from '@/components/dashboard/add-repo-dialog';
+import { SyncProgressModal, useSyncProgress } from '@/components/sync-progress-modal';
 
 interface Repo {
   id: number;
@@ -31,6 +32,7 @@ export default function DashboardPage() {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [lastSync, setLastSync] = useState<number | null>(null);
+  const { isOpen: syncInProgress, progress: syncProgress } = useSyncProgress();
 
   const canSync = !lastSync || Date.now() - lastSync > 15 * 60 * 1000;
 
@@ -118,8 +120,36 @@ export default function DashboardPage() {
 
       localStorage.setItem('lastSyncTime', Date.now().toString());
       setLastSync(Date.now());
-      toast.success('Repository synced successfully');
-      fetchRepos();
+      // SSE will handle progress updates, just refresh repos when done
+      setTimeout(fetchRepos, 3000);
+    } catch (error) {
+      toast.error('Failed to sync repository');
+    }
+  };
+
+  const handleFullSyncRepo = async (url: string) => {
+    if (!canSync) {
+      const minutesLeft = Math.ceil((15 * 60 * 1000 - (Date.now() - lastSync!)) / 60000);
+      toast.error(`Please wait ${minutesLeft} minute${minutesLeft !== 1 ? 's' : ''} before syncing again`);
+      return;
+    }
+
+    const confirmed = confirm('Full sync will re-fetch ALL commits from the repository. This may take longer. Continue?');
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, fullSync: true }),
+      });
+
+      if (!res.ok) throw new Error('Failed to sync repo');
+
+      localStorage.setItem('lastSyncTime', Date.now().toString());
+      setLastSync(Date.now());
+      toast.info('Full sync started - this will take longer than usual');
+      setTimeout(fetchRepos, 5000);
     } catch (error) {
       toast.error('Failed to sync repository');
     }
@@ -191,7 +221,9 @@ export default function DashboardPage() {
             repos={repos}
             onDelete={isAdmin ? handleDeleteRepo : undefined}
             onSync={handleSyncRepo}
+            onFullSync={isAdmin ? handleFullSyncRepo : undefined}
             canSync={canSync}
+            isAdmin={isAdmin}
           />
         )}
       </main>
@@ -201,6 +233,8 @@ export default function DashboardPage() {
         onOpenChange={setAddDialogOpen}
         onAdd={handleAddRepo}
       />
+
+      <SyncProgressModal isOpen={syncInProgress} progress={syncProgress} />
     </div>
   );
 }

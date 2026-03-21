@@ -155,14 +155,16 @@ export class BitbucketAPI implements GitProvider {
     let pageCount = 0;
     const MAX_PAGES = 100; // Safety limit: max 100 pages = 10,000 branches
 
+    console.log(`[BitbucketAPI] Starting branch fetch for ${workspace}/${repoSlug}`);
+
     while (apiUrl && pageCount < MAX_PAGES) {
       pageCount++;
-      console.log('[BitbucketAPI] Fetching branches page', pageCount);
+      console.log('[BitbucketAPI] Fetching branches page', pageCount, 'URL:', apiUrl.substring(0, 100) + '...');
 
       const response = await fetchWithRetry(apiUrl, this.token);
       const data: BitbucketPaginatedResponse<BitbucketBranch> = await response.json();
 
-      console.log('[BitbucketAPI] Page', pageCount, 'has', data.values.length, 'branches');
+      console.log('[BitbucketAPI] Page', pageCount, 'has', data.values.length, 'branches', data.next ? '(has next)' : '(last page)');
 
       for (const branch of data.values) {
         branches.push({
@@ -171,8 +173,13 @@ export class BitbucketAPI implements GitProvider {
         });
       }
 
-      // Get next page - stop if no branches on this page
-      apiUrl = (data.values.length > 0 && data.next) ? data.next : '';
+      // Get next page - stop if no branches on this page OR no next URL
+      if (data.values.length === 0 || !data.next) {
+        console.log('[BitbucketAPI] Pagination complete. Total branches:', branches.length);
+        break;
+      }
+
+      apiUrl = data.next;
     }
 
     if (pageCount >= MAX_PAGES) {

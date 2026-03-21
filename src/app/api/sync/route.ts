@@ -11,6 +11,7 @@ import {
   updateBranchAIDetection,
   enqueueForAIDetection,
   hasExistingJob,
+  getBranchNamesByRepo,
 } from '@/lib/db';
 import { createProvider, parseRepoUrl, getEnvVarName, type GitProvider } from '@/lib/git';
 import { AIDetector } from '@/lib/ai-detector';
@@ -31,7 +32,14 @@ export async function POST(req: NextRequest) {
 
   const startTime = Date.now();
   try {
-    const { url } = await req.json();
+    const { url, fullSync } = await req.json();
+
+    // fullSync = true means fetch all commits (ignore last_synced) and re-run AI detection
+    const isFullSync = fullSync === true;
+
+    if (!url) {
+      return NextResponse.json({ error: 'URL is required' }, { status: 400 });
+    }
 
     if (!url) {
       return NextResponse.json({ error: 'URL is required' }, { status: 400 });
@@ -74,9 +82,9 @@ export async function POST(req: NextRequest) {
     // Clear any previous sync error
     await updateRepoError(repo.id, null);
 
-    // Fetch commits (only since last sync if available)
-    console.log('[SYNC] Starting fetch commits...', repo.last_synced ? 'since: ' + repo.last_synced : 'full sync');
-    const lastSyncDate = repo.last_synced ? new Date(repo.last_synced) : undefined;
+    // Fetch commits (only since last sync if available, unless fullSync is true)
+    const lastSyncDate = isFullSync ? undefined : (repo.last_synced ? new Date(repo.last_synced) : undefined);
+    console.log('[SYNC] Starting fetch commits...', isFullSync ? '(FULL SYNC - all history)' : (repo.last_synced ? 'since: ' + repo.last_synced : 'full sync'));
     const commits = await provider.getCommits(url, lastSyncDate);
     console.log('[SYNC] Fetched', commits.length, 'commits');
 
@@ -148,24 +156,45 @@ export async function POST(req: NextRequest) {
     }
     console.log('[SYNC] Finished processing', commits.length, 'commits, created', aiJobsCreated, 'AI jobs');
 
-    // Fetch branches
+    // Fetch branches (incremental - only add new ones)
+    console.log('[SYNC] Starting branch fetch...');
     const branches = await provider.getBranches(url);
+    console.log('[SYNC] Fetched', branches.length, 'branches total from API');
+
+    // Get existing branch names for incremental sync
+    const existingBranchNames = await getBranchNamesByRepo(repo.id);
+    const existingBranchSet = new Set(existingBranchNames);
+    console.log('[SYNC] Existing branches in DB:', existingBranchNames.length);
+
+    // Log each branch name for debugging
+    console.log('[SYNC] All branch names from API:', branches.map(b => b.name).join(', '));
+
+    let insertedCount = 0;
+    let newBranchCount = 0;
     for (const branch of branches) {
+      // Check if branch already exists
+      const isNewBranch = !existingBranchSet.has(branch.name);
+
       const dbBranch = await upsertBranch(
         repo.id,
         branch.name,
         'unknown',
         new Date()
       );
+      insertedCount++;
 
-      // Run AI detection on branches
-      if (dbBranch.is_ai_detected === null) {
-        const detection = detector.detectFromBranchName(branch.name);
-        if (detection.confidence > 0.5) {
-          await updateBranchAIDetection(dbBranch.id, detection.isAI);
+      if (isNewBranch) {
+        newBranchCount++;
+        // Run AI detection on new branches only
+        if (dbBranch.is_ai_detected === null) {
+          const detection = detector.detectFromBranchName(branch.name);
+          if (detection.confidence > 0.5) {
+            await updateBranchAIDetection(dbBranch.id, detection.isAI);
+          }
         }
       }
     }
+    console.log('[SYNC] Inserted/updated', insertedCount, 'branches in DB (', newBranchCount, ' new)');
 
     await updateRepoLastSynced(repo.id);
 
