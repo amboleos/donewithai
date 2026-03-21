@@ -89,7 +89,7 @@ export class AIQueueProcessor {
 
       if (item.retry_count < MAX_RETRIES) {
         await incrementQueueRetry(item.id);
-        await this.sleep(RETRY_DELAYS[item.retry_count]);
+        await this.sleep(RETRY_DELAYS[item.retry_count + 1]); // Use incremented value
         // Re-queue by returning false
         return false;
       } else {
