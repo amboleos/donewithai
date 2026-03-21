@@ -5,16 +5,27 @@ import {
   getBranchById,
   getCommitsByBranchId,
   deleteQueueItemsForSource,
-  hasExistingJob,
   createAIJob,
   getCommitById,
 } from '@/lib/db';
 import { getPeriod, calculatePoints, resolveUserId } from '@/lib/ai-jobs';
 import { eventEmitter } from '../events/route';
+import { getServerSession } from '@/lib/server-auth';
 
 export async function POST(req: NextRequest) {
+  const session = await getServerSession(req);
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  if (session.user.role !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
   try {
-    const { type, id, isAI, repoId } = await req.json();
+    const body = await req.json();
+    const { type, id, isAi } = body;
+    const isAI = isAi;  // Handle camelCase naming
 
     if (type === 'commit') {
       // Remove from queue if pending (manual toggle wins)
