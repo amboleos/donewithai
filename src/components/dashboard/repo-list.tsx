@@ -43,10 +43,9 @@ export default function RepoList({ repos, onDelete, onSync }: RepoListProps) {
               </div>
               <div className="flex items-center gap-1">
                 {repo.sync_error && (
-                  <AlertTriangle
-                    className="h-4 w-4 text-amber-500"
-                    title={repo.sync_error}
-                  />
+                  <span title={repo.sync_error}>
+                    <AlertTriangle className="h-4 w-4 text-amber-500" />
+                  </span>
                 )}
                 <Badge variant="outline">{repo.owner}</Badge>
               </div>
