@@ -206,8 +206,10 @@ async function fetchDiffstatInBackground(
 
   for (const commit of pendingCommits) {
     try {
-      const diffstat = await provider.getCommitDiffstat(url, commit.sha);
-      await updateCommitLines(repoId, commit.sha, diffstat.additions, diffstat.deletions);
+      if (typeof provider.getCommitDiffstat === 'function') {
+        const diffstat = await provider.getCommitDiffstat(url, commit.sha);
+        await updateCommitLines(repoId, commit.sha, diffstat.additions, diffstat.deletions);
+      }
 
       // Delay to respect rate limits (1000/hour = ~1 per 3.6 seconds)
       await new Promise(resolve => setTimeout(resolve, 4000));
