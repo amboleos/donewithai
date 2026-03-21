@@ -1,5 +1,5 @@
 // src/lib/git/provider.ts
-export type GitProviderType = 'github' | 'bitbucket';
+export type { GitProviderType } from '@/types';
 
 export interface GitCommit {
   sha: string;
