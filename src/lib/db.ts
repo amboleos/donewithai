@@ -203,7 +203,7 @@ export async function createRepo(
   name: string,
   url: string,
   owner: string,
-  provider: string = 'github',
+  provider: GitProviderType = 'github',
   token_env_var: string | null = null
 ) {
   const result = await client.execute({
