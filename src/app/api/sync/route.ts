@@ -11,7 +11,7 @@ import {
   updateCommitAIDetection,
   updateBranchAIDetection,
 } from '@/lib/db';
-import { createProvider, parseRepoUrl, getEnvVarName } from '@/lib/git';
+import { createProvider, parseRepoUrl, getEnvVarName, type GitProvider } from '@/lib/git';
 import { AIDetector } from '@/lib/ai-detector';
 import type { GitProviderType } from '@/types';
 
@@ -134,7 +134,7 @@ export async function POST(req: NextRequest) {
 async function fetchDiffstatInBackground(
   repoId: number,
   url: string,
-  provider: any
+  provider: GitProvider
 ) {
   const pendingCommits = await getPendingCommitsForDiffstat(repoId);
 
