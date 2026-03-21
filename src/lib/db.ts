@@ -98,6 +98,9 @@ export async function initDb() {
       name TEXT NOT NULL,
       url TEXT NOT NULL,
       owner TEXT NOT NULL,
+      provider TEXT DEFAULT 'github',
+      token_env_var TEXT,
+      sync_error TEXT,
       last_synced TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
@@ -161,6 +164,37 @@ export async function initDb() {
     }
   }
 
+  // Add provider, token_env_var, sync_error to repos table if they don't exist
+  try {
+    await client.execute(`ALTER TABLE repos ADD COLUMN provider TEXT DEFAULT 'github'`);
+  } catch (e: any) {
+    if (!e.message?.includes('duplicate column') && !e.message?.includes('already exists')) {
+      throw e;
+    }
+  }
+
+  try {
+    await client.execute(`ALTER TABLE repos ADD COLUMN token_env_var TEXT`);
+  } catch (e: any) {
+    if (!e.message?.includes('duplicate column') && !e.message?.includes('already exists')) {
+      throw e;
+    }
+  }
+
+  try {
+    await client.execute(`ALTER TABLE repos ADD COLUMN sync_error TEXT`);
+  } catch (e: any) {
+    if (!e.message?.includes('duplicate column') && !e.message?.includes('already exists')) {
+      throw e;
+    }
+  }
+
+  // Update existing repos to have provider='github'
+  await client.execute({
+    sql: `UPDATE repos SET provider = 'github' WHERE provider IS NULL`,
+    args: [],
+  });
+
   // Set first user as admin if no admin exists
   await client.execute({
     sql: `UPDATE users SET role = ? WHERE id = 1 AND role = ?`,
@@ -196,6 +230,7 @@ export async function initDb() {
   await client.execute(`CREATE INDEX IF NOT EXISTS idx_branches_repo_id ON branches(repo_id)`);
   await client.execute(`CREATE INDEX IF NOT EXISTS idx_user_mappings_repo ON user_mappings(repo_id)`);
   await client.execute(`CREATE INDEX IF NOT EXISTS idx_user_mappings_github ON user_mappings(github_username)`);
+  await client.execute(`CREATE INDEX IF NOT EXISTS idx_repos_provider ON repos(provider)`);
 }
 
 // Repo operations
