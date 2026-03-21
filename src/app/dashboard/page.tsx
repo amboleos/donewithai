@@ -30,6 +30,9 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [lastSync, setLastSync] = useState<number | null>(null);
+
+  const canSync = !lastSync || Date.now() - lastSync > 15 * 60 * 1000;
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -39,6 +42,13 @@ export default function DashboardPage() {
       checkAdmin();
     }
   }, [authLoading, user, router]);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('lastSyncTime');
+    if (stored) {
+      setLastSync(parseInt(stored));
+    }
+  }, []);
 
   const fetchRepos = async () => {
     try {
@@ -91,6 +101,12 @@ export default function DashboardPage() {
   };
 
   const handleSyncRepo = async (url: string) => {
+    if (!canSync) {
+      const minutesLeft = Math.ceil((15 * 60 * 1000 - (Date.now() - lastSync!)) / 60000);
+      toast.error(`Please wait ${minutesLeft} minute${minutesLeft !== 1 ? 's' : ''} before syncing again`);
+      return;
+    }
+
     try {
       const res = await fetch('/api/sync', {
         method: 'POST',
@@ -100,6 +116,8 @@ export default function DashboardPage() {
 
       if (!res.ok) throw new Error('Failed to sync repo');
 
+      localStorage.setItem('lastSyncTime', Date.now().toString());
+      setLastSync(Date.now());
       toast.success('Repository synced successfully');
       fetchRepos();
     } catch (error) {
@@ -173,6 +191,7 @@ export default function DashboardPage() {
             repos={repos}
             onDelete={isAdmin ? handleDeleteRepo : undefined}
             onSync={handleSyncRepo}
+            canSync={canSync}
           />
         )}
       </main>

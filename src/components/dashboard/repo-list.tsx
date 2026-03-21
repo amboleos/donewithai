@@ -21,9 +21,10 @@ interface RepoListProps {
   repos: Repo[];
   onDelete?: (id: number) => void;
   onSync: (url: string) => void;
+  canSync?: boolean;
 }
 
-export default function RepoList({ repos, onDelete, onSync }: RepoListProps) {
+export default function RepoList({ repos, onDelete, onSync, canSync = true }: RepoListProps) {
   const getProviderIcon = (provider?: string) => {
     if (provider === 'bitbucket') {
       return <Container className="h-4 w-4 text-blue-600" />;
@@ -71,9 +72,11 @@ export default function RepoList({ repos, onDelete, onSync }: RepoListProps) {
                 variant="ghost"
                 size="sm"
                 onClick={() => onSync(repo.url)}
-                title="Sync repository"
+                title={canSync ? 'Sync repository' : 'Sync is on cooldown'}
+                disabled={!canSync}
+                className={!canSync ? 'opacity-50 cursor-not-allowed' : ''}
               >
-                <RefreshCw className="h-4 w-4" />
+                <RefreshCw className={`h-4 w-4 ${!canSync ? '' : ''}`} />
               </Button>
               {onDelete && (
                 <Button
