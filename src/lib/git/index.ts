@@ -58,6 +58,11 @@ export function createProvider(url: string): GitProvider {
   if (provider === 'bitbucket') {
     const parsed = parseRepoUrl(url);
     const envVarName = getEnvVarName(parsed.name, 'bitbucket');
+
+    if (!envVarName) {
+      throw new Error('Could not determine Bitbucket token environment variable name');
+    }
+
     const token = process.env[envVarName];
 
     if (!token) {
