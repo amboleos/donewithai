@@ -1,4 +1,5 @@
 import { createClient } from '@libsql/client';
+import { GitProviderType } from '@/types';
 
 const tursoUrl = process.env.TURSO_DATABASE_URL || process.env.POSTGRES_URL;
 const tursoAuthToken = process.env.TURSO_AUTH_TOKEN;
@@ -24,7 +25,7 @@ export interface Repo {
   name: string;
   url: string;
   owner: string;
-  provider: string;
+  provider: GitProviderType;
   token_env_var: string | null;
   last_synced: string | null;
   sync_error: string | null;
