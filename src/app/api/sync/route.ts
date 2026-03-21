@@ -8,14 +8,18 @@ import {
   updateRepoError,
   getPendingCommitsForDiffstat,
   updateCommitLines,
-  updateCommitAIDetection,
   updateBranchAIDetection,
+  enqueueForAIDetection,
+  hasExistingJob,
 } from '@/lib/db';
 import { createProvider, parseRepoUrl, getEnvVarName, type GitProvider } from '@/lib/git';
 import { AIDetector } from '@/lib/ai-detector';
-import type { GitProviderType } from '@/types';
+import { hasAIKeyword } from '@/lib/ai-keywords';
+import { createAIJobFromCommit } from '@/lib/ai-jobs';
+import { eventEmitter } from '../events/route';
 
 export async function POST(req: NextRequest) {
+  const startTime = Date.now();
   try {
     const { url } = await req.json();
 
@@ -60,8 +64,25 @@ export async function POST(req: NextRequest) {
     // Clear any previous sync error
     await updateRepoError(repo.id, null);
 
-    // Fetch commits
-    const commits = await provider.getCommits(url);
+    // Fetch commits (only since last sync if available)
+    console.log('[SYNC] Starting fetch commits...', repo.last_synced ? 'since: ' + repo.last_synced : 'full sync');
+    const lastSyncDate = repo.last_synced ? new Date(repo.last_synced) : undefined;
+    const commits = await provider.getCommits(url, lastSyncDate);
+    console.log('[SYNC] Fetched', commits.length, 'commits');
+
+    // Emit sync started
+    eventEmitter.emit({
+      type: 'sync_started',
+      data: {
+        repoId: repo.id,
+        repoName: repo.name,
+        totalCommits: commits.length,
+        timestamp: new Date().toISOString(),
+      },
+    });
+
+    let aiJobsCreated = 0;
+    let processedCount = 0;
     for (const commit of commits) {
       const dbCommit = await upsertCommit(
         repo.id,
@@ -73,15 +94,49 @@ export async function POST(req: NextRequest) {
         commit.additions,
         commit.deletions
       );
+      processedCount++;
 
-      // Run AI detection on commits that don't have it
-      if (dbCommit.is_ai_detected === null) {
-        const detection = detector.detectFromCommitMessage(commit.message);
-        if (detection.confidence > 0.5) {
-          await updateCommitAIDetection(dbCommit.id, detection.isAI, detection.confidence);
+      // Emit progress every 10 commits
+      if (processedCount % 10 === 0 || processedCount === commits.length) {
+        eventEmitter.emit({
+          type: 'progress',
+          data: {
+            repoId: repo.id,
+            processed: processedCount,
+            total: commits.length,
+            percentage: Math.round((processedCount / commits.length) * 100),
+            currentCommit: commit.message.split('\n')[0].substring(0, 50),
+          },
+        });
+      }
+
+      // Skip if AI job already exists
+      if (await hasExistingJob('commit', dbCommit.id)) {
+        continue;
+      }
+
+      // Check for AI keyword
+      const hasKeyword = await hasAIKeyword(commit.message);
+
+      if (hasKeyword && (commit.additions + commit.deletions) >= 200) {
+        const job = await createAIJobFromCommit(dbCommit, 'keyword');
+        if (job) {
+          aiJobsCreated++;
+          eventEmitter.emit({
+            type: 'ai_tagged',
+            data: {
+              type: 'commit',
+              id: dbCommit.id,
+              userName: commit.author,
+            },
+          });
         }
+      } else {
+        // Add to queue for LLM processing
+        await enqueueForAIDetection(repo.id, dbCommit.id, null);
       }
     }
+    console.log('[SYNC] Finished processing', commits.length, 'commits, created', aiJobsCreated, 'AI jobs');
 
     // Fetch branches
     const branches = await provider.getBranches(url);
@@ -112,7 +167,18 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    return NextResponse.json({ success: true, repo });
+    // Emit sync completed
+    const duration = Date.now() - startTime;
+    eventEmitter.emit({
+      type: 'sync_completed',
+      data: {
+        repoId: repo.id,
+        aiJobsFound: aiJobsCreated,
+        duration,
+      },
+    });
+
+    return NextResponse.json({ success: true, repo, aiJobsCreated });
   } catch (error: any) {
     console.error('Sync error:', error);
 
