@@ -85,6 +85,13 @@ export async function POST(req: NextRequest) {
     // Fetch commits (only since last sync if available, unless fullSync is true)
     const lastSyncDate = isFullSync ? undefined : (repo.last_synced ? new Date(repo.last_synced) : undefined);
     console.log('[SYNC] Starting fetch commits...', isFullSync ? '(FULL SYNC - all history)' : (repo.last_synced ? 'since: ' + repo.last_synced : 'full sync'));
+
+    // Emit fetching_commits event
+    eventEmitter.emit({
+      type: 'fetching_commits',
+      data: { message: `Fetching commits from ${parsed.provider}...` },
+    });
+
     const commits = await provider.getCommits(url, lastSyncDate);
     console.log('[SYNC] Fetched', commits.length, 'commits');
 
@@ -96,6 +103,18 @@ export async function POST(req: NextRequest) {
         repoName: repo.name,
         totalCommits: commits.length,
         timestamp: new Date().toISOString(),
+      },
+    });
+
+    // Emit processing_commits event
+    eventEmitter.emit({
+      type: 'processing_commits',
+      data: {
+        repoId: repo.id,
+        processed: 0,
+        total: commits.length,
+        percentage: 0,
+        currentCommit: 'Starting...',
       },
     });
 
@@ -117,7 +136,7 @@ export async function POST(req: NextRequest) {
       // Emit progress every 10 commits
       if (processedCount % 10 === 0 || processedCount === commits.length) {
         eventEmitter.emit({
-          type: 'progress',
+          type: 'processing_commits',
           data: {
             repoId: repo.id,
             processed: processedCount,
@@ -155,6 +174,12 @@ export async function POST(req: NextRequest) {
       }
     }
     console.log('[SYNC] Finished processing', commits.length, 'commits, created', aiJobsCreated, 'AI jobs');
+
+    // Emit fetching_branches event
+    eventEmitter.emit({
+      type: 'fetching_branches',
+      data: { page: 0, message: 'Fetching branches...' },
+    });
 
     // Fetch branches (incremental - only add new ones)
     console.log('[SYNC] Starting branch fetch...');
@@ -196,6 +221,12 @@ export async function POST(req: NextRequest) {
     }
     console.log('[SYNC] Inserted/updated', insertedCount, 'branches in DB (', newBranchCount, ' new)');
 
+    // Emit branches_fetched event
+    eventEmitter.emit({
+      type: 'branches_fetched',
+      data: { total: insertedCount, new: newBranchCount },
+    });
+
     await updateRepoLastSynced(repo.id);
 
     // For Bitbucket, trigger background diffstat fetch
@@ -220,6 +251,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, repo, aiJobsCreated });
   } catch (error: any) {
     console.error('Sync error:', error);
+
+    // Emit sync_error event
+    eventEmitter.emit({
+      type: 'sync_error',
+      data: { error: error.message || 'Unknown error' },
+    });
 
     // If we have a repo ID, store the error
     if (error.message?.includes('Environment variable')) {

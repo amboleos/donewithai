@@ -8,9 +8,13 @@ export const dynamic = 'force-dynamic';
 // SSE event type definitions
 export type SyncEvent =
   | { type: 'sync_started'; data: { repoId: number; repoName: string; totalCommits: number; timestamp: string } }
-  | { type: 'progress'; data: { repoId: number; processed: number; total: number; percentage: number; currentCommit: string } }
+  | { type: 'fetching_commits'; data: { message: string } }
+  | { type: 'processing_commits'; data: { repoId: number; processed: number; total: number; percentage: number; currentCommit: string } }
+  | { type: 'fetching_branches'; data: { page: number; message: string } }
+  | { type: 'branches_fetched'; data: { total: number; new: number } }
   | { type: 'sync_completed'; data: { repoId: number; aiJobsFound: number; duration: number } }
-  | { type: 'ai_tagged'; data: { type: 'commit' | 'branch'; id: number; userName: string } };
+  | { type: 'ai_tagged'; data: { type: 'commit' | 'branch'; id: number; userName: string } }
+  | { type: 'sync_error'; data: { error: string } };
 
 // Global event emitter for SSE
 class EventEmitter {
