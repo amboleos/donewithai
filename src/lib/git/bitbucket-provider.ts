@@ -24,7 +24,7 @@ async function fetchWithRetry(url: string, token: string): Promise<Response> {
     }
 
     if (!response.ok) {
-      throw new Error(`Bitbucket API error: ${response.status} ${response.statusText}`);
+      throw new Error(`Bitbucket API error: ${response.status} ${response.statusText} (URL: ${url})`);
     }
 
     return response;
@@ -76,7 +76,8 @@ export class BitbucketAPI implements GitProvider {
 
   private parseRepoUrl(url: string): { workspace: string; repoSlug: string } {
     // Match: bitbucket.org/workspace/repo or bitbucket.org:workspace/repo
-    const match = url.match(/bitbucket\.org[:/]([^/]+)\/([^/.]+?)(\.git)?$/);
+    // Allows trailing slashes and optional query parameters
+    const match = url.match(/bitbucket\.org[:/]([^/]+)\/([^/.]+?)(?:\.git)?\/?(?:\?.*)?$/);
     if (!match) {
       throw new Error('Invalid Bitbucket URL');
     }
@@ -98,7 +99,7 @@ export class BitbucketAPI implements GitProvider {
     };
   }
 
-  async getCommits(url: string, since?: Date): Promise<GitCommit[]> {
+  async getCommits(url: string, since?: Date, _perPage?: number): Promise<GitCommit[]> {
     const { workspace, repoSlug } = this.parseRepoUrl(url);
     let apiUrl = `${BITBUCKET_API_BASE}/repositories/${workspace}/${repoSlug}/commits?pagelen=50`;
 
