@@ -1,0 +1,45 @@
+{
+  "testDate": "2025-03-21",
+  "summary": {
+    "task32": {
+      "name": "Developer View Restrictions",
+      "description": "Admin blocked, 403 on admin APIs, repos accessible",
+      "tests": [
+        {"name": "GET /api/admin/keywords with kasim token", "expected": "401", "actual": "401", "passed": true},
+        {"name": "GET /api/admin/users with kasim token", "expected": "403", "actual": "403", "passed": true},
+        {"name": "GET /api/repos with kasim token", "expected": "200", "actual": "200", "passed": true},
+        {"name": "GET /api/ai/jobs with kasim token", "expected": "200", "actual": "200", "passed": true}
+      ],
+      "passed": 4,
+      "failed": 0
+    },
+    "task37": {
+      "name": "API Authentication Bearer Tokens",
+      "description": "Both Bearer header and cookie methods work",
+      "tests": [
+        {"name": "GET /api/admin/keywords with Bearer header (admin)", "expected": "200", "actual": "200", "passed": true},
+        {"name": "GET /api/admin/keywords with cookie (admin)", "expected": "200", "actual": "200", "passed": true},
+        {"name": "GET /api/ai/jobs with Bearer header (kasim)", "expected": "200", "actual": "200", "passed": true},
+        {"name": "GET /api/ai/jobs with cookie (kasim)", "expected": "200", "actual": "200", "passed": true}
+      ],
+      "passed": 4,
+      "failed": 0
+    },
+    "task44": {
+      "name": "Unauthorized Access",
+      "description": "Proper error codes returned (401 for no auth, invalid token, non-admin)",
+      "tests": [
+        {"name": "GET /api/admin/keywords without auth", "expected": "401", "actual": "401", "passed": true},
+        {"name": "GET /api/admin/keywords with invalid token", "expected": "401", "actual": "401", "passed": true},
+        {"name": "GET /api/admin/keywords with developer token", "expected": "401", "actual": "401", "passed": true},
+        {"name": "GET /api/ai/jobs without auth", "expected": "401", "actual": "401", "passed": true},
+        {"name": "GET /api/ai/jobs with invalid token", "expected": "401", "actual": "401", "passed": true}
+      ],
+      "passed": 5,
+      "failed": 0
+    }
+  },
+  "totalPassed": 13,
+  "totalFailed": 0,
+  "overallStatus": "ALL_TESTS_PASSED"
+}

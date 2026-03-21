@@ -5,13 +5,17 @@ async function dropAllTables() {
   // Disable foreign key constraints temporarily
   await client.execute(`PRAGMA foreign_keys = OFF`);
 
-  // Drop all tables
+  // Drop all tables (in specific order due to foreign keys, though FKs are disabled)
   await client.execute(`DROP TABLE IF EXISTS ai_detections`);
   await client.execute(`DROP TABLE IF EXISTS user_mappings`);
   await client.execute(`DROP TABLE IF EXISTS branches`);
   await client.execute(`DROP TABLE IF EXISTS commits`);
   await client.execute(`DROP TABLE IF EXISTS users`);
   await client.execute(`DROP TABLE IF EXISTS repos`);
+  await client.execute(`DROP TABLE IF EXISTS ai_keywords`);
+  await client.execute(`DROP TABLE IF EXISTS ai_jobs`);
+  await client.execute(`DROP TABLE IF EXISTS ai_detection_queue`);
+  await client.execute(`DROP TABLE IF EXISTS branch_commits`);
 
   // Re-enable foreign key constraints
   await client.execute(`PRAGMA foreign_keys = ON`);

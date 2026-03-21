@@ -107,11 +107,17 @@ export class BitbucketAPI implements GitProvider {
       apiUrl += `&since=${since.toISOString()}`;
     }
 
+    console.log('[BitbucketAPI] Fetching commits from:', apiUrl);
     const commits: GitCommit[] = [];
+    let pageCount = 0;
+    const MAX_PAGES = 100; // Safety limit: max 100 pages = 5000 commits
 
-    while (apiUrl) {
+    while (apiUrl && pageCount < MAX_PAGES) {
+      pageCount++;
+      console.log('[BitbucketAPI] Fetching page', pageCount);
       const response = await fetchWithRetry(apiUrl, this.token);
       const data: BitbucketPaginatedResponse<BitbucketCommit> = await response.json();
+      console.log('[BitbucketAPI] Page', pageCount, 'has', data.values.length, 'commits');
 
       for (const commit of data.values) {
         // Extract author name from raw format (e.g., "Author Name <email@example.com>")
@@ -130,8 +136,12 @@ export class BitbucketAPI implements GitProvider {
         });
       }
 
-      // Get next page
-      apiUrl = data.next || '';
+      // Get next page - stop if no commits on this page
+      apiUrl = (data.values.length > 0 && data.next) ? data.next : '';
+    }
+
+    if (pageCount >= MAX_PAGES) {
+      console.warn('[BitbucketAPI] Reached maximum pages limit, truncating results');
     }
 
     return commits;

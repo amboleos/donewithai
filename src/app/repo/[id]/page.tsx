@@ -45,10 +45,13 @@ export default function RepoDetailPage() {
 
   const [repo, setRepo] = useState<Repo | null>(null);
   const [commits, setCommits] = useState<Commit[]>([]);
+  const [allCommitsCount, setAllCommitsCount] = useState<number>(0);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [analytics, setAnalytics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'commits' | 'branches' | 'analytics'>('commits');
+  const [commitsPage, setCommitsPage] = useState(0);
+  const COMMITS_PER_PAGE = 50;
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -63,7 +66,7 @@ export default function RepoDetailPage() {
     try {
       const [repoRes, commitsRes, branchesRes, analyticsRes] = await Promise.all([
         fetch(`/api/repos/${repoId}`),
-        fetch(`/api/repos/${repoId}/commits`),
+        fetch(`/api/repos/${repoId}/commits?limit=10000`),
         fetch(`/api/repos/${repoId}/branches`),
         fetch(`/api/repos/${repoId}/analytics-mapped?days=30`),
       ]);
@@ -75,8 +78,10 @@ export default function RepoDetailPage() {
 
       setRepo(repoData.repo);
       setCommits(commitsData.commits || []);
+      setAllCommitsCount((commitsData.commits || []).length);
       setBranches(branchesData.branches || []);
       setAnalytics(analyticsData);
+      setCommitsPage(0);
     } catch (error) {
       console.error('Failed to fetch repo data:', error);
     } finally {
@@ -126,7 +131,7 @@ export default function RepoDetailPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Total Commits</CardDescription>
-              <CardTitle className="text-3xl">{commits.length}</CardTitle>
+              <CardTitle className="text-3xl">{allCommitsCount}</CardTitle>
             </CardHeader>
           </Card>
           <Card>
@@ -159,7 +164,7 @@ export default function RepoDetailPage() {
             variant={activeTab === 'commits' ? 'default' : 'outline'}
             onClick={() => setActiveTab('commits')}
           >
-            Commits ({commits.length})
+            Commits ({allCommitsCount})
           </Button>
           <Button
             variant={activeTab === 'branches' ? 'default' : 'outline'}
@@ -180,45 +185,75 @@ export default function RepoDetailPage() {
           <Card>
             <CardHeader>
               <CardTitle>Commits</CardTitle>
-              <CardDescription>Recent commits in this repository</CardDescription>
+              <CardDescription>
+                Showing {Math.min((commitsPage + 1) * COMMITS_PER_PAGE, allCommitsCount)} of {allCommitsCount} commits
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {commits.length === 0 ? (
                   <p className="text-slate-500 text-center py-8">No commits found. Sync the repository to fetch commits.</p>
                 ) : (
-                  commits.slice(0, 20).map((commit) => (
-                    <div key={commit.id} className="flex items-start gap-4 p-4 rounded-lg border hover:bg-slate-50 dark:hover:bg-slate-800">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <User className="h-4 w-4 text-slate-400" />
-                          <span className="text-sm font-medium">{commit.author}</span>
-                          {commit.is_ai_detected && (
-                            <Badge variant="outline" className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
-                              <Brain className="h-3 w-3 mr-1" />
-                              AI
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">{commit.message.split('\n')[0]}</p>
-                        <div className="flex items-center gap-4 text-xs text-slate-400">
-                          <span className="font-mono">{commit.sha.substring(0, 7)}</span>
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {new Date(commit.date).toLocaleDateString()}
-                          </span>
-                          <span className="flex items-center gap-1 text-green-600">
-                            <Plus className="h-3 w-3" />
-                            {commit.lines_added}
-                          </span>
-                          <span className="flex items-center gap-1 text-red-600">
-                            <Minus className="h-3 w-3" />
-                            {commit.lines_removed}
-                          </span>
+                  <>
+                    {commits
+                      .slice(commitsPage * COMMITS_PER_PAGE, (commitsPage + 1) * COMMITS_PER_PAGE)
+                      .map((commit) => (
+                      <div key={commit.id} className="flex items-start gap-4 p-4 rounded-lg border hover:bg-slate-50 dark:hover:bg-slate-800">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <User className="h-4 w-4 text-slate-400" />
+                            <span className="text-sm font-medium">{commit.author}</span>
+                            {commit.is_ai_detected && (
+                              <Badge variant="outline" className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
+                                <Brain className="h-3 w-3 mr-1" />
+                                AI
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">{commit.message.split('\n')[0]}</p>
+                          <div className="flex items-center gap-4 text-xs text-slate-400">
+                            <span className="font-mono">{commit.sha.substring(0, 7)}</span>
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {new Date(commit.date).toLocaleDateString()}
+                            </span>
+                            <span className="flex items-center gap-1 text-green-600">
+                              <Plus className="h-3 w-3" />
+                              {commit.lines_added}
+                            </span>
+                            <span className="flex items-center gap-1 text-red-600">
+                              <Minus className="h-3 w-3" />
+                              {commit.lines_removed}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    ))}
+                    {/* Pagination */}
+                    {allCommitsCount > COMMITS_PER_PAGE && (
+                      <div className="flex items-center justify-center gap-2 pt-4 border-t">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCommitsPage(Math.max(0, commitsPage - 1))}
+                          disabled={commitsPage === 0}
+                        >
+                          Previous
+                        </Button>
+                        <span className="text-sm text-slate-600">
+                          Page {commitsPage + 1} of {Math.ceil(allCommitsCount / COMMITS_PER_PAGE)}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCommitsPage(Math.min(Math.floor(allCommitsCount / COMMITS_PER_PAGE), commitsPage + 1))}
+                          disabled={(commitsPage + 1) * COMMITS_PER_PAGE >= allCommitsCount}
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </CardContent>
@@ -297,7 +332,7 @@ export default function RepoDetailPage() {
               <CardContent>
                 <div className="text-center py-8">
                   <div className="text-5xl font-bold text-purple-600 mb-2">
-                    {commits.length > 0 ? Math.round((aiCommits / commits.length) * 100) : 0}%
+                    {allCommitsCount > 0 ? Math.round((aiCommits / allCommitsCount) * 100) : 0}%
                   </div>
                   <p className="text-slate-500">of commits detected as AI-generated</p>
                 </div>

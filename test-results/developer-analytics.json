@@ -1,0 +1,211 @@
+{
+  "testName": "E2E Test: Developer (kasim) - View Analytics",
+  "timestamp": "2026-03-21T17:00:00Z",
+  "testUser": {
+    "id": 2,
+    "email": "kasim@test.com",
+    "name": "kasim",
+    "role": "developer"
+  },
+  "tests": {
+    "task30_developer_view_analytics": {
+      "name": "Developer View Analytics",
+      "status": "PASS",
+      "results": {
+        "login": {
+          "status": "PASS",
+          "description": "kasim can login successfully",
+          "user": {
+            "id": 2,
+            "email": "kasim@test.com",
+            "name": "kasim",
+            "role": "developer"
+          }
+        },
+        "view_repos": {
+          "status": "PASS",
+          "description": "kasim can view all repos",
+          "repos_count": 1,
+          "repos": [
+            {
+              "id": 1,
+              "name": "e2e-repo",
+              "provider": "bitbucket"
+            }
+          ]
+        },
+        "view_analytics": {
+          "status": "PASS",
+          "description": "kasim can view analytics for repo",
+          "analytics_data": {
+            "daily_analytics": {
+              "days_count": 2,
+              "2026-03-15": {
+                "commit_count": 1,
+                "lines_added": 250,
+                "lines_removed": 50,
+                "ai_commits": 1
+              },
+              "2026-03-16": {
+                "commit_count": 1,
+                "lines_added": 180,
+                "lines_removed": 70,
+                "ai_commits": 0
+              }
+            },
+            "developer_stats": {
+              "testuser": {
+                "total_commits": 2,
+                "total_lines_added": 430,
+                "total_lines_removed": 120,
+                "ai_commits": 1,
+                "ai_percentage": 50
+              }
+            }
+          }
+        },
+        "view_mapped_analytics": {
+          "status": "PASS",
+          "description": "kasim can view mapped analytics with user mappings applied",
+          "mapped_developer": {
+            "author": "Admin",
+            "originalAuthor": "testuser",
+            "total_commits": 2
+          }
+        },
+        "view_commits": {
+          "status": "PASS",
+          "description": "kasim can view commits for repo",
+          "commits_count": 2
+        },
+        "view_branches": {
+          "status": "PASS",
+          "description": "kasim can view branches for repo",
+          "branches_count": 1
+        }
+      }
+    },
+    "additional_developer_tests": {
+      "name": "Additional Developer Role Tests",
+      "status": "PARTIAL",
+      "results": {
+        "admin_users_access": {
+          "status": "PASS",
+          "description": "kasim cannot access /api/admin/users",
+          "response": "Forbidden"
+        },
+        "admin_keywords_access": {
+          "status": "PASS",
+          "description": "kasim cannot access /api/admin/keywords",
+          "response": "Unauthorized"
+        },
+        "create_keyword": {
+          "status": "PASS",
+          "description": "kasim cannot create keywords",
+          "response": "Unauthorized"
+        },
+        "admin_mappings_access": {
+          "status": "PASS",
+          "description": "kasim cannot access /api/admin/mappings",
+          "response": "Forbidden"
+        },
+        "admin_all_access": {
+          "status": "PASS",
+          "description": "kasim cannot access /api/admin/all",
+          "response": "Forbidden"
+        },
+        "admin_github_users_access": {
+          "status": "PASS",
+          "description": "kasim cannot access /api/admin/github-users",
+          "response": "Forbidden"
+        },
+        "view_ai_jobs": {
+          "status": "PASS",
+          "description": "kasim can view AI jobs (all data, not filtered)",
+          "jobs_count": 3
+        },
+        "toggle_ai_detection": {
+          "status": "PASS",
+          "description": "kasim can toggle AI detection on commits/branches",
+          "response": "success"
+        },
+        "admin_verify": {
+          "status": "PASS",
+          "description": "kasim verified as non-admin",
+          "isAdmin": false
+        },
+        "create_repo": {
+          "status": "PARTIAL",
+          "description": "kasim can create repos (no auth check - depends on valid token)",
+          "note": "Creation works but fails if no GitHub token available"
+        },
+        "delete_repo": {
+          "status": "FAIL_SECURITY",
+          "description": "kasim can DELETE repos - NO AUTH CHECK!",
+          "severity": "HIGH",
+          "endpoint": "/api/repo?id=2 (DELETE)",
+          "issue": "DELETE endpoint in repos/route.ts does not verify admin role"
+        },
+        "trigger_sync": {
+          "status": "PASS",
+          "description": "kasim can trigger sync via /api/sync (no auth check)",
+          "note": "Sync endpoint has no authentication"
+        }
+      }
+    }
+  },
+  "issues_found": [
+    {
+      "severity": "HIGH",
+      "issue": "No auth check on DELETE /api/repos",
+      "endpoint": "/api/repos DELETE",
+      "description": "Any authenticated user can delete repositories"
+    },
+    {
+      "severity": "MEDIUM",
+      "issue": "No auth check on POST /api/sync",
+      "endpoint": "/api/sync POST",
+      "description": "Any user can trigger sync operations"
+    },
+    {
+      "severity": "MEDIUM",
+      "issue": "No auth check on POST /api/repos",
+      "endpoint": "/api/repos POST",
+      "description": "Any authenticated user can create repositories"
+    },
+    {
+      "severity": "MEDIUM",
+      "issue": "No auth check on POST /api/ai-toggle",
+      "endpoint": "/api/ai-toggle POST",
+      "description": "Any authenticated user can toggle AI detection status"
+    },
+    {
+      "severity": "LOW",
+      "issue": "kasim sees ALL AI jobs, not just own",
+      "endpoint": "/api/ai/jobs GET",
+      "description": "Developer can view all AI jobs across all users"
+    },
+    {
+      "severity": "LOW",
+      "issue": "/api/auth/me returns 'Not authenticated' with valid Bearer token",
+      "endpoint": "/api/auth/me GET",
+      "description": "me endpoint expects cookie, not Bearer token"
+    }
+  ],
+  "summary": {
+    "total_tests": 18,
+    "passed": 15,
+    "failed": 0,
+    "security_issues": 1,
+    "partial": 2,
+    "overall": "PASS with security concerns"
+  },
+  "recommendations": [
+    "Add admin role check to DELETE /api/repos",
+    "Add admin role check to POST /api/sync",
+    "Consider adding auth to POST /api/repos for repo creation",
+    "Consider restricting AI toggle to admins or repo owners",
+    "Filter /api/ai/jobs by user_id for developer role",
+    "Fix /api/auth/me to accept Bearer token"
+  ]
+}

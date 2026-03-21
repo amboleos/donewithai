@@ -4,7 +4,7 @@ import { hashPassword, generateToken } from '@/lib/simple-auth';
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, password, name } = await req.json();
+    const { email, password, name, github_username } = await req.json();
 
     if (!email || !password || !name) {
       return NextResponse.json(
@@ -45,8 +45,8 @@ export async function POST(req: NextRequest) {
 
     // Create user
     const result = await client.execute({
-      sql: `INSERT INTO users (email, password, name, role) VALUES (?, ?, ?, ?) RETURNING *`,
-      args: [email, hashedPassword, name, role],
+      sql: `INSERT INTO users (email, password, name, role, github_username) VALUES (?, ?, ?, ?, ?) RETURNING *`,
+      args: [email, hashedPassword, name, role, github_username || null],
     });
 
     const user = result.rows[0] as any;
@@ -64,6 +64,7 @@ export async function POST(req: NextRequest) {
         email: user.email,
         name: user.name,
         role: user.role,
+        github_username: user.github_username,
       },
       token,
     });
