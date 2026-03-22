@@ -61,7 +61,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Get commit SHA or branch info
-    let sha: string;
+    let sha: string | null = null;
+    let branchName: string | null = null;
+
     if (sourceType === 'commit') {
       const commit = await getCommitById(sourceId);
       if (!commit || commit.repo_id !== repoId) {
@@ -73,11 +75,7 @@ export async function POST(req: NextRequest) {
       if (!branch || branch.repo_id !== repoId) {
         return NextResponse.json({ error: 'Branch not found' }, { status: 404 });
       }
-      // For branches, use the tip commit
-      // TODO: In future, aggregate all branch commits
-      return NextResponse.json({
-        error: 'Branch analysis not yet implemented. Use commit analysis.',
-      }, { status: 400 });
+      branchName = branch.name;
     }
 
     // Emit progress events
@@ -116,7 +114,17 @@ export async function POST(req: NextRequest) {
 
     // Run analysis
     const startTime = Date.now();
-    const result = await analyzer.analyzeCommit(repo.url, sha, provider, emitProgress);
+    let result;
+
+    if (sourceType === 'commit' && sha) {
+      result = await analyzer.analyzeCommit(repo.url, sha, provider, emitProgress);
+    } else if (sourceType === 'branch' && branchName) {
+      result = await analyzer.analyzeBranch(repo.url, branchName, provider, undefined, emitProgress);
+    } else {
+      return NextResponse.json({
+        error: 'Invalid source configuration',
+      }, { status: 400 });
+    }
 
     // Save to DB
     const saved = await saveCodeAnalysis(

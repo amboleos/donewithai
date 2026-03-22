@@ -1,5 +1,5 @@
 import { Octokit } from 'octokit';
-import type { GitProvider, GitCommit, GitBranch, GitRepoInfo, CommitDiff, CommitDiffFile } from './provider';
+import type { GitProvider, GitCommit, GitBranch, GitRepoInfo, CommitDiff, CommitDiffFile, BranchDiff } from './provider';
 
 export class GitHubAPI implements GitProvider {
   private octokit: Octokit;
@@ -208,6 +208,47 @@ export class GitHubAPI implements GitProvider {
       files,
       totalAdditions: data.stats?.additions || 0,
       totalDeletions: data.stats?.deletions || 0,
+    };
+  }
+
+  async getBranchDiff(url: string, branchName: string, baseBranch?: string): Promise<BranchDiff> {
+    const { owner, repo } = this.parseRepoUrl(url);
+
+    // Get repo info to find default branch if base not specified
+    let base = baseBranch;
+    if (!base) {
+      const repoInfo = await this.getRepoInfo(url);
+      base = repoInfo.defaultBranch;
+    }
+
+    // Use compare API to get diff between branches
+    const { data } = await this.octokit.rest.repos.compareCommits({
+      owner,
+      repo,
+      base,
+      head: branchName,
+    });
+
+    const files: CommitDiffFile[] = [];
+
+    for (const file of data.files || []) {
+      files.push({
+        path: file.filename,
+        additions: file.additions || 0,
+        deletions: file.deletions || 0,
+        content: file.patch || '',
+      });
+    }
+
+    return {
+      branchName,
+      baseBranch: base,
+      files,
+      totalAdditions: data.commits?.reduce((sum, c) => {
+        // Approximate since compare doesn't give total stats directly
+        return sum;
+      }, 0) || files.reduce((sum, f) => sum + f.additions, 0),
+      totalDeletions: files.reduce((sum, f) => sum + f.deletions, 0),
     };
   }
 }

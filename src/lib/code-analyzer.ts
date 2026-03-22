@@ -1,7 +1,7 @@
 // src/lib/code-analyzer.ts
 import OpenAI from 'openai';
 import { filterDiffFiles, formatDiffForLLM, type FilteredFile, type DiffStats } from './smart-filter';
-import type { GitProvider, CommitDiff } from './git/provider';
+import type { GitProvider, CommitDiff, BranchDiff } from './git/provider';
 import type { CodeAnalysisReport, FileAnalysis } from './db';
 
 export interface CodeAnalysisResult {
@@ -55,6 +55,62 @@ export class CodeAnalyzer {
 
     const diff = await provider.getCommitDiff(url, sha);
     console.log('[CodeAnalyzer] Diff fetched:', diff.files.length, 'files');
+
+    // Stage 2: Apply smart-filter
+    onProgress?.('filtering', 'Applying smart-filter...');
+    const { filtered, stats } = filterDiffFiles(
+      diff.files.map(f => ({
+        path: f.path,
+        additions: f.additions,
+        deletions: f.deletions,
+        content: f.content,
+      }))
+    );
+
+    console.log('[CodeAnalyzer] Filtered:', stats.includedFiles, 'included,', stats.excludedFiles, 'excluded');
+
+    // Stage 3: Format for LLM
+    onProgress?.('formatting', 'Preparing analysis...');
+    const formattedDiff = formatDiffForLLM(filtered);
+
+    // Stage 4: Analyze with LLM
+    onProgress?.('analyzing', 'Analyzing with z.ai...');
+    const analysisResult = await this.analyzeWithLLM(formattedDiff, stats, filtered);
+
+    const durationMs = Date.now() - startTime;
+
+    return {
+      ...analysisResult,
+      durationMs,
+    };
+  }
+
+  /**
+   * Analyze a branch's diff to determine if it's Agentic AI or Human Assisted
+   */
+  async analyzeBranch(
+    url: string,
+    branchName: string,
+    provider: GitProvider,
+    baseBranch?: string,
+    onProgress?: (stage: string, message: string) => void
+  ): Promise<CodeAnalysisResult> {
+    const startTime = Date.now();
+
+    if (!this.client) {
+      throw new Error('z.ai API key not configured');
+    }
+
+    if (!provider.getBranchDiff) {
+      throw new Error('Git provider does not support branch diff fetching');
+    }
+
+    // Stage 1: Fetch diff
+    onProgress?.('fetching', `Fetching branch diff (${branchName} vs ${baseBranch || 'default'})...`);
+    console.log('[CodeAnalyzer] Fetching branch diff for', branchName);
+
+    const diff = await provider.getBranchDiff(url, branchName, baseBranch);
+    console.log('[CodeAnalyzer] Branch diff fetched:', diff.files.length, 'files');
 
     // Stage 2: Apply smart-filter
     onProgress?.('filtering', 'Applying smart-filter...');

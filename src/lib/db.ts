@@ -602,6 +602,33 @@ export async function getBranchesByRepo(repoId: number) {
   return result.rows as unknown as Branch[];
 }
 
+export interface BranchWithStats extends Branch {
+  commit_count: number;
+  first_commit_date: string | null;
+  last_commit_date: string | null;
+}
+
+export async function getBranchesWithStatsByRepo(repoId: number): Promise<BranchWithStats[]> {
+  const result = await client.execute({
+    sql: `
+      SELECT
+        b.*,
+        COUNT(DISTINCT bc.commit_id) as commit_count,
+        MIN(c.date) as first_commit_date,
+        MAX(c.date) as last_commit_date
+      FROM branches b
+      LEFT JOIN branch_commits bc ON b.id = bc.branch_id
+      LEFT JOIN commits c ON bc.commit_id = c.id
+      WHERE b.repo_id = ?
+      GROUP BY b.id
+      HAVING COUNT(DISTINCT bc.commit_id) > 0
+      ORDER BY last_commit_date DESC
+    `,
+    args: [repoId],
+  });
+  return result.rows as unknown as BranchWithStats[];
+}
+
 export async function getBranchNamesByRepo(repoId: number): Promise<string[]> {
   const result = await client.execute({
     sql: `SELECT name FROM branches WHERE repo_id = ?`,
