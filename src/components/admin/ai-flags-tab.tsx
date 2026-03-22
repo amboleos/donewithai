@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { GitBranch, RefreshCw, Check, X, Brain, GitCommit, ChevronDown, ChevronUp, Search, Sparkles, Loader2 } from 'lucide-react';
+import { GitBranch, RefreshCw, Check, X, Brain, GitCommit, ChevronDown, ChevronUp, Search, Sparkles, Loader2, Code2, User } from 'lucide-react';
 import { toast } from 'sonner';
 import AnalysisReportModal from '@/components/ai-analysis-report-modal';
 
@@ -14,6 +14,9 @@ interface Commit {
   repo_id: number;
   is_ai_detected: boolean | null;
   repo_name: string;
+  // Code analysis fields
+  code_is_agentic: number | null;
+  code_confidence: number | null;
 }
 
 interface Branch {
@@ -22,6 +25,9 @@ interface Branch {
   repo_id: number;
   is_ai_detected: boolean | null;
   repo_name: string;
+  // Code analysis fields
+  code_is_agentic: number | null;
+  code_confidence: number | null;
 }
 
 type SortField = 'name' | 'author' | 'repo' | 'status';
@@ -70,6 +76,47 @@ export default function AIFlagsTab() {
   const SortIndicator = ({ field }: { field: SortField }) => {
     if (sortField !== field) return null;
     return sortOrder === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />;
+  };
+
+  // Helper to render code analysis badge
+  const CodeAnalysisBadge = ({ isAgentic, confidence }: { isAgentic: number | null; confidence: number | null }) => {
+    if (isAgentic === null || isAgentic === undefined) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded bg-slate-800 text-slate-500 border border-slate-700">
+          <Code2 className="h-3 w-3" /> NOT ANALYZED
+        </span>
+      );
+    }
+
+    if (isAgentic === 1) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded bg-red-500/20 text-red-400 border border-red-500/30" title={`Confidence: ${((confidence || 0) * 100).toFixed(0)}%`}>
+          <Sparkles className="h-3 w-3" /> AGENTIC AI
+        </span>
+      );
+    }
+
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded bg-blue-500/20 text-blue-400 border border-blue-500/30" title={`Confidence: ${((confidence || 0) * 100).toFixed(0)}%`}>
+        <User className="h-3 w-3" /> HUMAN ASSISTED
+      </span>
+    );
+  };
+
+  // Helper to render pattern-based detection badge
+  const PatternBadge = ({ isAIDetected }: { isAIDetected: boolean | null }) => {
+    if (isAIDetected) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded bg-purple-500/20 text-purple-400 border border-purple-500/30">
+          <Brain className="h-3 w-3" /> AI
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded bg-slate-700 text-slate-400 border border-slate-600">
+        <Check className="h-3 w-3" /> HUMAN
+      </span>
+    );
   };
 
   const filteredAndSortedCommits = [...commits]
@@ -191,6 +238,11 @@ export default function AIFlagsTab() {
   const aiCommitsCount = commits.filter(c => c.is_ai_detected).length;
   const aiBranchesCount = branches.filter(b => b.is_ai_detected).length;
 
+  // Code analysis stats
+  const agenticCount = [...commits, ...branches].filter(item => item.code_is_agentic === 1).length;
+  const humanAssistedCount = [...commits, ...branches].filter(item => item.code_is_agentic === 0).length;
+  const notAnalyzedCount = [...commits, ...branches].filter(item => item.code_is_agentic === null).length;
+
   return (
     <div className="space-y-4">
       {/* Stats bar */}
@@ -212,8 +264,23 @@ export default function AIFlagsTab() {
           </div>
           <div className="flex items-center gap-2">
             <Brain className="h-4 w-4 text-purple-500" />
-            <span className="text-slate-500">ai_detected:</span>
+            <span className="text-slate-500">pattern_ai:</span>
             <span className="text-purple-400">{aiCommitsCount + aiBranchesCount}</span>
+          </div>
+          <div className="flex items-center gap-2 border-l border-slate-700 pl-4">
+            <Sparkles className="h-4 w-4 text-red-500" />
+            <span className="text-slate-500">agentic:</span>
+            <span className="text-red-400">{agenticCount}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <User className="h-4 w-4 text-blue-500" />
+            <span className="text-slate-500">human_assisted:</span>
+            <span className="text-blue-400">{humanAssistedCount}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Code2 className="h-4 w-4 text-slate-500" />
+            <span className="text-slate-500">not_analyzed:</span>
+            <span className="text-slate-400">{notAnalyzedCount}</span>
           </div>
         </div>
       </div>
@@ -295,8 +362,9 @@ export default function AIFlagsTab() {
                       <div className="flex items-center gap-1">REPO <SortIndicator field="repo" /></div>
                     </th>
                     <th className="px-4 py-3 text-left font-mono text-xs text-green-500 cursor-pointer hover:text-green-400" onClick={() => handleSort('status')}>
-                      <div className="flex items-center gap-1">STATUS <SortIndicator field="status" /></div>
+                      <div className="flex items-center gap-1">PATTERN <SortIndicator field="status" /></div>
                     </th>
+                    <th className="px-4 py-3 text-left font-mono text-xs text-green-500">CODE ANALYSIS</th>
                     <th className="px-4 py-3 text-right font-mono text-xs text-green-500">ACTION</th>
                   </tr>
                 </thead>
@@ -312,15 +380,10 @@ export default function AIFlagsTab() {
                       <td className="px-4 py-3 text-slate-400">{commit.author}</td>
                       <td className="px-4 py-3 text-slate-500">{commit.repo_name}</td>
                       <td className="px-4 py-3">
-                        {commit.is_ai_detected ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded bg-purple-500/20 text-purple-400 border border-purple-500/30">
-                            <Check className="h-3 w-3" /> AI
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded bg-slate-700 text-slate-400 border border-slate-600">
-                            <X className="h-3 w-3" /> HUMAN
-                          </span>
-                        )}
+                        <PatternBadge isAIDetected={commit.is_ai_detected} />
+                      </td>
+                      <td className="px-4 py-3">
+                        <CodeAnalysisBadge isAgentic={commit.code_is_agentic} confidence={commit.code_confidence} />
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-2">
@@ -396,8 +459,9 @@ export default function AIFlagsTab() {
                       <div className="flex items-center gap-1">REPO <SortIndicator field="repo" /></div>
                     </th>
                     <th className="px-4 py-3 text-left font-mono text-xs text-green-500 cursor-pointer hover:text-green-400" onClick={() => handleSort('status')}>
-                      <div className="flex items-center gap-1">STATUS <SortIndicator field="status" /></div>
+                      <div className="flex items-center gap-1">PATTERN <SortIndicator field="status" /></div>
                     </th>
+                    <th className="px-4 py-3 text-left font-mono text-xs text-green-500">CODE ANALYSIS</th>
                     <th className="px-4 py-3 text-right font-mono text-xs text-green-500">ACTION</th>
                   </tr>
                 </thead>
@@ -412,15 +476,10 @@ export default function AIFlagsTab() {
                       </td>
                       <td className="px-4 py-3 text-slate-500">{branch.repo_name}</td>
                       <td className="px-4 py-3">
-                        {branch.is_ai_detected ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded bg-purple-500/20 text-purple-400 border border-purple-500/30">
-                            <Check className="h-3 w-3" /> AI
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded bg-slate-700 text-slate-400 border border-slate-600">
-                            <X className="h-3 w-3" /> HUMAN
-                          </span>
-                        )}
+                        <PatternBadge isAIDetected={branch.is_ai_detected} />
+                      </td>
+                      <td className="px-4 py-3">
+                        <CodeAnalysisBadge isAgentic={branch.code_is_agentic} confidence={branch.code_confidence} />
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-2">
