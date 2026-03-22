@@ -32,6 +32,8 @@ interface Branch {
 
 type SortField = 'name' | 'author' | 'repo' | 'status';
 type SortOrder = 'asc' | 'desc';
+type PatternFilter = 'all' | 'ai' | 'human' | 'unknown';
+type CodeAnalysisFilter = 'all' | 'agentic' | 'human_assisted' | 'not_analyzed';
 
 export default function AIFlagsTab() {
   const [commits, setCommits] = useState<Commit[]>([]);
@@ -43,6 +45,9 @@ export default function AIFlagsTab() {
   const [searchQuery, setSearchQuery] = useState('');
   const [analyzingId, setAnalyzingId] = useState<number | null>(null);
   const [analysisResult, setAnalysisResult] = useState<any | null>(null);
+  // Filter states
+  const [patternFilter, setPatternFilter] = useState<PatternFilter>('all');
+  const [codeAnalysisFilter, setCodeAnalysisFilter] = useState<CodeAnalysisFilter>('all');
 
   useEffect(() => {
     fetchData();
@@ -119,11 +124,31 @@ export default function AIFlagsTab() {
     );
   };
 
+  // Apply pattern filter
+  const matchesPatternFilter = (isAIDetected: boolean | null): boolean => {
+    if (patternFilter === 'all') return true;
+    if (patternFilter === 'ai') return isAIDetected === true;
+    if (patternFilter === 'human') return isAIDetected === false;
+    if (patternFilter === 'unknown') return isAIDetected === null;
+    return true;
+  };
+
+  // Apply code analysis filter
+  const matchesCodeAnalysisFilter = (codeIsAgentic: number | null): boolean => {
+    if (codeAnalysisFilter === 'all') return true;
+    if (codeAnalysisFilter === 'agentic') return codeIsAgentic === 1;
+    if (codeAnalysisFilter === 'human_assisted') return codeIsAgentic === 0;
+    if (codeAnalysisFilter === 'not_analyzed') return codeIsAgentic === null;
+    return true;
+  };
+
   const filteredAndSortedCommits = [...commits]
     .filter(c =>
-      c.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.repo_name.toLowerCase().includes(searchQuery.toLowerCase())
+      c.repo_name.toLowerCase().includes(searchQuery.toLowerCase())) &&
+      matchesPatternFilter(c.is_ai_detected) &&
+      matchesCodeAnalysisFilter(c.code_is_agentic)
     )
     .sort((a, b) => {
       let aVal: any, bVal: any;
@@ -154,8 +179,10 @@ export default function AIFlagsTab() {
 
   const filteredAndSortedBranches = [...branches]
     .filter(b =>
-      b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      b.repo_name.toLowerCase().includes(searchQuery.toLowerCase())
+      (b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      b.repo_name.toLowerCase().includes(searchQuery.toLowerCase())) &&
+      matchesPatternFilter(b.is_ai_detected) &&
+      matchesCodeAnalysisFilter(b.code_is_agentic)
     )
     .sort((a, b) => {
       let aVal: any, bVal: any;
@@ -288,7 +315,7 @@ export default function AIFlagsTab() {
       {/* Type tabs */}
       <div className="flex items-center gap-2">
         <button
-          onClick={() => { setActiveTab('commits'); setSearchQuery(''); }}
+          onClick={() => { setActiveTab('commits'); setSearchQuery(''); setPatternFilter('all'); setCodeAnalysisFilter('all'); }}
           className={`
             flex items-center gap-2 px-4 py-2 rounded font-mono text-sm transition-all
             ${activeTab === 'commits'
@@ -302,7 +329,7 @@ export default function AIFlagsTab() {
           <span className="text-xs opacity-50">[{commits.length}]</span>
         </button>
         <button
-          onClick={() => { setActiveTab('branches'); setSearchQuery(''); }}
+          onClick={() => { setActiveTab('branches'); setSearchQuery(''); setPatternFilter('all'); setCodeAnalysisFilter('all'); }}
           className={`
             flex items-center gap-2 px-4 py-2 rounded font-mono text-sm transition-all
             ${activeTab === 'branches'
@@ -333,6 +360,72 @@ export default function AIFlagsTab() {
             className="text-xs text-slate-500 hover:text-slate-300 font-mono"
           >
             [ESC]
+          </button>
+        )}
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-wrap items-center gap-4">
+        {/* Pattern Status Filter */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-mono text-slate-500">PATTERN:</span>
+          <div className="flex gap-1">
+            {(['all', 'ai', 'human', 'unknown'] as PatternFilter[]).map((filter) => (
+              <button
+                key={filter}
+                onClick={() => setPatternFilter(filter)}
+                className={`
+                  px-2 py-1 rounded text-xs font-mono transition-colors
+                  ${patternFilter === filter
+                    ? 'bg-purple-500/20 text-purple-400 border border-purple-500/50'
+                    : 'bg-slate-800 text-slate-500 border border-slate-700 hover:text-slate-300 hover:border-slate-600'
+                  }
+                `}
+              >
+                {filter.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Code Analysis Filter */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-mono text-slate-500">CODE:</span>
+          <div className="flex gap-1">
+            {(['all', 'agentic', 'human_assisted', 'not_analyzed'] as CodeAnalysisFilter[]).map((filter) => (
+              <button
+                key={filter}
+                onClick={() => setCodeAnalysisFilter(filter)}
+                className={`
+                  px-2 py-1 rounded text-xs font-mono transition-colors
+                  ${codeAnalysisFilter === filter
+                    ? filter === 'agentic'
+                      ? 'bg-red-500/20 text-red-400 border border-red-500/50'
+                      : filter === 'human_assisted'
+                        ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50'
+                        : filter === 'not_analyzed'
+                          ? 'bg-slate-600 text-slate-300 border border-slate-500'
+                          : 'bg-green-500/20 text-green-400 border border-green-500/50'
+                    : 'bg-slate-800 text-slate-500 border border-slate-700 hover:text-slate-300 hover:border-slate-600'
+                  }
+                `}
+              >
+                {filter === 'all' ? 'ALL' : filter === 'human_assisted' ? 'HUMAN' : filter.toUpperCase().replace('_', ' ')}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Clear Filters Button */}
+        {(patternFilter !== 'all' || codeAnalysisFilter !== 'all') && (
+          <button
+            onClick={() => {
+              setPatternFilter('all');
+              setCodeAnalysisFilter('all');
+            }}
+            className="text-xs font-mono text-slate-500 hover:text-slate-300 transition-colors"
+          >
+            [CLEAR FILTERS]
           </button>
         )}
       </div>
