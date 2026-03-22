@@ -1,5 +1,5 @@
 import { Octokit } from 'octokit';
-import type { GitProvider, GitCommit, GitBranch, GitRepoInfo } from './provider';
+import type { GitProvider, GitCommit, GitBranch, GitRepoInfo, CommitDiff, CommitDiffFile } from './provider';
 
 export class GitHubAPI implements GitProvider {
   private octokit: Octokit;
@@ -181,6 +181,34 @@ export class GitHubAPI implements GitProvider {
 
   extractRepoNameFromUrl(url: string): string {
     return this.parseRepoUrl(url).repo;
+  }
+
+  async getCommitDiff(url: string, sha: string): Promise<CommitDiff> {
+    const { owner, repo } = this.parseRepoUrl(url);
+
+    const { data } = await this.octokit.rest.repos.getCommit({
+      owner,
+      repo,
+      ref: sha,
+    });
+
+    const files: CommitDiffFile[] = [];
+
+    for (const file of data.files || []) {
+      files.push({
+        path: file.filename,
+        additions: file.additions || 0,
+        deletions: file.deletions || 0,
+        content: file.patch || '',
+      });
+    }
+
+    return {
+      sha: data.sha,
+      files,
+      totalAdditions: data.stats?.additions || 0,
+      totalDeletions: data.stats?.deletions || 0,
+    };
   }
 }
 

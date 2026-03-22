@@ -1,5 +1,5 @@
 // src/lib/git/bitbucket-provider.ts
-import type { GitProvider, GitCommit, GitBranch, GitRepoInfo } from './provider';
+import type { GitProvider, GitCommit, GitBranch, GitRepoInfo, CommitDiff, CommitDiffFile } from './provider';
 
 const BITBUCKET_API_BASE = 'https://api.bitbucket.org/2.0';
 const RETRY_DELAYS = [1000, 2000, 4000, 8000, 16000]; // ms
@@ -219,4 +219,53 @@ export class BitbucketAPI implements GitProvider {
 
   // Note: getBranchCommitCount and setupWebhook are optional in GitProvider interface
   // Bitbucket provider doesn't implement them (out of scope)
+
+  async getCommitDiff(url: string, sha: string): Promise<CommitDiff> {
+    const { workspace, repoSlug } = this.parseRepoUrl(url);
+    const apiUrl = `${BITBUCKET_API_BASE}/repositories/${workspace}/${repoSlug}/diff/${sha}`;
+
+    const response = await fetchWithRetry(apiUrl, this.token);
+    const diffText = await response.text();
+
+    // Parse unified diff format
+    const files: CommitDiffFile[] = [];
+    const fileBlocks = diffText.split(/^diff --git /m).filter(Boolean);
+
+    let totalAdditions = 0;
+    let totalDeletions = 0;
+
+    for (const block of fileBlocks) {
+      const lines = block.split('\n');
+      const headerLine = lines[0] || '';
+
+      // Extract filename from "a/path/to/file b/path/to/file"
+      const match = headerLine.match(/^a\/(.+?)\s+b\/(.+?)(?:\s|$)/);
+      const path = match ? match[2] : headerLine.split(' ')[0] || 'unknown';
+
+      let additions = 0;
+      let deletions = 0;
+
+      for (const line of lines) {
+        if (line.startsWith('+') && !line.startsWith('+++')) additions++;
+        if (line.startsWith('-') && !line.startsWith('---')) deletions++;
+      }
+
+      totalAdditions += additions;
+      totalDeletions += deletions;
+
+      files.push({
+        path,
+        additions,
+        deletions,
+        content: block,
+      });
+    }
+
+    return {
+      sha,
+      files,
+      totalAdditions,
+      totalDeletions,
+    };
+  }
 }
