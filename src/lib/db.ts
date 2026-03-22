@@ -1175,6 +1175,20 @@ export async function saveCodeAnalysis(
     `,
     args: [repoId, sourceType, sourceId, isAgentic ? 1 : 0, confidence, JSON.stringify(report), model, tokensUsed || null, durationMs || null],
   });
+
+  // Update is_ai_detected on the corresponding commit or branch
+  if (sourceType === 'commit') {
+    await client.execute({
+      sql: `UPDATE commits SET is_ai_detected = ? WHERE id = ?`,
+      args: [isAgentic ? 1 : 0, sourceId],
+    });
+  } else if (sourceType === 'branch') {
+    await client.execute({
+      sql: `UPDATE branches SET is_ai_detected = ? WHERE id = ?`,
+      args: [isAgentic ? 1 : 0, sourceId],
+    });
+  }
+
   return result.rows[0] as unknown as CodeAnalysis;
 }
 
