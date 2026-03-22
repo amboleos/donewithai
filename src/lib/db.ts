@@ -4,6 +4,9 @@ import { GitProviderType } from '@/types';
 const tursoUrl = process.env.TURSO_DATABASE_URL || process.env.POSTGRES_URL;
 const tursoAuthToken = process.env.TURSO_AUTH_TOKEN;
 
+// AI Cutoff Date - only process commits from 2026 onwards
+export const AI_CUTOFF_DATE = '2026-01-01T00:00:00.000Z';
+
 if (!tursoUrl) {
   throw new Error('TURSO_DATABASE_URL environment variable is not set');
 }
@@ -121,6 +124,40 @@ export interface AIKeyword {
   keyword: string;
   is_active: number;  // 0 or 1
   created_at: string;
+}
+
+export interface CodeAnalysis {
+  id: number;
+  repo_id: number;
+  source_type: 'commit' | 'branch';
+  source_id: number;
+  is_agentic: number;  // 1 or 0
+  confidence: number;
+  report: string;  // JSON string
+  model: string;
+  tokens_used: number | null;
+  duration_ms: number | null;
+  created_at: string;
+}
+
+export interface CodeAnalysisReport {
+  summary: string;
+  filesAnalyzed: number;
+  linesAdded: number;
+  linesRemoved: number;
+  patternsFound: string[];
+  fileBreakdown: FileAnalysis[];
+  reasoning: string;
+}
+
+export interface FileAnalysis {
+  path: string;
+  language: string;
+  additions: number;
+  deletions: number;
+  patterns: string[];
+  isExcluded: boolean;
+  excludeReason?: string;
 }
 
 // Create tables
@@ -308,6 +345,38 @@ export async function initDb() {
       ('ai assisted')
   `);
 
+  // Code analysis results table
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS code_analyses (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      repo_id INTEGER NOT NULL,
+      source_type TEXT NOT NULL,        -- 'commit' | 'branch'
+      source_id INTEGER NOT NULL,       -- commit.id or branch.id
+
+      -- Analysis result
+      is_agentic INTEGER NOT NULL,      -- 1 = Agentic AI, 0 = Human Assisted
+      confidence REAL NOT NULL,         -- 0.0 - 1.0
+
+      -- Detailed report (JSON)
+      report TEXT NOT NULL,
+
+      -- Metadata
+      model TEXT NOT NULL,              -- 'z.ai-4.5-air'
+      tokens_used INTEGER,
+      duration_ms INTEGER,
+
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+
+      FOREIGN KEY (repo_id) REFERENCES repos(id) ON DELETE CASCADE,
+      UNIQUE(repo_id, source_type, source_id)
+    )
+  `);
+
+  // Indexes for code_analyses
+  await client.execute(`CREATE INDEX IF NOT EXISTS idx_code_analyses_repo ON code_analyses(repo_id)`);
+  await client.execute(`CREATE INDEX IF NOT EXISTS idx_code_analyses_source ON code_analyses(source_type, source_id)`);
+  await client.execute(`CREATE INDEX IF NOT EXISTS idx_code_analyses_agentic ON code_analyses(is_agentic, confidence)`);
+
   // Junction table to track which commits belong to which branches
   // This is needed for branch aggregation AI job calculation
   await client.execute(`
@@ -432,10 +501,26 @@ export async function upsertCommit(
   return result.rows[0] as unknown as Commit;
 }
 
+export async function getCommitBySha(repoId: number, sha: string) {
+  const result = await client.execute({
+    sql: `SELECT * FROM commits WHERE repo_id = ? AND sha = ? LIMIT 1`,
+    args: [repoId, sha],
+  });
+  return result.rows[0] as unknown as Commit | undefined;
+}
+
 export async function getCommitsByRepo(repoId: number, limit: number = 100) {
   const result = await client.execute({
-    sql: `SELECT * FROM commits WHERE repo_id = ? ORDER BY date DESC LIMIT ?`,
-    args: [repoId, limit],
+    sql: `SELECT * FROM commits WHERE repo_id = ? AND date >= ? ORDER BY date DESC LIMIT ?`,
+    args: [repoId, AI_CUTOFF_DATE, limit],
+  });
+  return result.rows as unknown as Commit[];
+}
+
+export async function getAllCommitsByRepo(repoId: number) {
+  const result = await client.execute({
+    sql: `SELECT * FROM commits WHERE repo_id = ? AND date >= ? ORDER BY date DESC`,
+    args: [repoId, AI_CUTOFF_DATE],
   });
   return result.rows as unknown as Commit[];
 }
@@ -502,9 +587,17 @@ export async function upsertBranch(
 }
 
 export async function getBranchesByRepo(repoId: number) {
+  // Only return branches that have at least one commit from 2026+
   const result = await client.execute({
-    sql: `SELECT * FROM branches WHERE repo_id = ? ORDER BY created_at DESC`,
-    args: [repoId],
+    sql: `
+      SELECT DISTINCT b.*
+      FROM branches b
+      JOIN branch_commits bc ON b.id = bc.branch_id
+      JOIN commits c ON bc.commit_id = c.id
+      WHERE b.repo_id = ? AND c.date >= ?
+      ORDER BY b.name
+    `,
+    args: [repoId, AI_CUTOFF_DATE],
   });
   return result.rows as unknown as Branch[];
 }
@@ -632,10 +725,10 @@ export async function getGithubUsersByRepo(repoId: number) {
     sql: `
       SELECT DISTINCT author
       FROM commits
-      WHERE repo_id = ?
+      WHERE repo_id = ? AND date >= ?
       ORDER BY author
     `,
-    args: [repoId],
+    args: [repoId, AI_CUTOFF_DATE],
   });
   return result.rows.map((row: any) => row.author) as string[];
 }
@@ -659,11 +752,12 @@ export async function getRepoAnalytics(repoId: number, days: number = 30) {
         SUM(CASE WHEN is_ai_detected = 1 THEN 1 ELSE 0 END) as ai_commits
       FROM commits
       WHERE repo_id = ?
+        AND date >= ?
         AND date >= date('now', '-' || ? || ' days')
       GROUP BY day
       ORDER BY day
     `,
-    args: [repoId, days],
+    args: [repoId, AI_CUTOFF_DATE, days],
   });
   return result.rows;
 }
@@ -682,11 +776,11 @@ export async function getDeveloperStats(repoId: number) {
           1
         ) as ai_percentage
       FROM commits
-      WHERE repo_id = ?
+      WHERE repo_id = ? AND date >= ?
       GROUP BY author
       ORDER BY total_commits DESC
     `,
-    args: [repoId],
+    args: [repoId, AI_CUTOFF_DATE],
   });
   return result.rows;
 }
@@ -724,11 +818,11 @@ export async function getDeveloperStatsWithMappings(repoId: number) {
           1
         ) as ai_percentage
       FROM commits
-      WHERE repo_id = ?
+      WHERE repo_id = ? AND date >= ?
       GROUP BY author
       ORDER BY total_commits DESC
     `,
-    args: [repoId],
+    args: [repoId, AI_CUTOFF_DATE],
   });
 
   const rows = result.rows as any[];
@@ -1019,10 +1113,56 @@ export async function getCommitsByBranchId(branchId: number): Promise<Commit[]> 
     sql: `
       SELECT c.* FROM commits c
       JOIN branch_commits bc ON c.id = bc.commit_id
-      WHERE bc.branch_id = ?
+      WHERE bc.branch_id = ? AND c.date >= ?
       ORDER BY c.date DESC
     `,
-    args: [branchId],
+    args: [branchId, AI_CUTOFF_DATE],
   });
   return result.rows as unknown as Commit[];
+}
+
+// Code Analysis operations
+export async function saveCodeAnalysis(
+  repoId: number,
+  sourceType: 'commit' | 'branch',
+  sourceId: number,
+  isAgentic: boolean,
+  confidence: number,
+  report: CodeAnalysisReport,
+  model: string = 'z.ai-4.5-air',
+  tokensUsed?: number,
+  durationMs?: number
+) {
+  const result = await client.execute({
+    sql: `
+      INSERT INTO code_analyses (repo_id, source_type, source_id, is_agentic, confidence, report, model, tokens_used, duration_ms)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT (repo_id, source_type, source_id) DO UPDATE SET
+        is_agentic = excluded.is_agentic,
+        confidence = excluded.confidence,
+        report = excluded.report,
+        model = excluded.model,
+        tokens_used = excluded.tokens_used,
+        duration_ms = excluded.duration_ms
+      RETURNING *
+    `,
+    args: [repoId, sourceType, sourceId, isAgentic ? 1 : 0, confidence, JSON.stringify(report), model, tokensUsed || null, durationMs || null],
+  });
+  return result.rows[0] as unknown as CodeAnalysis;
+}
+
+export async function getCodeAnalysis(repoId: number, sourceType: 'commit' | 'branch', sourceId: number) {
+  const result = await client.execute({
+    sql: `SELECT * FROM code_analyses WHERE repo_id = ? AND source_type = ? AND source_id = ?`,
+    args: [repoId, sourceType, sourceId],
+  });
+  return result.rows[0] as unknown as CodeAnalysis | undefined;
+}
+
+export async function getCodeAnalysisById(id: number) {
+  const result = await client.execute({
+    sql: `SELECT * FROM code_analyses WHERE id = ?`,
+    args: [id],
+  });
+  return result.rows[0] as unknown as CodeAnalysis | undefined;
 }
