@@ -128,3 +128,199 @@
     @apply font-sans;
   }
 }
+
+/* ============================================
+   Custom Animations for UI Components
+   ============================================ */
+
+/* Ripple effect for buttons */
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+.animate-ripple {
+  animation: ripple 600ms ease-out forwards;
+}
+
+/* Stripe animation for progress bars */
+@keyframes stripe {
+  0% {
+    background-position: 1rem 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
+}
+
+/* Pulse glow effect for badges */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px currentColor;
+  }
+  50% {
+    box-shadow: 0 0 20px currentColor;
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Spin slow for large spinners */
+@keyframes spin-slow {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+
+/* Fade in animation */
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 200ms ease-out;
+}
+
+/* Slide up animation */
+@keyframes slide-up {
+  0% {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 200ms ease-out;
+}
+
+/* Scale in animation */
+@keyframes scale-in {
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-scale-in {
+  animation: scale-in 200ms ease-out;
+}
+
+/* Bounce for dots */
+@keyframes bounce-dot {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-25%);
+  }
+}
+
+.animate-bounce-dot {
+  animation: bounce-dot 0.6s ease-in-out infinite;
+}
+
+/* ============================================
+   Custom Design Token Colors
+   ============================================ */
+
+:root {
+  /* Primary - Electric Violet */
+  --color-primary-50: oklch(0.97 0.015 285);
+  --color-primary-100: oklch(0.94 0.03 285);
+  --color-primary-200: oklch(0.89 0.055 285);
+  --color-primary-300: oklch(0.81 0.095 285);
+  --color-primary-400: oklch(0.68 0.15 285);
+  --color-primary-500: oklch(0.58 0.20 285);
+  --color-primary-600: oklch(0.50 0.22 285);
+  --color-primary-700: oklch(0.42 0.20 285);
+  --color-primary-800: oklch(0.35 0.16 285);
+  --color-primary-900: oklch(0.28 0.12 285);
+
+  /* Accent - Coral Orange */
+  --color-accent-50: oklch(0.98 0.02 45);
+  --color-accent-100: oklch(0.95 0.045 45);
+  --color-accent-200: oklch(0.90 0.08 45);
+  --color-accent-300: oklch(0.82 0.13 45);
+  --color-accent-400: oklch(0.72 0.18 45);
+  --color-accent-500: oklch(0.65 0.22 45);
+  --color-accent-600: oklch(0.58 0.24 45);
+  --color-accent-700: oklch(0.50 0.22 45);
+  --color-accent-800: oklch(0.42 0.18 45);
+  --color-accent-900: oklch(0.35 0.14 45);
+
+  /* AI Badge - Glowing Cyan */
+  --color-ai-50: oklch(0.98 0.03 195);
+  --color-ai-100: oklch(0.94 0.06 195);
+  --color-ai-200: oklch(0.88 0.10 195);
+  --color-ai-300: oklch(0.80 0.15 195);
+  --color-ai-400: oklch(0.70 0.20 195);
+  --color-ai-500: oklch(0.60 0.24 195);
+  --color-ai-600: oklch(0.52 0.25 195);
+  --color-ai-700: oklch(0.45 0.22 195);
+  --color-ai-800: oklch(0.38 0.18 195);
+  --color-ai-900: oklch(0.30 0.14 195);
+
+  /* Success - Emerald */
+  --color-success-50: oklch(0.97 0.03 145);
+  --color-success-100: oklch(0.93 0.06 145);
+  --color-success-200: oklch(0.87 0.10 145);
+  --color-success-300: oklch(0.78 0.15 145);
+  --color-success-400: oklch(0.68 0.20 145);
+  --color-success-500: oklch(0.58 0.23 145);
+  --color-success-600: oklch(0.50 0.24 145);
+  --color-success-700: oklch(0.42 0.21 145);
+  --color-success-800: oklch(0.35 0.17 145);
+  --color-success-900: oklch(0.28 0.13 145);
+
+  /* Warning - Amber */
+  --color-warning-50: oklch(0.98 0.02 85);
+  --color-warning-100: oklch(0.95 0.05 85);
+  --color-warning-200: oklch(0.90 0.10 85);
+  --color-warning-300: oklch(0.82 0.16 85);
+  --color-warning-400: oklch(0.72 0.22 85);
+  --color-warning-500: oklch(0.64 0.26 85);
+  --color-warning-600: oklch(0.56 0.27 85);
+  --color-warning-700: oklch(0.48 0.24 85);
+  --color-warning-800: oklch(0.40 0.20 85);
+  --color-warning-900: oklch(0.32 0.15 85);
+
+  /* Error - Rose */
+  --color-error-50: oklch(0.97 0.03 25);
+  --color-error-100: oklch(0.93 0.07 25);
+  --color-error-200: oklch(0.86 0.12 25);
+  --color-error-300: oklch(0.77 0.18 25);
+  --color-error-400: oklch(0.67 0.24 25);
+  --color-error-500: oklch(0.58 0.27 25);
+  --color-error-600: oklch(0.50 0.28 25);
+  --color-error-700: oklch(0.42 0.25 25);
+  --color-error-800: oklch(0.35 0.20 25);
+  --color-error-900: oklch(0.28 0.16 25);
+}

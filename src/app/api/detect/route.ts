@@ -9,10 +9,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 });
     }
 
-    const detector = new AIDetector(process.env.ANTHROPIC_API_KEY || '');
+    const detector = new AIDetector(process.env.ZAI_API_KEY || '');
     const result = type === 'branch'
-      ? detector.detectFromBranchName(message)
-      : await detector.detectWithLLM(message, 'commit');
+      ? await detector.detectFromBranchName(message)
+      : await detector.detectFromCommitMessage(message);
 
     return NextResponse.json(result);
   } catch (error: any) {

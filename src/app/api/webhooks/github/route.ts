@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
       }
 
       const github = new GitHubAPI(githubToken);
-      const detector = new AIDetector(process.env.ANTHROPIC_API_KEY);
+      const detector = new AIDetector(process.env.ZAI_API_KEY);
 
       // Process commits
       for (const commit of payload.commits) {

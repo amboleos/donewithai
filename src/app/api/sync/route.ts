@@ -372,7 +372,6 @@ export async function POST(req: NextRequest) {
       type: 'sync_error',
       data: {
         error: error.message || 'Unknown error',
-        syncType: fullSync ? 'full' : 'incremental',
       },
     });
 

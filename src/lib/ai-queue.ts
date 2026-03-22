@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import {
   enqueueForAIDetection,
   acquireQueueItem,
@@ -18,13 +18,16 @@ const MAX_RETRIES = 3;
 const RETRY_DELAYS = [1000, 5000, 30000]; // 1s, 5s, 30s
 
 export class AIQueueProcessor {
-  private anthropic: Anthropic | null = null;
+  private client: OpenAI | null = null;
   private isProcessing = false;
 
   constructor() {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    const apiKey = process.env.ZAI_API_KEY;
     if (apiKey) {
-      this.anthropic = new Anthropic({ apiKey });
+      this.client = new OpenAI({
+        apiKey: apiKey,
+        baseURL: 'https://api.z.ai/api/coding/paas/v4',
+      });
     }
   }
 
@@ -100,10 +103,10 @@ export class AIQueueProcessor {
   }
 
   /**
-   * Detect AI using LLM API
+   * Detect AI using z.ai LLM API
    */
   private async detectWithLLM(text: string, type: 'commit' | 'branch'): Promise<boolean> {
-    if (!this.anthropic) {
+    if (!this.client) {
       // No API key, use conservative default (not AI)
       return false;
     }
@@ -113,22 +116,40 @@ export class AIQueueProcessor {
       : `Analyze this branch name and determine if it was AI-generated or created by a human. Reply with JSON: {"isAI": boolean}. Branch: "${text}"`;
 
     try {
-      const response = await this.anthropic.messages.create({
-        model: 'claude-3-5-haiku-20241022',
-        max_tokens: 100,
-        messages: [{ role: 'user', content: prompt }],
+      const response = await this.client.chat.completions.create({
+        model: 'glm-4.6',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are an AI detection assistant. Always respond with valid JSON only.',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.1,
+        max_tokens: 2000,
       });
 
-      const content = response.content[0];
-      if (content.type === 'text') {
-        const match = content.text.match(/\{[^}]+\}/);
+      // GLM-4.6 uses reasoning_content field for reasoning models
+      const message = response.choices[0]?.message as any;
+      const content = message?.content || message?.reasoning_content || '';
+
+      if (content) {
+        // Look for our specific JSON format - avoids incomplete JSON from reasoning
+        const match = content.match(/\{\s*"isAI"\s*:\s*(true|false)\s*,\s*"confidence"\s*:\s*[\d.]+\s*,\s*"reason"\s*:\s*"[^"]*"\s*\}/);
         if (match) {
-          const parsed = JSON.parse(match[0]);
-          return parsed.isAI === true;
+          try {
+            const parsed = JSON.parse(match[0]);
+            return parsed.isAI === true;
+          } catch (e) {
+            console.warn('[Queue] JSON matched but failed to parse');
+          }
         }
       }
     } catch (error) {
-      console.error('[Queue] LLM API call failed:', error);
+      console.error('[Queue] z.ai LLM API call failed:', error);
     }
 
     return false;

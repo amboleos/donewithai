@@ -1,5 +1,7 @@
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
+import { hasAIKeyword } from '@/lib/ai-keywords';
 
+// Fallback pattern-based detection (used only if LLM fails)
 const aiPatterns = [
   /\b(co-pilot|copilot|ai-generated|ai assisted|ai assisted|llm|gpt|chatgpt|claude|gemini|openai)\b/i,
   /^(feat|fix|chore|docs|style|refactor|test|build)(\(.*\))?:?\s+[A-Z]/, // Conventional commits
@@ -26,15 +28,63 @@ export interface AIDetectionResult {
 }
 
 export class AIDetector {
-  private anthropic: Anthropic | null = null;
+  private client: OpenAI | null = null;
+  private useLLM: boolean;
 
-  constructor(apiKey?: string) {
+  constructor(apiKey?: string, useLLM: boolean = true) {
     if (apiKey) {
-      this.anthropic = new Anthropic({ apiKey });
+      // Use z.ai Coding API (GLM Coding Plan)
+      this.client = new OpenAI({
+        apiKey: apiKey,
+        baseURL: 'https://api.z.ai/api/coding/paas/v4',
+      });
     }
+    this.useLLM = useLLM && !!apiKey;
   }
 
-  detectFromCommitMessage(message: string): AIDetectionResult {
+  /**
+   * Check if LLM detection is enabled
+   */
+  canUseLLM(): boolean {
+    return this.useLLM && this.client !== null;
+  }
+
+  /**
+   * Detect AI from commit message with new logic:
+   * 1. Check if message contains AI keywords → immediately AI
+   * 2. Otherwise → use LLM to decide
+   * 3. Fallback to pattern matching if LLM fails
+   */
+  async detectFromCommitMessage(message: string): Promise<AIDetectionResult> {
+    const trimmed = message.trim();
+
+    // STEP 1: Check AI keywords first (fast path)
+    const hasKeyword = await hasAIKeyword(trimmed);
+    if (hasKeyword) {
+      return {
+        isAI: true,
+        confidence: 1.0,
+        reason: 'Contains AI keyword from database',
+      };
+    }
+
+    // STEP 2: Use LLM if available
+    if (this.canUseLLM()) {
+      try {
+        return await this.detectWithLLM(trimmed, 'commit');
+      } catch (error) {
+        console.warn('[AIDetector] LLM detection failed, using pattern fallback:', error);
+      }
+    }
+
+    // STEP 3: Fallback to pattern matching
+    return this.detectFromCommitMessagePattern(trimmed);
+  }
+
+  /**
+   * Pattern-based detection (fallback only)
+   */
+  detectFromCommitMessagePattern(message: string): AIDetectionResult {
     const trimmed = message.trim();
     let aiScore = 0;
     let humanScore = 0;
@@ -109,7 +159,42 @@ export class AIDetector {
     };
   }
 
-  detectFromBranchName(branchName: string): AIDetectionResult {
+  /**
+   * Detect AI from branch name with new logic:
+   * 1. Check if name contains AI keywords → immediately AI
+   * 2. Otherwise → use LLM to decide
+   * 3. Fallback to pattern matching if LLM fails
+   */
+  async detectFromBranchName(branchName: string): Promise<AIDetectionResult> {
+    const trimmed = branchName.trim();
+
+    // STEP 1: Check AI keywords first
+    const hasKeyword = await hasAIKeyword(trimmed);
+    if (hasKeyword) {
+      return {
+        isAI: true,
+        confidence: 1.0,
+        reason: 'Contains AI keyword from database',
+      };
+    }
+
+    // STEP 2: Use LLM if available
+    if (this.canUseLLM()) {
+      try {
+        return await this.detectWithLLM(trimmed, 'branch');
+      } catch (error) {
+        console.warn('[AIDetector] LLM detection failed, using pattern fallback:', error);
+      }
+    }
+
+    // STEP 3: Fallback to pattern matching
+    return this.detectFromBranchNamePattern(trimmed);
+  }
+
+  /**
+   * Pattern-based branch detection (fallback only)
+   */
+  detectFromBranchNamePattern(branchName: string): AIDetectionResult {
     const trimmed = branchName.trim().toLowerCase();
     let aiScore = 0;
     let humanScore = 0;
@@ -152,39 +237,155 @@ export class AIDetector {
     };
   }
 
+  /**
+   * Use z.ai LLM (GLM-4.6) to detect AI-generated content
+   */
   async detectWithLLM(message: string, type: 'commit' | 'branch'): Promise<AIDetectionResult> {
-    if (!this.anthropic) {
-      return this.detectFromCommitMessage(message);
+    if (!this.client) {
+      throw new Error('OpenAI client not initialized');
     }
+
+    const isCommit = type === 'commit';
+    const prompt = isCommit
+      ? `Analyze this commit message and determine if it was written by AI or a human.
+
+Commit: "${message}"
+
+AI indicators: generic conventional commits, perfect grammar, overly structured formats, vague descriptions
+Human indicators: contextual reasoning ("because/so that"), wip/todo markers, emotional language, typos, specific context
+
+Reply ONLY with valid JSON in this exact format:
+{"isAI": true or false, "confidence": 0.0 to 1.0, "reason": "brief explanation"}`
+      : `Analyze this branch name and determine if it was created by AI or a human.
+
+Branch: "${message}"
+
+AI indicators: feat/fix prefixes, numeric ticket IDs, long kebab-case names, generic patterns
+Human indicators: wip/todo/temp markers, personal naming, descriptive names
+
+Reply ONLY with valid JSON in this exact format:
+{"isAI": true or false, "confidence": 0.0 to 1.0, "reason": "brief explanation"}`;
 
     try {
-      const prompt = type === 'commit'
-        ? `Analyze this commit message and determine if it was written by a human or AI. Reply with JSON: {"isAI": boolean, "confidence": number, "reason": string}. Commit: "${message}"`
-        : `Analyze this branch name and determine if it was created by a human or AI. Reply with JSON: {"isAI": boolean, "confidence": number, "reason": string}. Branch: "${message}"`;
-
-      const response = await this.anthropic.messages.create({
-        model: 'claude-3-5-haiku-20241022',
-        max_tokens: 200,
-        messages: [{ role: 'user', content: prompt }],
+      console.log('[AIDetector] Calling LLM for', type, 'detection...');
+      const response = await this.client.chat.completions.create({
+        model: 'glm-4.6',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are an AI detection assistant. Always respond with valid JSON only. No markdown, no code blocks, just raw JSON.',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.1,
+        max_tokens: 500,
       });
 
-      const content = response.content[0];
-      if (content.type === 'text') {
-        const jsonMatch = content.text.match(/\{[^}]+\}/);
-        if (jsonMatch) {
-          const parsed = JSON.parse(jsonMatch[0]);
+      const responseMessage = response.choices[0]?.message;
+      let content = responseMessage?.content || '';
+
+      // Log raw response for debugging
+      console.log('[AIDetector] Raw LLM response:', {
+        contentLength: content.length,
+        contentPreview: content.substring(0, 200),
+        hasContent: !!content,
+        finishReason: response.choices[0]?.finish_reason,
+      });
+
+      if (!content) {
+        console.error('[AIDetector] Empty response from LLM');
+        throw new Error('Empty response from LLM');
+      }
+
+      // Clean up common issues:
+      // 1. Remove markdown code blocks if present
+      content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+      // 2. Trim whitespace
+      content = content.trim();
+
+      console.log('[AIDetector] Cleaned content:', content.substring(0, 200));
+
+      // Strategy 1: Try to parse the entire content as JSON
+      try {
+        const parsed = JSON.parse(content);
+        if (typeof parsed.isAI === 'boolean' && typeof parsed.confidence === 'number') {
+          console.log('[AIDetector] ✓ Parsed as full JSON:', parsed);
           return {
             isAI: parsed.isAI,
-            confidence: parsed.confidence || 0.7,
-            reason: `LLM Analysis: ${parsed.reason || 'No reason provided'}`,
+            confidence: Math.min(1.0, Math.max(0.0, parsed.confidence)),
+            reason: `z.ai: ${parsed.reason || 'No explanation'}`,
           };
         }
+      } catch (e) {
+        console.log('[AIDetector] Full content is not valid JSON, trying extraction...');
       }
-    } catch (error) {
-      console.error('LLM detection failed, falling back to pattern matching:', error);
-    }
 
-    return this.detectFromCommitMessage(message);
+      // Strategy 2: Extract JSON using regex patterns (more flexible)
+      const patterns = [
+        // Standard pattern with isAI
+        /\{\s*"isAI"\s*:\s*(true|false)\s*,\s*"confidence"\s*:\s*[\d.]+\s*,\s*"reason"\s*:\s*"[^"]*"\s*\}/,
+        // With single quotes
+        /\{\s*'isAI'\s*:\s*(true|false)\s*,\s*'confidence'\s*:\s*[\d.]+\s*,\s*'reason'\s*:\s*'[^']*'\s*\}/,
+        // With spaces in different places
+        /\{\s*"isAI"\s*:\s*(true|false)\s*,\s*"confidence"\s*:\s*[\d.]+\s*,\s*"reason"\s*:\s*"[^"]*"\s*\}/,
+        // More permissive - grab any JSON-like object with isAI
+        /\{[\s\S]*?"isAI"\s*:\s*(true|false)[\s\S]*?\}/,
+      ];
+
+      for (const pattern of patterns) {
+        const match = content.match(pattern);
+        if (match) {
+          console.log('[AIDetector] Found JSON with pattern:', pattern.toString().substring(0, 50));
+          try {
+            const parsed = JSON.parse(match[0]);
+            return {
+              isAI: Boolean(parsed.isAI),
+              confidence: Math.min(1.0, Math.max(0.0, Number(parsed.confidence) || 0.7)),
+              reason: `z.ai: ${parsed.reason || 'Extracted from response'}`,
+            };
+          } catch (parseError) {
+            console.log('[AIDetector] Pattern matched but failed to parse:', parseError);
+          }
+        }
+      }
+
+      // Strategy 3: Try to find any JSON object in the response
+      const anyJsonMatch = content.match(/\{[^\n]*\}/);
+      if (anyJsonMatch) {
+        console.log('[AIDetector] Trying any JSON object found:', anyJsonMatch[0]);
+        try {
+          const parsed = JSON.parse(anyJsonMatch[0]);
+          if (parsed.isAI !== undefined) {
+            return {
+              isAI: Boolean(parsed.isAI),
+              confidence: Math.min(1.0, Math.max(0.0, Number(parsed.confidence) || 0.7)),
+              reason: `z.ai: ${parsed.reason || 'Fallback extraction'}`,
+            };
+          }
+        } catch (e) {
+          console.log('[AIDetector] Any JSON parse failed:', e);
+        }
+      }
+
+      // All strategies failed
+      console.error('[AIDetector] ✗ All parsing strategies failed. Raw content:', content);
+      throw new Error(`Could not parse LLM response as JSON. Content: "${content.substring(0, 100)}..."`);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('Could not parse')) {
+        // Re-throw our parsing error
+        throw error;
+      }
+      // Log API errors
+      console.error('[AIDetector] z.ai API error:', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+        type: type,
+      });
+      throw error; // Re-throw to trigger fallback
+    }
   }
 
   hasMDFilePattern(message: string): boolean {

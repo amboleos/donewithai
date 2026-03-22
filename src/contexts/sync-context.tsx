@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { toast } from 'sonner';
 
 interface SyncProgress {
   repoId: number;
@@ -51,9 +52,34 @@ export function SyncProvider({ children }: { children: ReactNode }) {
 
           if (data.type === 'progress') {
             setProgress(data.data);
+          } else if (data.type === 'sync_starting') {
+            // Show immediate toast notification when sync starts
+            const syncTypeText = data.data.syncType === 'full' ? 'Full Sync' :
+                               data.data.syncType === 'ai_recheck' ? 'AI Recheck' :
+                               'Sync';
+            toast.loading(`${syncTypeText} started...`, {
+              id: `sync-${data.data.syncType}`,
+              description: data.data.message,
+            });
           } else if (data.type === 'sync_completed') {
+            // Update toast to success
+            const syncType = data.data.syncType || 'incremental';
+            const syncTypeText = syncType === 'full' ? 'Full Sync' :
+                               syncType === 'ai_recheck' ? 'AI Recheck' :
+                               'Sync';
+            toast.success(`${syncTypeText} completed!`, {
+              id: `sync-${syncType}`,
+              description: `Found ${data.data.aiJobsFound} AI commits`,
+            });
             // Keep final progress for a few seconds, then clear
             setTimeout(() => setProgress(null), 3000);
+          } else if (data.type === 'sync_error') {
+            // Update toast to error
+            const syncType = data.data.syncType || 'incremental';
+            toast.error('Sync failed', {
+              id: `sync-${syncType}`,
+              description: data.data.error,
+            });
           }
         } catch (e) {
           // Ignore parse errors for keep-alive

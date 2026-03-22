@@ -134,7 +134,7 @@ export async function POST(req: NextRequest) {
       result.isAgentic,
       result.confidence,
       result.report,
-      result.model || 'z.ai-4.5-air',
+      'z.ai-4.5-air',
       result.tokensUsed,
       result.durationMs
     );

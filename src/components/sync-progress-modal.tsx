@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { RefreshCw, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { RefreshCw, CheckCircle2, AlertTriangle, GitBranch, Database, Loader2 } from 'lucide-react';
 
 interface SyncProgress {
   repoId: number | null;
@@ -23,6 +23,46 @@ interface SyncProgressModalProps {
   isOpen: boolean;
   progress: SyncProgress | null;
 }
+
+// Stage configuration with icons
+const STAGE_CONFIG = {
+  fetching_commits: {
+    icon: Loader2,
+    label: 'Fetching Commits',
+    description: 'Retrieving commit history from remote repository',
+    color: 'blue',
+  },
+  processing_commits: {
+    icon: Database,
+    label: 'Processing',
+    description: 'Analyzing commits and detecting AI patterns',
+    color: 'indigo',
+  },
+  fetching_branches: {
+    icon: GitBranch,
+    label: 'Fetching Branches',
+    description: 'Retrieving branch information',
+    color: 'purple',
+  },
+  branches_fetched: {
+    icon: CheckCircle2,
+    label: 'Branches Complete',
+    description: 'Branch information retrieved',
+    color: 'green',
+  },
+  completed: {
+    icon: CheckCircle2,
+    label: 'Complete',
+    description: 'Sync finished successfully',
+    color: 'green',
+  },
+  error: {
+    icon: AlertTriangle,
+    label: 'Error',
+    description: 'Sync failed',
+    color: 'red',
+  },
+};
 
 export function useSyncProgress() {
   const [isOpen, setIsOpen] = useState(false);
@@ -172,94 +212,146 @@ export function useSyncProgress() {
   return { isOpen, progress, setIsOpen };
 }
 
+// Stage indicator component
+function StageIndicator({ currentStage }: { currentStage: SyncProgress['stage'] }) {
+  const stages: Array<keyof typeof STAGE_CONFIG> = ['fetching_commits', 'processing_commits', 'fetching_branches', 'branches_fetched'];
+  const currentIndex = stages.indexOf(currentStage as keyof typeof STAGE_CONFIG);
+  const displayIndex = currentStage === 'completed' ? stages.length : currentStage === 'error' ? -1 : currentIndex;
+
+  return (
+    <div className="flex items-center justify-between mb-6">
+      {stages.map((stage, index) => {
+        const config = STAGE_CONFIG[stage];
+        const StageIcon = config.icon;
+        const isActive = index === displayIndex;
+        const isCompleted = index < displayIndex;
+
+        return (
+          <div key={stage} className="flex items-center flex-1">
+            <div className="flex flex-col items-center flex-1">
+              <div className={`
+                w-10 h-10 border-2 flex items-center justify-center transition-all
+                ${isActive ? 'border-blue-500 bg-blue-500' : isCompleted ? 'border-green-500 bg-green-500' : 'border-slate-300 dark:border-slate-600 bg-transparent'}
+              `}>
+                {isCompleted ? (
+                  <CheckCircle2 className="h-5 w-5 text-white" />
+                ) : (
+                  <StageIcon className={`h-5 w-5 ${isActive ? 'text-white animate-spin' : 'text-slate-400 dark:text-slate-600'}`} />
+                )}
+              </div>
+              <span className={`text-[10px] uppercase font-bold tracking-wider mt-2 ${isActive ? 'text-blue-500' : isCompleted ? 'text-green-500' : 'text-slate-400'}`}>
+                {config.label.split(' ')[0]}
+              </span>
+            </div>
+            {index < stages.length - 1 && (
+              <div className={`flex-1 h-0.5 mx-1 ${index < displayIndex ? 'bg-green-500' : 'bg-slate-200 dark:bg-slate-700'}`} />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function SyncProgressModal({ isOpen, progress }: SyncProgressModalProps) {
   if (!isOpen || !progress) return null;
 
-  const getStageText = () => {
-    switch (progress.stage) {
-      case 'fetching_commits':
-        return 'Fetching commits from repository...';
-      case 'processing_commits':
-        return 'Processing commits and detecting AI...';
-      case 'fetching_branches':
-        return 'Fetching branches...';
-      case 'branches_fetched':
-        return `Found ${progress.branchesTotal} branches (${progress.branchesNew} new)`;
-      case 'completed':
-        return 'Sync completed!';
-      case 'error':
-        return `Error: ${progress.errorMessage}`;
-    }
-  };
+  const config = STAGE_CONFIG[progress.stage];
+  const StageIcon = config.icon;
+  const isCompleted = progress.stage === 'completed';
+  const isError = progress.stage === 'error';
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-in fade-in duration-200">
-      <Card className="w-full max-w-md mx-4 shadow-2xl">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            {progress.stage === 'completed' ? (
-              <CheckCircle2 className="h-6 w-6 text-green-500 animate-in zoom-in duration-300" />
-            ) : progress.stage === 'error' ? (
-              <AlertTriangle className="h-6 w-6 text-red-500" />
-            ) : (
-              <RefreshCw className="h-6 w-6 text-indigo-600 animate-spin" />
-            )}
-            <div>
-              <CardTitle className="text-lg">
-                {progress.stage === 'completed' ? 'Sync Complete!' :
-                 progress.stage === 'error' ? 'Sync Failed' :
-                 'Syncing...'}
-              </CardTitle>
-              <p className="text-sm text-slate-500">{progress.repoName}</p>
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 backdrop-blur-sm">
+      <div className="w-full max-w-md mx-4 border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 shadow-2xl">
+        {/* Header */}
+        <div className="p-6 border-b-2 border-slate-200 dark:border-slate-700">
+          <div className="flex items-center gap-4">
+            <div className={`
+              p-3 border-2 transition-all
+              ${isCompleted ? 'border-green-500 bg-green-500' : isError ? 'border-red-500 bg-red-500' : 'border-blue-500 bg-blue-500'}
+            `}>
+              <StageIcon className={`h-6 w-6 text-white ${progress.stage === 'fetching_commits' ? 'animate-spin' : ''}`} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-xl font-bold uppercase tracking-wide text-slate-900 dark:text-white">
+                {isCompleted ? 'Sync Complete!' : isError ? 'Sync Failed' : 'Syncing...'}
+              </h3>
+              <p className="text-sm font-mono text-slate-500 dark:text-slate-400 truncate">
+                {progress.repoName}
+              </p>
             </div>
           </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Stage text */}
-          <p className="text-sm text-slate-600 dark:text-slate-400">{getStageText()}</p>
+        </div>
 
-          {/* Progress bar */}
-          {progress.stage !== 'completed' && progress.stage !== 'error' && (
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-500">
-                  {progress.processed} / {progress.totalCommits} commits
+        {/* Body */}
+        <div className="p-6 space-y-6">
+          {/* Stage Indicators */}
+          {!isError && <StageIndicator currentStage={progress.stage} />}
+
+          {/* Stage Description */}
+          <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+            {config.description}
+          </p>
+
+          {/* Progress Bar */}
+          {!isCompleted && !isError && (
+            <div className="space-y-3">
+              <div className="flex justify-between text-sm font-mono">
+                <span className="text-slate-500 dark:text-slate-400">
+                  {progress.processed.toLocaleString()} / {progress.totalCommits.toLocaleString()} commits
                 </span>
-                <span className="font-medium">{progress.percentage}%</span>
+                <span className="font-bold text-blue-500">{progress.percentage}%</span>
               </div>
-              <Progress value={progress.percentage} className="h-2" />
+              <div className="h-3 border-2 border-slate-300 dark:border-slate-600 overflow-hidden">
+                <div
+                  className="h-full bg-blue-500 transition-all duration-300 ease-out"
+                  style={{ width: `${progress.percentage}%` }}
+                />
+              </div>
             </div>
           )}
 
-          {/* Current commit/status message */}
-          {(progress.currentCommit || progress.stage === 'fetching_branches' || progress.stage === 'branches_fetched') && (
-            <div className="text-xs text-slate-500 bg-slate-100 dark:bg-slate-800 rounded p-2">
-              <span className="font-medium">Status:</span> {progress.currentCommit}
+          {/* Current Commit/Status */}
+          {(progress.currentCommit && progress.stage !== 'completed' && progress.stage !== 'error') && (
+            <div className="p-3 border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950">
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Current</p>
+              <p className="text-sm font-mono text-slate-700 dark:text-slate-300 truncate">
+                {progress.currentCommit}
+              </p>
             </div>
           )}
 
-          {/* Branch info */}
+          {/* Branch Info */}
           {progress.stage === 'branches_fetched' && (
-            <div className="text-sm text-slate-600 dark:text-slate-400">
-              🌿 {progress.branchesTotal} total branches, {progress.branchesNew} new
+            <div className="p-3 border-2 border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950">
+              <p className="text-xs font-bold uppercase tracking-wider text-green-700 dark:text-green-300 mb-1">Branches Found</p>
+              <p className="text-sm font-mono text-green-800 dark:text-green-200">
+                {progress.branchesTotal} total, {progress.branchesNew} new
+              </p>
             </div>
           )}
 
-          {/* AI jobs found */}
+          {/* AI Jobs Found */}
           {progress.aiJobsFound > 0 && (
-            <div className="text-sm text-indigo-600 dark:text-indigo-400">
-              🤖 {progress.aiJobsFound} AI-generated commits found
+            <div className="p-3 border-2 border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950">
+              <p className="text-xs font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300 mb-1">AI Detected</p>
+              <p className="text-sm font-mono text-purple-800 dark:text-purple-200">
+                {progress.aiJobsFound.toLocaleString()} AI-generated commits found
+              </p>
             </div>
           )}
 
-          {/* Error message */}
-          {progress.stage === 'error' && (
-            <div className="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 rounded p-2">
-              {progress.errorMessage}
+          {/* Error Message */}
+          {isError && (
+            <div className="p-4 border-2 border-red-400 dark:border-red-700 bg-red-50 dark:bg-red-950">
+              <p className="text-sm font-mono text-red-700 dark:text-red-300">
+                {progress.errorMessage}
+              </p>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

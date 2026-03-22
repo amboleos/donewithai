@@ -20,10 +20,10 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const { searchParams } = new URL(req.url);
-    const limit = parseInt(searchParams.get('limit') || '100');
+    // Only show 2026+ data
+    const AI_CUTOFF_DATE = '2026-01-01T00:00:00.000Z';
 
-    // Fetch all commits with repo info
+    // Fetch all commits with repo info (2026+ only)
     const commitsResult = await client.execute({
       sql: `
         SELECT
@@ -36,16 +36,16 @@ export async function GET(req: NextRequest) {
           r.name as repo_name
         FROM commits c
         JOIN repos r ON c.repo_id = r.id
+        WHERE c.date >= ?
         ORDER BY c.date DESC
-        LIMIT ?
       `,
-      args: [limit],
+      args: [AI_CUTOFF_DATE],
     });
 
-    // Fetch all branches with repo info
+    // Fetch all branches with repo info (only branches with 2026+ commits)
     const branchesResult = await client.execute({
       sql: `
-        SELECT
+        SELECT DISTINCT
           b.id,
           b.name,
           b.repo_id,
@@ -53,10 +53,12 @@ export async function GET(req: NextRequest) {
           r.name as repo_name
         FROM branches b
         JOIN repos r ON b.repo_id = r.id
-        ORDER BY b.created_at DESC
-        LIMIT ?
+        JOIN branch_commits bc ON b.id = bc.branch_id
+        JOIN commits c ON bc.commit_id = c.id
+        WHERE c.date >= ?
+        ORDER BY b.name
       `,
-      args: [limit],
+      args: [AI_CUTOFF_DATE],
     });
 
     return NextResponse.json({
