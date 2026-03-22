@@ -7,14 +7,21 @@ export const dynamic = 'force-dynamic';
 
 // SSE event type definitions
 export type SyncEvent =
+  | { type: 'sync_starting'; data: { message: string; syncType: 'incremental' | 'full' | 'ai_recheck' } }
   | { type: 'sync_started'; data: { repoId: number; repoName: string; totalCommits: number; timestamp: string } }
   | { type: 'fetching_commits'; data: { message: string } }
   | { type: 'processing_commits'; data: { repoId: number; processed: number; total: number; percentage: number; currentCommit: string } }
   | { type: 'fetching_branches'; data: { page: number; message: string } }
   | { type: 'branches_fetched'; data: { total: number; new: number } }
-  | { type: 'sync_completed'; data: { repoId: number; aiJobsFound: number; duration: number } }
-  | { type: 'ai_tagged'; data: { type: 'commit' | 'branch'; id: number; userName: string } }
-  | { type: 'sync_error'; data: { error: string } };
+  | { type: 'sync_completed'; data: { repoId: number; aiJobsFound: number; duration: number; syncType?: 'incremental' | 'full' | 'ai_recheck' } }
+  | { type: 'ai_tagged'; data: { type: 'commit' | 'branch'; id: number; userName: string; reason?: string } }
+  | { type: 'sync_error'; data: { error: string; syncType?: 'incremental' | 'full' | 'ai_recheck' } }
+  | { type: 'ai_recheck_progress'; data: { repoId: number; processed: number; total: number; aiFound: number } }
+  // Code analysis events
+  | { type: 'code_analysis_started'; data: { repoId: number; sourceType: 'commit' | 'branch'; sourceId: number } }
+  | { type: 'code_analysis_progress'; data: { repoId: number; sourceType: 'commit' | 'branch'; sourceId: number; stage: string; message: string } }
+  | { type: 'code_analysis_completed'; data: { id: number; repoId: number; sourceType: 'commit' | 'branch'; sourceId: number; isAgentic: boolean; confidence: number; summary: string } }
+  | { type: 'code_analysis_error'; data: { error: string } };
 
 // Global event emitter for SSE
 class EventEmitter {
