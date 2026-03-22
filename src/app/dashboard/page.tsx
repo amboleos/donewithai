@@ -55,10 +55,10 @@ function AnimatedCounter({ value, label }: { value: number; label: string }) {
 
   return (
     <div className="flex flex-col">
-      <span className="text-3xl font-bold text-slate-900 dark:text-white font-mono">
+      <span className="text-3xl font-bold text-white font-mono">
         {display}
       </span>
-      <span className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">{label}</span>
+      <span className="text-xs uppercase tracking-wider text-white/60">{label}</span>
     </div>
   );
 }
@@ -66,10 +66,10 @@ function AnimatedCounter({ value, label }: { value: number; label: string }) {
 // Stat card component
 function StatCard({ icon: Icon, label, value, accent }: { icon: any; label: string; value: number; accent?: string }) {
   return (
-    <div className="border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 hover:border-blue-500 dark:hover:border-blue-500 transition-colors">
+    <div className="border border-white/20 bg-white/10 backdrop-blur-lg p-4 hover:bg-white/15 transition-all duration-300">
       <div className="flex items-center gap-4">
-        <div className={`p-2 border border-slate-300 dark:border-slate-600 ${accent || 'bg-slate-50 dark:bg-slate-800'}`}>
-          <Icon className="h-5 w-5 text-slate-700 dark:text-slate-300" />
+        <div className={`p-2 border border-white/30 bg-white/10`}>
+          <Icon className="h-5 w-5 text-white" />
         </div>
         <AnimatedCounter value={value} label={label} />
       </div>
@@ -80,29 +80,38 @@ function StatCard({ icon: Icon, label, value, accent }: { icon: any; label: stri
 // Loading skeleton
 function DashboardSkeleton() {
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-slate-950">
-      <header className="border-b-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="h-8 w-40 bg-slate-200 dark:bg-slate-700 animate-pulse" />
-          <div className="flex items-center gap-4">
-            <div className="h-8 w-24 bg-slate-200 dark:bg-slate-700 animate-pulse" />
-            <div className="h-8 w-8 bg-slate-200 dark:bg-slate-700 animate-pulse" />
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Animated Gradient Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600" />
+
+      {/* Floating Orbs */}
+      <div className="absolute top-20 left-20 w-72 h-72 bg-pink-400 rounded-full blur-[100px] opacity-40" />
+      <div className="absolute bottom-20 right-20 w-96 h-96 bg-blue-400 rounded-full blur-[120px] opacity-30" />
+
+      <div className="relative z-10">
+        <header className="border-b border-white/20 bg-white/10 backdrop-blur-lg">
+          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div className="h-8 w-40 bg-white/20 rounded animate-pulse" />
+            <div className="flex items-center gap-4">
+              <div className="h-8 w-24 bg-white/20 rounded animate-pulse" />
+              <div className="h-8 w-8 bg-white/20 rounded-full animate-pulse" />
+            </div>
           </div>
-        </div>
-      </header>
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        <div className="h-12 w-64 bg-slate-200 dark:bg-slate-700 animate-pulse mb-8" />
-        <div className="grid grid-cols-4 gap-4 mb-8">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-20 bg-slate-200 dark:bg-slate-700 animate-pulse" />
-          ))}
-        </div>
-        <div className="grid grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-48 bg-slate-200 dark:bg-slate-700 animate-pulse" />
-          ))}
-        </div>
-      </main>
+        </header>
+        <main className="max-w-7xl mx-auto px-6 py-8">
+          <div className="h-12 w-64 bg-white/20 rounded animate-pulse mb-8" />
+          <div className="grid grid-cols-4 gap-4 mb-8">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-20 bg-white/20 rounded animate-pulse" />
+            ))}
+          </div>
+          <div className="grid grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-48 bg-white/20 rounded animate-pulse" />
+            ))}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
@@ -271,122 +280,178 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-slate-950">
-      {/* Header */}
-      <header className="border-b-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-3 group">
-              <div className="p-2 border-2 border-blue-500 bg-blue-500 group-hover:bg-transparent transition-colors">
-                <Brain className="h-6 w-6 text-white group-hover:text-blue-500 transition-colors" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white uppercase">DoneWithAI</span>
-                <span className="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400">Code Detection System</span>
-              </div>
-            </Link>
+    <>
+      {/* Google Fonts */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
 
-            {/* Nav */}
-            <div className="flex items-center gap-3">
-              {isAdmin && (
-                <Link href="/admin">
-                  <button className="flex items-center gap-2 px-4 py-2 border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-sm font-medium hover:border-blue-500 hover:text-blue-500 dark:hover:border-blue-500 dark:hover:text-blue-500 transition-all">
-                    <Shield className="h-4 w-4" />
-                    <span>Admin</span>
-                  </button>
+      <div className="min-h-screen relative overflow-hidden">
+        {/* Animated Gradient Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600" />
+
+        {/* Floating Orbs */}
+        <div className="absolute top-20 left-20 w-72 h-72 bg-pink-400 rounded-full blur-[100px] opacity-40 animate-float-1" />
+        <div className="absolute bottom-20 right-20 w-96 h-96 bg-blue-400 rounded-full blur-[120px] opacity-30 animate-float-2" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-violet-400 rounded-full blur-[150px] opacity-20 animate-pulse-slow" />
+
+        {/* Grid Pattern Overlay */}
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTTAgNDBMMDQgMEgwIiBmaWxsPSJub25lIiBzdHJva2U9InJnYmEoMjU1LDI1NSwyNTUsMC4xKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-30" />
+
+        {/* Content */}
+        <div className="relative z-10">
+          {/* Header */}
+          <header className="border-b border-white/20 bg-white/10 backdrop-blur-lg sticky top-0 z-40">
+            <div className="max-w-7xl mx-auto px-6 py-4">
+              <div className="flex items-center justify-between">
+                {/* Logo */}
+                <Link href="/" className="flex items-center gap-3 group">
+                  <div className="p-2 border-2 border-white/30 bg-white/20 backdrop-blur-md rounded-xl group-hover:bg-white/30 transition-colors">
+                    <Brain className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xl font-bold tracking-tight text-white" style={{ fontFamily: 'Outfit, sans-serif' }}>
+                      DoneWithAI
+                    </span>
+                    <span className="text-[10px] uppercase tracking-widest text-white/60">Code Detection System</span>
+                  </div>
                 </Link>
+
+                {/* Nav */}
+                <div className="flex items-center gap-3">
+                  {isAdmin && (
+                    <Link href="/admin">
+                      <button className="flex items-center gap-2 px-4 py-2 border border-white/30 bg-white/10 backdrop-blur-md text-white text-sm font-medium hover:bg-white/20 transition-all rounded-lg">
+                        <Shield className="h-4 w-4" />
+                        <span>Admin</span>
+                      </button>
+                    </Link>
+                  )}
+                  <ThemeToggle />
+                  <button
+                    onClick={logout}
+                    className="flex items-center gap-2 px-4 py-2 border border-white/30 bg-white/10 backdrop-blur-md text-white text-sm font-medium hover:bg-white/20 transition-all rounded-lg"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span className="hidden sm:inline">Logout</span>
+                  </button>
+                  <div className="px-4 py-2 border border-white/30 bg-white/10 backdrop-blur-md rounded-lg">
+                    <span className="text-sm font-mono text-white">{user?.name}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <main className="max-w-7xl mx-auto px-6 py-8">
+            {/* Page Header */}
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8 pb-6 border-b border-white/20">
+              <div>
+                <h1 className="text-4xl font-bold tracking-tight text-white mb-2" style={{ fontFamily: 'Outfit, sans-serif' }}>
+                  Dashboard
+                </h1>
+                <p className="text-white/70 font-mono text-sm" style={{ fontFamily: 'Inter, sans-serif' }}>
+                  Tracking AI-generated code across your repositories
+                </p>
+              </div>
+              {isAdmin && (
+                <button
+                  onClick={() => setAddDialogOpen(true)}
+                  className="flex items-center gap-2 px-6 py-3 bg-white text-purple-700 text-sm font-bold uppercase tracking-wider hover:bg-white/90 hover:scale-[1.02] active:scale-[0.98] transition-all self-start shadow-xl shadow-white/10 rounded-lg"
+                  style={{ fontFamily: 'Outfit, sans-serif' }}
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Repository
+                </button>
               )}
-              <ThemeToggle />
-              <button
-                onClick={logout}
-                className="flex items-center gap-2 px-4 py-2 border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-sm font-medium hover:border-red-500 hover:text-red-500 dark:hover:border-red-500 dark:hover:text-red-500 transition-all"
-              >
-                <LogOut className="h-4 w-4" />
-                <span className="hidden sm:inline">Logout</span>
-              </button>
-              <div className="px-4 py-2 border-2 border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800">
-                <span className="text-sm font-mono text-slate-700 dark:text-slate-300">{user?.name}</span>
-              </div>
             </div>
-          </div>
-        </div>
-      </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8 pb-6 border-b-2 border-slate-300 dark:border-slate-700">
-          <div>
-            <h1 className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white uppercase mb-2">Dashboard</h1>
-            <p className="text-slate-600 dark:text-slate-400 font-mono text-sm">
-              Tracking AI-generated code across your repositories
-            </p>
-          </div>
-          {isAdmin && (
-            <button
-              onClick={() => setAddDialogOpen(true)}
-              className="flex items-center gap-2 px-6 py-3 border-2 border-blue-500 bg-blue-500 text-white text-sm font-bold uppercase tracking-wider hover:bg-transparent hover:text-blue-500 transition-all self-start"
-            >
-              <Plus className="h-4 w-4" />
-              Add Repository
-            </button>
-          )}
-        </div>
-
-        {/* Stats Grid */}
-        {repos.length > 0 && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <StatCard icon={Database} label="Total Repos" value={stats.totalRepos} accent="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800" />
-            <StatCard icon={GitBranch} label="GitHub" value={stats.githubRepos} />
-            <StatCard icon={GitFork} label="Bitbucket" value={stats.bitbucketRepos} />
-            <StatCard icon={Activity} label="Synced (7d)" value={stats.recentlySynced} accent="bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800" />
-          </div>
-        )}
-
-        {/* Empty State */}
-        {repos.length === 0 ? (
-          <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-16 text-center">
-            <div className="flex justify-center mb-6">
-              <div className="p-6 border-2 border-slate-300 dark:border-slate-600">
-                <GitBranch className="h-16 w-16 text-slate-400 dark:text-slate-500" />
+            {/* Stats Grid */}
+            {repos.length > 0 && (
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <StatCard icon={Database} label="Total Repos" value={stats.totalRepos} />
+                <StatCard icon={GitBranch} label="GitHub" value={stats.githubRepos} />
+                <StatCard icon={GitFork} label="Bitbucket" value={stats.bitbucketRepos} />
+                <StatCard icon={Activity} label="Synced (7d)" value={stats.recentlySynced} />
               </div>
-            </div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white uppercase mb-2">No Repositories</h2>
-            <p className="text-slate-600 dark:text-slate-400 mb-8 max-w-md mx-auto">
-              Add your first repository to start tracking AI-generated code patterns
-            </p>
-            {isAdmin && (
-              <button
-                onClick={() => setAddDialogOpen(true)}
-                className="inline-flex items-center gap-2 px-8 py-4 border-2 border-blue-500 bg-blue-500 text-white font-bold uppercase tracking-wider hover:bg-transparent hover:text-blue-500 transition-all"
-              >
-                <Plus className="h-5 w-5" />
-                Add Your First Repository
-              </button>
             )}
-          </div>
-        ) : (
-          /* Repo List */
-          <RepoList
-            repos={repos}
-            onDelete={isAdmin ? handleDeleteRepo : undefined}
-            onSync={handleSyncRepo}
-            onFullSync={isAdmin ? handleFullSyncRepo : undefined}
-            onRecheckAI={isAdmin ? handleRecheckAI : undefined}
-            canSync={canSync}
-            isAdmin={isAdmin}
-          />
-        )}
-      </main>
 
-      {/* Dialogs */}
-      <AddRepoDialog
-        open={addDialogOpen}
-        onOpenChange={setAddDialogOpen}
-        onAdd={handleAddRepo}
-      />
+            {/* Empty State */}
+            {repos.length === 0 ? (
+              <div className="border border-white/20 bg-white/10 backdrop-blur-xl p-16 text-center rounded-2xl">
+                <div className="flex justify-center mb-6">
+                  <div className="p-6 border border-white/30 bg-white/10 rounded-2xl">
+                    <GitBranch className="h-16 w-16 text-white/60" />
+                  </div>
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: 'Outfit, sans-serif' }}>
+                  No Repositories
+                </h2>
+                <p className="text-white/70 mb-8 max-w-md mx-auto" style={{ fontFamily: 'Inter, sans-serif' }}>
+                  Add your first repository to start tracking AI-generated code patterns
+                </p>
+                {isAdmin && (
+                  <button
+                    onClick={() => setAddDialogOpen(true)}
+                    className="inline-flex items-center gap-2 px-8 py-4 bg-white text-purple-700 font-bold uppercase tracking-wider hover:bg-white/90 transition-all rounded-lg"
+                    style={{ fontFamily: 'Outfit, sans-serif' }}
+                  >
+                    <Plus className="h-5 w-5" />
+                    Add Your First Repository
+                  </button>
+                )}
+              </div>
+            ) : (
+              /* Repo List */
+              <RepoList
+                repos={repos}
+                onDelete={isAdmin ? handleDeleteRepo : undefined}
+                onSync={handleSyncRepo}
+                onFullSync={isAdmin ? handleFullSyncRepo : undefined}
+                onRecheckAI={isAdmin ? handleRecheckAI : undefined}
+                canSync={canSync}
+                isAdmin={isAdmin}
+              />
+            )}
+          </main>
+        </div>
 
-      <SyncProgressModal isOpen={syncInProgress} progress={syncProgress} />
-    </div>
+        {/* Dialogs */}
+        <AddRepoDialog
+          open={addDialogOpen}
+          onOpenChange={setAddDialogOpen}
+          onAdd={handleAddRepo}
+        />
+
+        <SyncProgressModal isOpen={syncInProgress} progress={syncProgress} />
+      </div>
+
+      {/* Custom Styles */}
+      <style jsx global>{`
+        @keyframes float-1 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          33% { transform: translate(30px, -30px) scale(1.05); }
+          66% { transform: translate(-20px, 20px) scale(0.95); }
+        }
+        @keyframes float-2 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          33% { transform: translate(-30px, 20px) scale(1.1); }
+          66% { transform: translate(20px, -20px) scale(0.9); }
+        }
+        @keyframes pulse-slow {
+          0%, 100% { opacity: 0.2; transform: translate(-50%, -50%) scale(1); }
+          50% { opacity: 0.3; transform: translate(-50%, -50%) scale(1.1); }
+        }
+        .animate-float-1 {
+          animation: float-1 20s ease-in-out infinite;
+        }
+        .animate-float-2 {
+          animation: float-2 25s ease-in-out infinite;
+        }
+        .animate-pulse-slow {
+          animation: pulse-slow 4s ease-in-out infinite;
+        }
+      `}</style>
+    </>
   );
 }

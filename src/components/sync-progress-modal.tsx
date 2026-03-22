@@ -30,19 +30,19 @@ const STAGE_CONFIG = {
     icon: Loader2,
     label: 'Fetching Commits',
     description: 'Retrieving commit history from remote repository',
-    color: 'blue',
+    color: 'violet',
   },
   processing_commits: {
     icon: Database,
     label: 'Processing',
     description: 'Analyzing commits and detecting AI patterns',
-    color: 'indigo',
+    color: 'purple',
   },
   fetching_branches: {
     icon: GitBranch,
     label: 'Fetching Branches',
     description: 'Retrieving branch information',
-    color: 'purple',
+    color: 'fuchsia',
   },
   branches_fetched: {
     icon: CheckCircle2,
@@ -230,21 +230,21 @@ function StageIndicator({ currentStage }: { currentStage: SyncProgress['stage'] 
           <div key={stage} className="flex items-center flex-1">
             <div className="flex flex-col items-center flex-1">
               <div className={`
-                w-10 h-10 border-2 flex items-center justify-center transition-all
-                ${isActive ? 'border-blue-500 bg-blue-500' : isCompleted ? 'border-green-500 bg-green-500' : 'border-slate-300 dark:border-slate-600 bg-transparent'}
+                w-10 h-10 border-2 flex items-center justify-center transition-all rounded-xl
+                ${isActive ? 'border-white/50 bg-white/20 backdrop-blur' : isCompleted ? 'border-green-400/50 bg-green-500/20 backdrop-blur' : 'border-white/20 bg-white/5 backdrop-blur'}
               `}>
                 {isCompleted ? (
-                  <CheckCircle2 className="h-5 w-5 text-white" />
+                  <CheckCircle2 className="h-5 w-5 text-green-400" />
                 ) : (
-                  <StageIcon className={`h-5 w-5 ${isActive ? 'text-white animate-spin' : 'text-slate-400 dark:text-slate-600'}`} />
+                  <StageIcon className={`h-5 w-5 ${isActive ? 'text-white animate-spin' : 'text-white/40'}`} />
                 )}
               </div>
-              <span className={`text-[10px] uppercase font-bold tracking-wider mt-2 ${isActive ? 'text-blue-500' : isCompleted ? 'text-green-500' : 'text-slate-400'}`}>
+              <span className={`text-[10px] uppercase font-bold tracking-wider mt-2 ${isActive ? 'text-white' : isCompleted ? 'text-green-400' : 'text-white/40'}`} style={{ fontFamily: 'Outfit, sans-serif' }}>
                 {config.label.split(' ')[0]}
               </span>
             </div>
             {index < stages.length - 1 && (
-              <div className={`flex-1 h-0.5 mx-1 ${index < displayIndex ? 'bg-green-500' : 'bg-slate-200 dark:bg-slate-700'}`} />
+              <div className={`flex-1 h-0.5 mx-1 ${index < displayIndex ? 'bg-green-400/50' : 'bg-white/10'}`} />
             )}
           </div>
         );
@@ -262,22 +262,22 @@ export function SyncProgressModal({ isOpen, progress }: SyncProgressModalProps) 
   const isError = progress.stage === 'error';
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 backdrop-blur-sm">
-      <div className="w-full max-w-md mx-4 border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 shadow-2xl">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-md">
+      <div className="w-full max-w-md mx-4 border border-white/20 bg-white/10 backdrop-blur-xl shadow-2xl rounded-2xl overflow-hidden">
         {/* Header */}
-        <div className="p-6 border-b-2 border-slate-200 dark:border-slate-700">
+        <div className="p-6 border-b border-white/10">
           <div className="flex items-center gap-4">
             <div className={`
-              p-3 border-2 transition-all
-              ${isCompleted ? 'border-green-500 bg-green-500' : isError ? 'border-red-500 bg-red-500' : 'border-blue-500 bg-blue-500'}
+              p-3 border border-white/30 rounded-xl transition-all backdrop-blur
+              ${isCompleted ? 'bg-green-500/20' : isError ? 'bg-red-500/20' : 'bg-violet-500/20'}
             `}>
-              <StageIcon className={`h-6 w-6 text-white ${progress.stage === 'fetching_commits' ? 'animate-spin' : ''}`} />
+              <StageIcon className={`h-6 w-6 ${isCompleted ? 'text-green-400' : isError ? 'text-red-400' : 'text-white'} ${progress.stage === 'fetching_commits' ? 'animate-spin' : ''}`} />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-xl font-bold uppercase tracking-wide text-slate-900 dark:text-white">
+              <h3 className="text-xl font-bold tracking-wide text-white" style={{ fontFamily: 'Outfit, sans-serif' }}>
                 {isCompleted ? 'Sync Complete!' : isError ? 'Sync Failed' : 'Syncing...'}
               </h3>
-              <p className="text-sm font-mono text-slate-500 dark:text-slate-400 truncate">
+              <p className="text-sm text-white/60 truncate" style={{ fontFamily: 'Inter, sans-serif' }}>
                 {progress.repoName}
               </p>
             </div>
@@ -290,22 +290,22 @@ export function SyncProgressModal({ isOpen, progress }: SyncProgressModalProps) 
           {!isError && <StageIndicator currentStage={progress.stage} />}
 
           {/* Stage Description */}
-          <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+          <p className="text-sm text-white/70 font-medium" style={{ fontFamily: 'Inter, sans-serif' }}>
             {config.description}
           </p>
 
           {/* Progress Bar */}
           {!isCompleted && !isError && (
             <div className="space-y-3">
-              <div className="flex justify-between text-sm font-mono">
-                <span className="text-slate-500 dark:text-slate-400">
+              <div className="flex justify-between text-sm" style={{ fontFamily: 'Inter, sans-serif' }}>
+                <span className="text-white/60">
                   {progress.processed.toLocaleString()} / {progress.totalCommits.toLocaleString()} commits
                 </span>
-                <span className="font-bold text-blue-500">{progress.percentage}%</span>
+                <span className="font-bold text-white">{progress.percentage}%</span>
               </div>
-              <div className="h-3 border-2 border-slate-300 dark:border-slate-600 overflow-hidden">
+              <div className="h-3 border border-white/20 bg-white/5 backdrop-blur rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-blue-500 transition-all duration-300 ease-out"
+                  className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-300 ease-out rounded-full"
                   style={{ width: `${progress.percentage}%` }}
                 />
               </div>
@@ -314,9 +314,9 @@ export function SyncProgressModal({ isOpen, progress }: SyncProgressModalProps) 
 
           {/* Current Commit/Status */}
           {(progress.currentCommit && progress.stage !== 'completed' && progress.stage !== 'error') && (
-            <div className="p-3 border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Current</p>
-              <p className="text-sm font-mono text-slate-700 dark:text-slate-300 truncate">
+            <div className="p-3 border border-white/20 bg-white/5 backdrop-blur rounded-xl">
+              <p className="text-xs font-bold uppercase tracking-wider text-white/50 mb-1" style={{ fontFamily: 'Outfit, sans-serif' }}>Current</p>
+              <p className="text-sm text-white/80 truncate" style={{ fontFamily: 'Inter, sans-serif' }}>
                 {progress.currentCommit}
               </p>
             </div>
@@ -324,9 +324,9 @@ export function SyncProgressModal({ isOpen, progress }: SyncProgressModalProps) 
 
           {/* Branch Info */}
           {progress.stage === 'branches_fetched' && (
-            <div className="p-3 border-2 border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950">
-              <p className="text-xs font-bold uppercase tracking-wider text-green-700 dark:text-green-300 mb-1">Branches Found</p>
-              <p className="text-sm font-mono text-green-800 dark:text-green-200">
+            <div className="p-3 border border-green-400/30 bg-green-500/10 backdrop-blur rounded-xl">
+              <p className="text-xs font-bold uppercase tracking-wider text-green-400 mb-1" style={{ fontFamily: 'Outfit, sans-serif' }}>Branches Found</p>
+              <p className="text-sm text-green-300" style={{ fontFamily: 'Inter, sans-serif' }}>
                 {progress.branchesTotal} total, {progress.branchesNew} new
               </p>
             </div>
@@ -334,9 +334,9 @@ export function SyncProgressModal({ isOpen, progress }: SyncProgressModalProps) 
 
           {/* AI Jobs Found */}
           {progress.aiJobsFound > 0 && (
-            <div className="p-3 border-2 border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950">
-              <p className="text-xs font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300 mb-1">AI Detected</p>
-              <p className="text-sm font-mono text-purple-800 dark:text-purple-200">
+            <div className="p-3 border border-pink-400/30 bg-pink-500/10 backdrop-blur rounded-xl">
+              <p className="text-xs font-bold uppercase tracking-wider text-pink-400 mb-1" style={{ fontFamily: 'Outfit, sans-serif' }}>AI Detected</p>
+              <p className="text-sm text-pink-300" style={{ fontFamily: 'Inter, sans-serif' }}>
                 {progress.aiJobsFound.toLocaleString()} AI-generated commits found
               </p>
             </div>
@@ -344,8 +344,8 @@ export function SyncProgressModal({ isOpen, progress }: SyncProgressModalProps) 
 
           {/* Error Message */}
           {isError && (
-            <div className="p-4 border-2 border-red-400 dark:border-red-700 bg-red-50 dark:bg-red-950">
-              <p className="text-sm font-mono text-red-700 dark:text-red-300">
+            <div className="p-4 border border-red-400/30 bg-red-500/10 backdrop-blur rounded-xl">
+              <p className="text-sm text-red-300" style={{ fontFamily: 'Inter, sans-serif' }}>
                 {progress.errorMessage}
               </p>
             </div>

@@ -42,17 +42,10 @@ const RepoCard = memo(({ repo, onDelete, onSync, onFullSync, onRecheckAI, canSyn
     return <GitBranch className="h-4 w-4" />;
   };
 
-  const getProviderColor = () => {
-    if (repo.provider === 'bitbucket') {
-      return 'text-blue-600 dark:text-blue-400 border-blue-500';
-    }
-    return 'text-slate-900 dark:text-white border-slate-700';
-  };
-
   const getSyncStatus = () => {
     if (repo.sync_error) {
       return (
-        <div className="flex items-center gap-2 text-xs font-mono text-red-600 dark:text-red-400">
+        <div className="flex items-center gap-2 text-xs font-mono text-red-400">
           <XCircle className="h-3 w-3" />
           <span>SYNC ERROR</span>
         </div>
@@ -62,41 +55,41 @@ const RepoCard = memo(({ repo, onDelete, onSync, onFullSync, onRecheckAI, canSyn
       const daysAgo = Math.floor((Date.now() - new Date(repo.last_synced).getTime()) / (1000 * 60 * 60 * 24));
       if (daysAgo === 0) {
         return (
-          <div className="flex items-center gap-2 text-xs font-mono text-green-600 dark:text-green-400">
+          <div className="flex items-center gap-2 text-xs font-mono text-green-400">
             <CheckCircle2 className="h-3 w-3" />
             <span>SYNCED TODAY</span>
           </div>
         );
       }
       return (
-        <div className="text-xs font-mono text-slate-500 dark:text-slate-400">
+        <div className="text-xs font-mono text-white/50">
           {daysAgo} day{daysAgo !== 1 ? 's' : ''} ago
         </div>
       );
     }
     return (
-      <div className="text-xs font-mono text-slate-400 dark:text-slate-500">
+      <div className="text-xs font-mono text-white/40">
         NOT SYNCED
       </div>
     );
   };
 
   return (
-    <div className="group border-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-blue-500 dark:hover:border-blue-500 transition-all">
+    <div className="group border border-white/20 bg-white/10 backdrop-blur-xl hover:bg-white/15 hover:border-white/30 transition-all rounded-2xl overflow-hidden">
       {/* Card Header */}
-      <div className="p-4 border-b-2 border-slate-200 dark:border-slate-800">
+      <div className="p-4 border-b border-white/10">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
             {/* Provider Icon */}
-            <div className={`p-2 border ${getProviderColor()} shrink-0`}>
+            <div className="p-2 border border-white/30 bg-white/10 backdrop-blur rounded-lg shrink-0">
               {getProviderIcon()}
             </div>
             {/* Repo Name */}
             <div className="min-w-0">
-              <h3 className="font-bold text-slate-900 dark:text-white uppercase tracking-wide text-sm truncate">
+              <h3 className="font-bold text-white tracking-wide text-sm truncate" style={{ fontFamily: 'Outfit, sans-serif' }}>
                 {repo.name}
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-mono truncate">
+              <p className="text-xs text-white/60 font-mono truncate">
                 {repo.owner}
               </p>
             </div>
@@ -108,8 +101,8 @@ const RepoCard = memo(({ repo, onDelete, onSync, onFullSync, onRecheckAI, canSyn
 
         {/* Error Badge */}
         {repo.sync_error && (
-          <div className="mt-3 p-2 border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950">
-            <p className="text-xs text-red-700 dark:text-red-300 font-mono line-clamp-1">
+          <div className="mt-3 p-2 border border-red-400/30 bg-red-500/20 backdrop-blur rounded-lg">
+            <p className="text-xs text-red-300 font-mono line-clamp-1">
               {repo.sync_error}
             </p>
           </div>
@@ -117,8 +110,8 @@ const RepoCard = memo(({ repo, onDelete, onSync, onFullSync, onRecheckAI, canSyn
       </div>
 
       {/* Card Body - URL */}
-      <div className="px-4 py-3 bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800">
-        <p className="text-xs font-mono text-slate-600 dark:text-slate-400 truncate">
+      <div className="px-4 py-3 bg-white/5 border-b border-white/10">
+        <p className="text-xs font-mono text-white/50 truncate">
           {repo.url}
         </p>
       </div>
@@ -127,7 +120,7 @@ const RepoCard = memo(({ repo, onDelete, onSync, onFullSync, onRecheckAI, canSyn
       <div className="p-3 flex items-center gap-2 flex-wrap">
         {/* View Details - Primary Action */}
         <Link href={`/repo/${repo.id}`} className="flex-1 min-w-[140px]">
-          <button className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-slate-900 dark:border-white bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold uppercase tracking-wider hover:bg-transparent hover:text-slate-900 dark:hover:bg-transparent dark:hover:text-white transition-all">
+          <button className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white text-purple-700 text-xs font-bold uppercase tracking-wider hover:bg-white/90 hover:scale-[1.02] active:scale-[0.98] transition-all rounded-lg" style={{ fontFamily: 'Outfit, sans-serif' }}>
             <span>View</span>
             <ExternalLink className="h-3 w-3" />
           </button>
@@ -138,10 +131,10 @@ const RepoCard = memo(({ repo, onDelete, onSync, onFullSync, onRecheckAI, canSyn
           onClick={() => onSync(repo.url)}
           disabled={!canSync}
           title={canSync ? 'Sync repository (incremental)' : 'Sync is on cooldown'}
-          className={`p-2.5 border-2 transition-all ${
+          className={`p-2.5 border transition-all rounded-lg ${
             canSync
-              ? 'border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:border-blue-500 hover:text-blue-500 dark:hover:border-blue-500 dark:hover:text-blue-500'
-              : 'border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-600 cursor-not-allowed'
+              ? 'border-white/30 bg-white/10 text-white hover:bg-white/20 hover:border-white/50'
+              : 'border-white/10 bg-white/5 text-white/30 cursor-not-allowed'
           }`}
         >
           <RefreshCw className="h-4 w-4" />
@@ -154,7 +147,7 @@ const RepoCard = memo(({ repo, onDelete, onSync, onFullSync, onRecheckAI, canSyn
               <button
                 onClick={() => onFullSync(repo.url)}
                 title="Full sync (re-fetch all commits)"
-                className="p-2.5 border-2 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-500 hover:text-white hover:border-indigo-500 dark:hover:bg-indigo-500 dark:hover:text-white dark:hover:border-indigo-500 transition-all"
+                className="p-2.5 border border-violet-400/30 bg-violet-500/20 text-violet-300 hover:bg-violet-500/40 hover:border-violet-400/50 transition-all rounded-lg"
               >
                 <RotateCcw className="h-4 w-4" />
               </button>
@@ -163,7 +156,7 @@ const RepoCard = memo(({ repo, onDelete, onSync, onFullSync, onRecheckAI, canSyn
               <button
                 onClick={() => onRecheckAI(repo.id)}
                 title="Re-check AI for all 2026 commits/branches"
-                className="p-2.5 border-2 border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-400 hover:bg-purple-500 hover:text-white hover:border-purple-500 dark:hover:bg-purple-500 dark:hover:text-white dark:hover:border-purple-500 transition-all"
+                className="p-2.5 border border-pink-400/30 bg-pink-500/20 text-pink-300 hover:bg-pink-500/40 hover:border-pink-400/50 transition-all rounded-lg"
               >
                 <Brain className="h-4 w-4" />
               </button>
@@ -176,7 +169,7 @@ const RepoCard = memo(({ repo, onDelete, onSync, onFullSync, onRecheckAI, canSyn
                   }
                 }}
                 title="Delete repository"
-                className="p-2.5 border-2 border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 dark:hover:bg-red-500 dark:hover:text-white dark:hover:border-red-500 transition-all"
+                className="p-2.5 border border-red-400/30 bg-red-500/20 text-red-300 hover:bg-red-500/40 hover:border-red-400/50 transition-all rounded-lg"
               >
                 <Trash2 className="h-4 w-4" />
               </button>
