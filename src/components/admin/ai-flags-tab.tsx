@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { GitBranch, RefreshCw, Check, X, Brain, GitCommit, ChevronDown, ChevronUp, Search, Sparkles, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import AnalysisReportModal from '@/components/ai-analysis-report-modal';
 
 interface Commit {
   id: number;
@@ -472,6 +473,13 @@ export default function AIFlagsTab() {
           )}
         </div>
       )}
+
+      {/* Analysis Report Modal */}
+      <AnalysisReportModal
+        isOpen={!!analysisResult}
+        onClose={() => setAnalysisResult(null)}
+        analysis={analysisResult}
+      />
     </div>
   );
 }
