@@ -37,14 +37,14 @@ UsersTab → ConfirmDialog → DELETE /api/admin/users/[id] → deleteUser()
 ### Types
 
 ```typescript
-// PublicUser type (excludes password) - already exists in db.ts
+// PublicUser type - EXTEND existing interface in db.ts to add created_at
 interface PublicUser {
   id: number;
   name: string;
   email: string;
   github_username: string | null;
   role: string;
-  created_at: string;
+  created_at: string;  // ADD THIS FIELD
 }
 
 // UserDialog props
@@ -174,6 +174,7 @@ export async function deleteUser(id: number): Promise<boolean>
 - **Password hashing:** Done in API route using `hashPassword()` from `simple-auth.ts` before passing to DB
 - **`getUserByEmail`:** Already exists in db.ts (returns `Promise<User | undefined>`) - use existing function
 - **`github_username` normalization:** Normalize to lowercase (consistent with existing `createUserMapping` pattern)
+- **`getAllUsers()` modification:** Add `created_at` to SELECT query and update `PublicUser` interface
 - **No schema changes** - Existing `users` table is sufficient
 
 ---
@@ -221,7 +222,7 @@ export async function deleteUser(id: number): Promise<boolean>
 
 | # | Task | Files |
 |---|------|-------|
-| 1 | Add DB functions (`createUser`, `updateUser`, `deleteUser`) | `src/lib/db.ts` |
+| 1 | Add DB functions (`createUser`, `updateUser`, `deleteUser`) + extend `PublicUser` + update `getAllUsers()` | `src/lib/db.ts` |
 | 2 | Add API endpoints (POST, PUT, DELETE) | `src/app/api/admin/users/route.ts`, `src/app/api/admin/users/[id]/route.ts` |
 | 3 | Create `UserDialog` component | `src/components/admin/user-dialog.tsx` |
 | 4 | Create `UsersTab` component | `src/components/admin/users-tab.tsx` |
