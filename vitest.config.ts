@@ -8,6 +8,10 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./tests/setup.ts'],
+    env: {
+      TURSO_DATABASE_URL: 'file:./test.db',
+      TURSO_AUTH_TOKEN: 'test-token',
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
