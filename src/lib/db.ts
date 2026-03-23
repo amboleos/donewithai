@@ -702,7 +702,14 @@ export async function getUserById(id: number) {
     sql: `SELECT * FROM users WHERE id = ?`,
     args: [id],
   });
-  return result.rows[0] as unknown as User | undefined;
+  const user = result.rows[0] as unknown as User | undefined;
+
+  // Convert created_at to string if it exists
+  if (user && user.created_at) {
+    user.created_at = String(user.created_at);
+  }
+
+  return user;
 }
 
 export async function getUsers() {

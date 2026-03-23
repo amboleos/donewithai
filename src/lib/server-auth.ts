@@ -41,6 +41,7 @@ export async function getServerSession(req?: { cookies: { get: (name: string) =>
       email: user.email,
       github_username: user.github_username,
       role: user.role || 'developer',
+      created_at: user.created_at,
     },
   };
 }
