@@ -263,7 +263,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 
 - [ ] **Step 3.1: Create [id] route directory**
 
-Run: `mkdir -p src/app/api/admin/users/\[id\]`
+Run: `mkdir -p 'src/app/api/admin/users/[id]'`
 
 - [ ] **Step 3.2: Create PUT handler**
 
@@ -272,7 +272,7 @@ Create file `src/app/api/admin/users/[id]/route.ts` with PUT handler:
 ```typescript
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/simple-auth';
-import { updateUser, deleteUser, ROLES } from '@/lib/db';
+import { updateUser, ROLES } from '@/lib/db';
 
 // PUT - Update user
 export async function PUT(
@@ -327,7 +327,12 @@ export async function PUT(
 
 - [ ] **Step 3.3: Add DELETE handler to same file**
 
-Append DELETE handler to `src/app/api/admin/users/[id]/route.ts`:
+First, update the import at the top of the file to include `deleteUser`:
+```typescript
+import { updateUser, deleteUser, ROLES } from '@/lib/db';
+```
+
+Then append DELETE handler:
 
 ```typescript
 
