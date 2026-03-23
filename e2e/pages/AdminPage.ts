@@ -36,6 +36,9 @@ export class AdminPage extends BasePage {
   readonly statusSortButton: Locator;
 
   // AI Flags tab analyze buttons
+  // Note: These are convenience locators for direct access in tests.
+  // Methods like clickAnalyzeCommit/clickAnalyzeBranch recreate locators locally
+  // to ensure they target specific rows correctly.
   readonly analyzeCommitButton: Locator;
   readonly analyzeBranchButton: Locator;
   readonly analysisModal: Locator;
@@ -388,14 +391,23 @@ export class AdminPage extends BasePage {
    * Wait for analyze to complete
    */
   async waitForAnalyzeComplete(rowIndex: number, type: 'commit' | 'branch' = 'commit', timeout: number = 60000): Promise<boolean> {
-    const startTime = Date.now();
-    while (Date.now() - startTime < timeout) {
-      if (!(await this.isAnalyzeInProgress(rowIndex, type))) {
-        return true;
+    try {
+      const startTime = Date.now();
+      while (Date.now() - startTime < timeout) {
+        try {
+          if (!(await this.isAnalyzeInProgress(rowIndex, type))) {
+            return true;
+          }
+        } catch {
+          // Row might not exist yet, continue waiting
+        }
+        await this.page.waitForTimeout(1000);
       }
-      await this.page.waitForTimeout(1000);
+      return false;
+    } catch (error) {
+      console.error('Error waiting for analyze complete:', error);
+      return false;
     }
-    return false;
   }
 
   /**
