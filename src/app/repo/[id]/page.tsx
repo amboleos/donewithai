@@ -575,17 +575,19 @@ function RepoDetailContent() {
                 </div>
                 <div className="flex items-center gap-2">
                   <ThemeToggle />
-                  <Button
-                    onClick={handleAIRecheck}
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    disabled={isAIRechecking}
-                    title="Recheck AI for all commits"
-                  >
-                    <Brain className={`h-4 w-4 ${isAIRechecking ? 'animate-pulse' : ''}`} />
-                    AI Recheck
-                  </Button>
+                  {isAdmin && (
+                    <Button
+                      onClick={handleAIRecheck}
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                      disabled={isAIRechecking}
+                      title="Recheck AI for all commits"
+                    >
+                      <Brain className={`h-4 w-4 ${isAIRechecking ? 'animate-pulse' : ''}`} />
+                      AI Recheck
+                    </Button>
+                  )}
                   <Button
                     onClick={handleRefresh}
                     variant="outline"

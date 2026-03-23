@@ -2,9 +2,32 @@
 
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { GitBranch, RefreshCw, GitCommit, ChevronDown, ChevronUp, Search, Sparkles, Loader2, Code2, User, Plus, Minus, XCircle } from 'lucide-react';
+import { GitBranch, RefreshCw, GitCommit, ChevronDown, ChevronUp, Search, Sparkles, Loader2, Code2, User, Plus, Minus, XCircle, Brain, FileText, TrendingUp, CheckCircle, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import AnalysisReportModal from '@/components/ai-analysis-report-modal';
+
+interface CodeAnalysisResult {
+  id: number;
+  isAgentic: boolean;
+  confidence: number;
+  report: {
+    summary: string;
+    patternsFound: string[];
+    fileBreakdown: Array<{
+      path: string;
+      language: string;
+      additions: number;
+      deletions: number;
+      isExcluded: boolean;
+    }>;
+    filesAnalyzed: number;
+    linesAdded: number;
+    linesRemoved: number;
+    reasoning: string;
+  };
+  model: string;
+  durationMs?: number;
+  tokensUsed?: number;
+}
 
 interface Commit {
   id: number;
@@ -16,9 +39,8 @@ interface Commit {
   date: string;
   lines_added: number;
   lines_removed: number;
-  // Code analysis fields
-  code_is_agentic: number | null;
-  code_confidence: number | null;
+  // AI detection status (single source of truth from commits table)
+  is_ai_detected: number | null;
 }
 
 interface Branch {
@@ -26,9 +48,8 @@ interface Branch {
   name: string;
   repo_id: number;
   repo_name: string;
-  // Code analysis fields
-  code_is_agentic: number | null;
-  code_confidence: number | null;
+  // AI detection status (single source of truth from branches table)
+  is_ai_detected: number | null;
 }
 
 type SortField = 'name' | 'author' | 'repo' | 'date';
@@ -50,13 +71,23 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const [searchQuery, setSearchQuery] = useState('');
   const [analyzingId, setAnalyzingId] = useState<number | null>(null);
-  const [analysisResult, setAnalysisResult] = useState<any | null>(null);
+  const [commitAnalyses, setCommitAnalyses] = useState<Record<number, CodeAnalysisResult>>({});
   const [selectedCommit, setSelectedCommit] = useState<Commit | null>(null);
+  const [loadingAnalysis, setLoadingAnalysis] = useState<number | null>(null);
   // Filter states
   const [codeAnalysisFilter, setCodeAnalysisFilter] = useState<CodeAnalysisFilter>('all');
 
   useEffect(() => {
     fetchData();
+  }, []);
+
+  // Handle ESC key to close commit modal
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSelectedCommit(null);
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
   }, []);
 
   const fetchData = async () => {
@@ -99,9 +130,9 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
     return sortOrder === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />;
   };
 
-  // Helper to render code analysis badge
-  const CodeAnalysisBadge = ({ isAgentic, confidence }: { isAgentic: number | null; confidence: number | null }) => {
-    if (isAgentic === null || isAgentic === undefined) {
+  // Helper to render AI detection badge (based on is_ai_detected from commits/branches tables)
+  const AIDetectionBadge = ({ isAIDetected }: { isAIDetected: number | null }) => {
+    if (isAIDetected === null || isAIDetected === undefined) {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-mono font-bold uppercase tracking-wider border-2 border-[var(--muted-foreground)] bg-[var(--muted)] text-[var(--muted-foreground)]">
           <Code2 className="h-3 w-3" /> NOT ANALYZED
@@ -109,27 +140,27 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
       );
     }
 
-    if (isAgentic === 1) {
+    if (isAIDetected === 1) {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-mono font-bold uppercase tracking-wider border-2 border-[var(--destructive)] bg-[var(--destructive)]/10 text-[var(--destructive)]" title={`Confidence: ${((confidence || 0) * 100).toFixed(0)}%`}>
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-mono font-bold uppercase tracking-wider border-2 border-[var(--destructive)] bg-[var(--destructive)]/10 text-[var(--destructive)]">
           <Sparkles className="h-3 w-3" /> AGENTIC AI
         </span>
       );
     }
 
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-mono font-bold uppercase tracking-wider border-2 border-[var(--primary)] bg-[var(--primary)]/10 text-[var(--primary)]" title={`Confidence: ${((confidence || 0) * 100).toFixed(0)}%`}>
-        <User className="h-3 w-3" /> HUMAN ASSISTED
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-mono font-bold uppercase tracking-wider border-2 border-[var(--primary)] bg-[var(--primary)]/10 text-[var(--primary)]">
+        <User className="h-3 w-3" /> HUMAN
       </span>
     );
   };
 
-  // Apply code analysis filter
-  const matchesCodeAnalysisFilter = (codeIsAgentic: number | null): boolean => {
+  // Apply AI detection filter (based on is_ai_detected)
+  const matchesCodeAnalysisFilter = (isAIDetected: number | null): boolean => {
     if (codeAnalysisFilter === 'all') return true;
-    if (codeAnalysisFilter === 'agentic') return codeIsAgentic === 1;
-    if (codeAnalysisFilter === 'human_assisted') return codeIsAgentic === 0;
-    if (codeAnalysisFilter === 'not_analyzed') return codeIsAgentic === null;
+    if (codeAnalysisFilter === 'agentic') return isAIDetected === 1;
+    if (codeAnalysisFilter === 'human_assisted') return isAIDetected === 0;
+    if (codeAnalysisFilter === 'not_analyzed') return isAIDetected === null;
     return true;
   };
 
@@ -138,7 +169,7 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
       (c.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.repo_name.toLowerCase().includes(searchQuery.toLowerCase())) &&
-      matchesCodeAnalysisFilter(c.code_is_agentic)
+      matchesCodeAnalysisFilter(c.is_ai_detected)
     )
     .sort((a, b) => {
       let aVal: any, bVal: any;
@@ -171,7 +202,7 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
     .filter(b =>
       (b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       b.repo_name.toLowerCase().includes(searchQuery.toLowerCase())) &&
-      matchesCodeAnalysisFilter(b.code_is_agentic)
+      matchesCodeAnalysisFilter(b.is_ai_detected)
     )
     .sort((a, b) => {
       let aVal: any, bVal: any;
@@ -224,16 +255,75 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
       }
 
       const data = await res.json();
-      setAnalysisResult(data.analysis);
-      toast.success('Code analysis completed');
+      const analysis = data.analysis as CodeAnalysisResult;
 
-      // Refresh data to show updated AI status
-      fetchData();
+      // Store analysis result for this commit
+      setCommitAnalyses(prev => ({
+        ...prev,
+        [sourceId]: analysis
+      }));
+
+      // Update the commit's is_ai_detected in local state (no refresh needed)
+      if (sourceType === 'commit') {
+        let updatedCommit: Commit | null = null;
+        setCommits(prev => prev.map(c => {
+          if (c.id === sourceId) {
+            updatedCommit = { ...c, is_ai_detected: analysis.isAgentic ? 1 : 0 };
+            return updatedCommit;
+          }
+          return c;
+        }));
+        // Also update selectedCommit if it's the same one
+        if (selectedCommit?.id === sourceId) {
+          setSelectedCommit(prev => prev ? { ...prev, is_ai_detected: analysis.isAgentic ? 1 : 0 } : null);
+        }
+        // Open the modal with the analyzed commit (if not already open)
+        if (updatedCommit && selectedCommit?.id !== sourceId) {
+          setSelectedCommit(updatedCommit);
+        }
+      } else if (sourceType === 'branch') {
+        setBranches(prev => prev.map(b =>
+          b.id === sourceId
+            ? { ...b, is_ai_detected: analysis.isAgentic ? 1 : 0 }
+            : b
+        ));
+      }
+
+      toast.success('Code analysis completed');
     } catch (error: any) {
       toast.error(error.message || 'Analysis failed');
     } finally {
       setAnalyzingId(null);
     }
+  };
+
+  // Fetch existing analysis for a commit when selecting it
+  const fetchCommitAnalysis = async (commitId: number, repoId: number) => {
+    if (commitAnalyses[commitId]) return; // Already cached
+
+    setLoadingAnalysis(commitId);
+    try {
+      const res = await fetch(`/api/ai/code-analysis?repoId=${repoId}&sourceType=commit&sourceId=${commitId}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.analysis) {
+          setCommitAnalyses(prev => ({
+            ...prev,
+            [commitId]: data.analysis
+          }));
+        }
+      }
+    } catch (error) {
+      // Silently fail - analysis may not exist yet
+    } finally {
+      setLoadingAnalysis(null);
+    }
+  };
+
+  // Handle commit selection - fetch analysis if available
+  const handleSelectCommit = (commit: Commit) => {
+    setSelectedCommit(commit);
+    fetchCommitAnalysis(commit.id, commit.repo_id);
   };
 
   if (loading) {
@@ -247,10 +337,10 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
     );
   }
 
-  // Code analysis stats
-  const agenticCount = [...commits, ...branches].filter(item => item.code_is_agentic === 1).length;
-  const humanAssistedCount = [...commits, ...branches].filter(item => item.code_is_agentic === 0).length;
-  const notAnalyzedCount = [...commits, ...branches].filter(item => item.code_is_agentic === null).length;
+  // AI detection stats (based on is_ai_detected)
+  const agenticCount = [...commits, ...branches].filter(item => item.is_ai_detected === 1).length;
+  const humanAssistedCount = [...commits, ...branches].filter(item => item.is_ai_detected === 0).length;
+  const notAnalyzedCount = [...commits, ...branches].filter(item => item.is_ai_detected === null).length;
 
   return (
     <div className="space-y-4">
@@ -429,7 +519,7 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
                     <tr
                       key={commit.id}
                       className="border-b-2 border-[var(--border)] hover:bg-[var(--muted)] transition-colors cursor-pointer"
-                      onClick={() => setSelectedCommit(commit)}
+                      onClick={() => handleSelectCommit(commit)}
                     >
                       <td className="px-4 py-3">
                         <div className="max-w-md">
@@ -463,7 +553,7 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <CodeAnalysisBadge isAgentic={commit.code_is_agentic} confidence={commit.code_confidence} />
+                        <AIDetectionBadge isAIDetected={commit.is_ai_detected} />
                       </td>
                       {isAdmin && (
                         <td className="px-4 py-3">
@@ -548,7 +638,7 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
                         <td className="px-4 py-3 text-[var(--muted-foreground)]">{branch.repo_name}</td>
                       )}
                       <td className="px-4 py-3">
-                        <CodeAnalysisBadge isAgentic={branch.code_is_agentic} confidence={branch.code_confidence} />
+                        <AIDetectionBadge isAIDetected={branch.is_ai_detected} />
                       </td>
                       {isAdmin && (
                         <td className="px-4 py-3">
@@ -591,13 +681,6 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
         </div>
       )}
 
-      {/* Analysis Report Modal */}
-      <AnalysisReportModal
-        isOpen={!!analysisResult}
-        onClose={() => setAnalysisResult(null)}
-        analysis={analysisResult}
-      />
-
       {/* Commit Message Modal */}
       {selectedCommit && (
         <div
@@ -605,7 +688,7 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
           onClick={() => setSelectedCommit(null)}
         >
           <div
-            className="bg-[var(--card)] border-2 border-[var(--border)] [box-shadow:var(--shadow-brutal)] rounded-lg max-w-2xl w-full max-h-[80vh] overflow-hidden"
+            className="bg-[var(--card)] border-2 border-[var(--border)] [box-shadow:var(--shadow-brutal)] rounded-lg max-w-3xl w-full max-h-[85vh] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-4 py-3 border-b-2 border-[var(--border)] bg-[var(--muted)]">
@@ -622,7 +705,7 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
                 <XCircle className="h-5 w-5 text-[var(--muted-foreground)]" />
               </button>
             </div>
-            <div className="p-4 space-y-4 overflow-y-auto max-h-[60vh]">
+            <div className="p-4 space-y-4 overflow-y-auto max-h-[calc(85vh-60px)]">
               <div>
                 <label className="text-xs font-mono text-[var(--muted-foreground)]" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
                   MESSAGE
@@ -678,9 +761,150 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
                   CODE ANALYSIS
                 </label>
                 <div className="mt-1">
-                  <CodeAnalysisBadge isAgentic={selectedCommit.code_is_agentic} confidence={selectedCommit.code_confidence} />
+                  <AIDetectionBadge isAIDetected={selectedCommit.is_ai_detected} />
                 </div>
               </div>
+
+              {/* Analysis Details Section */}
+              {loadingAnalysis === selectedCommit.id && (
+                <div className="flex items-center gap-2 text-[var(--muted-foreground)] py-4">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="font-mono text-sm">Loading analysis...</span>
+                </div>
+              )}
+
+              {commitAnalyses[selectedCommit.id] && (
+                <div className="border-t-2 border-[var(--border)] pt-4 mt-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {commitAnalyses[selectedCommit.id].isAgentic ? (
+                        <div className="p-2 border-2 border-[var(--destructive)] bg-[var(--destructive)]/10 [box-shadow:var(--shadow-brutal-sm)]">
+                          <Brain className="h-4 w-4 text-[var(--destructive)]" />
+                        </div>
+                      ) : (
+                        <div className="p-2 border-2 border-[var(--success)] bg-[var(--success)]/10 [box-shadow:var(--shadow-brutal-sm)]">
+                          <User className="h-4 w-4 text-[var(--success)]" />
+                        </div>
+                      )}
+                      <div>
+                        <h3 className="text-sm font-bold text-[var(--foreground)]" style={{ fontFamily: 'Sora, sans-serif' }}>
+                          {commitAnalyses[selectedCommit.id].isAgentic ? 'AGENTIC AI DETECTED' : 'HUMAN'}
+                        </h3>
+                        <p className="text-xs text-[var(--muted-foreground)] font-mono">
+                          {commitAnalyses[selectedCommit.id].model} - {commitAnalyses[selectedCommit.id].durationMs ? `${(commitAnalyses[selectedCommit.id].durationMs! / 1000).toFixed(1)}s` : 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xl font-bold font-mono text-[var(--foreground)]">{Math.round(commitAnalyses[selectedCommit.id].confidence * 100)}%</div>
+                      <div className="text-xs text-[var(--muted-foreground)] font-mono">confidence</div>
+                    </div>
+                  </div>
+
+                  {/* Summary */}
+                  <div className="p-3 border-2 border-[var(--border)] bg-[var(--muted)] [box-shadow:var(--shadow-brutal-sm)]">
+                    <h4 className="text-xs font-bold text-[var(--primary)] font-mono mb-1 flex items-center gap-2" style={{ fontFamily: 'Sora, sans-serif' }}>
+                      <FileText className="h-3 w-3" />
+                      SUMMARY
+                    </h4>
+                    <p className="text-[var(--foreground)] text-sm leading-relaxed" style={{ fontFamily: 'Sora, sans-serif' }}>
+                      {commitAnalyses[selectedCommit.id].report.summary}
+                    </p>
+                  </div>
+
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-4 gap-2">
+                    <div className="p-2 border-2 border-[var(--border)] bg-[var(--muted)] [box-shadow:var(--shadow-brutal-sm)] text-center">
+                      <div className="text-lg font-bold font-mono text-[var(--foreground)]">{commitAnalyses[selectedCommit.id].report.filesAnalyzed}</div>
+                      <div className="text-xs text-[var(--muted-foreground)] font-mono">files</div>
+                    </div>
+                    <div className="p-2 border-2 border-[var(--border)] bg-[var(--muted)] [box-shadow:var(--shadow-brutal-sm)] text-center">
+                      <div className="text-lg font-bold font-mono text-[var(--success)]">+{commitAnalyses[selectedCommit.id].report.linesAdded}</div>
+                      <div className="text-xs text-[var(--muted-foreground)] font-mono">added</div>
+                    </div>
+                    <div className="p-2 border-2 border-[var(--border)] bg-[var(--muted)] [box-shadow:var(--shadow-brutal-sm)] text-center">
+                      <div className="text-lg font-bold font-mono text-[var(--destructive)]">-{commitAnalyses[selectedCommit.id].report.linesRemoved}</div>
+                      <div className="text-xs text-[var(--muted-foreground)] font-mono">removed</div>
+                    </div>
+                    <div className="p-2 border-2 border-[var(--border)] bg-[var(--muted)] [box-shadow:var(--shadow-brutal-sm)] text-center">
+                      <div className="text-lg font-bold font-mono text-[var(--warning)]">{commitAnalyses[selectedCommit.id].tokensUsed || 'N/A'}</div>
+                      <div className="text-xs text-[var(--muted-foreground)] font-mono">tokens</div>
+                    </div>
+                  </div>
+
+                  {/* Patterns Found */}
+                  {commitAnalyses[selectedCommit.id].report.patternsFound.length > 0 && (
+                    <div>
+                      <h4 className="text-xs font-bold text-[var(--primary)] font-mono mb-2 flex items-center gap-2" style={{ fontFamily: 'Sora, sans-serif' }}>
+                        <TrendingUp className="h-3 w-3" />
+                        PATTERNS FOUND
+                      </h4>
+                      <div className="flex flex-wrap gap-1">
+                        {commitAnalyses[selectedCommit.id].report.patternsFound.map((pattern, i) => (
+                          <span
+                            key={i}
+                            className="px-2 py-0.5 border-2 border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)] font-mono text-xs font-bold uppercase tracking-wider"
+                          >
+                            {pattern}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* File Breakdown */}
+                  {commitAnalyses[selectedCommit.id].report.fileBreakdown.length > 0 && (
+                    <div>
+                      <h4 className="text-xs font-bold text-[var(--primary)] font-mono mb-2 flex items-center gap-2" style={{ fontFamily: 'Sora, sans-serif' }}>
+                        <FileText className="h-3 w-3" />
+                        FILE BREAKDOWN ({commitAnalyses[selectedCommit.id].report.fileBreakdown.length} files)
+                      </h4>
+                      <div className="max-h-40 overflow-y-auto space-y-1">
+                        {commitAnalyses[selectedCommit.id].report.fileBreakdown.slice(0, 10).map((file, i) => (
+                          <div
+                            key={i}
+                            className={`flex items-center justify-between p-1.5 border-2 ${
+                              file.isExcluded
+                                ? 'bg-[var(--muted)]/50 border-[var(--border)] text-[var(--muted-foreground)]'
+                                : 'bg-[var(--muted)] border-[var(--border)]'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              {file.isExcluded ? (
+                                <AlertCircle className="h-3 w-3 text-[var(--muted-foreground)] shrink-0" />
+                              ) : (
+                                <CheckCircle className="h-3 w-3 text-[var(--success)] shrink-0" />
+                              )}
+                              <span className="text-xs font-mono truncate">{file.path}</span>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="text-xs font-mono text-[var(--muted-foreground)]">{file.language}</span>
+                              <span className="text-xs font-mono text-[var(--success)]">+{file.additions}</span>
+                              <span className="text-xs font-mono text-[var(--destructive)]">-{file.deletions}</span>
+                            </div>
+                          </div>
+                        ))}
+                        {commitAnalyses[selectedCommit.id].report.fileBreakdown.length > 10 && (
+                          <div className="text-xs text-[var(--muted-foreground)] font-mono text-center py-1">
+                            +{commitAnalyses[selectedCommit.id].report.fileBreakdown.length - 10} more files
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Reasoning */}
+                  <div className="p-3 border-2 border-[var(--border)] bg-[var(--muted)] [box-shadow:var(--shadow-brutal-sm)]">
+                    <h4 className="text-xs font-bold text-[var(--primary)] font-mono mb-1 flex items-center gap-2" style={{ fontFamily: 'Sora, sans-serif' }}>
+                      <Brain className="h-3 w-3" />
+                      REASONING
+                    </h4>
+                    <p className="text-[var(--foreground)] text-sm leading-relaxed whitespace-pre-wrap" style={{ fontFamily: 'Sora, sans-serif' }}>
+                      {commitAnalyses[selectedCommit.id].report.reasoning}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
