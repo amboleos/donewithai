@@ -66,9 +66,9 @@ function AnimatedCounter({ value, label }: { value: number; label: string }) {
 // Stat card component
 function StatCard({ icon: Icon, label, value, accent }: { icon: any; label: string; value: number; accent?: string }) {
   return (
-    <div className="border border-white/20 bg-white/10 backdrop-blur-lg p-4 hover:bg-white/15 transition-all duration-300">
+    <div className="card-glass p-4">
       <div className="flex items-center gap-4">
-        <div className={`p-2 border border-white/30 bg-white/10`}>
+        <div className="p-2 border border-white/30 bg-white/10">
           <Icon className="h-5 w-5 text-white" />
         </div>
         <AnimatedCounter value={value} label={label} />
@@ -85,8 +85,9 @@ function DashboardSkeleton() {
       <div className="absolute inset-0 bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600" />
 
       {/* Floating Orbs */}
-      <div className="absolute top-20 left-20 w-72 h-72 bg-pink-400 rounded-full blur-[100px] opacity-40" />
-      <div className="absolute bottom-20 right-20 w-96 h-96 bg-blue-400 rounded-full blur-[120px] opacity-30" />
+      <div className="absolute top-20 left-20 w-72 h-72 bg-pink-400 rounded-full blur-[100px] opacity-40 animate-float-1" />
+      <div className="absolute bottom-20 right-20 w-96 h-96 bg-blue-400 rounded-full blur-[120px] opacity-30 animate-float-2" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-violet-400 rounded-full blur-[150px] opacity-20 animate-pulse-slow" />
 
       <div className="relative z-10">
         <header className="border-b border-white/20 bg-white/10 backdrop-blur-lg">
@@ -425,33 +426,6 @@ export default function DashboardPage() {
 
         <SyncProgressModal isOpen={syncInProgress} progress={syncProgress} />
       </div>
-
-      {/* Custom Styles */}
-      <style jsx global>{`
-        @keyframes float-1 {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(30px, -30px) scale(1.05); }
-          66% { transform: translate(-20px, 20px) scale(0.95); }
-        }
-        @keyframes float-2 {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(-30px, 20px) scale(1.1); }
-          66% { transform: translate(20px, -20px) scale(0.9); }
-        }
-        @keyframes pulse-slow {
-          0%, 100% { opacity: 0.2; transform: translate(-50%, -50%) scale(1); }
-          50% { opacity: 0.3; transform: translate(-50%, -50%) scale(1.1); }
-        }
-        .animate-float-1 {
-          animation: float-1 20s ease-in-out infinite;
-        }
-        .animate-float-2 {
-          animation: float-2 25s ease-in-out infinite;
-        }
-        .animate-pulse-slow {
-          animation: pulse-slow 4s ease-in-out infinite;
-        }
-      `}</style>
     </>
   );
 }
