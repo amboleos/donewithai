@@ -19,10 +19,9 @@ export {
   CardTitle,
   CardDescription,
   CardContent,
-  CardDecoration,
   cardVariants,
 } from "./card"
-export type { CardProps, CardHeaderProps, CardTitleProps, CardContentProps, CardFooterProps, CardDecorationProps } from "./card"
+export type { CardProps } from "./card"
 
 // Badge
 export {
@@ -30,9 +29,8 @@ export {
   badgeVariants,
   AIBadge,
   StatusBadge,
-  PulseBadge,
 } from "./badge"
-export type { BadgeProps, AIBadgeProps, StatusBadgeProps, PulseBadgeProps } from "./badge"
+export type { BadgeProps, AIBadgeProps, StatusBadgeProps } from "./badge"
 
 // Input
 export {

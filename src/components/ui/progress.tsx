@@ -3,33 +3,25 @@
 import * as React from "react"
 import * as ProgressPrimitive from "@radix-ui/react-progress"
 import { cva, type VariantProps } from "class-variance-authority"
-
 import { cn } from "@/lib/utils"
 
 // ============================================
-// Progress Variants
+// Progress Variants - Neo-Brutalist Style
 // ============================================
 
 const progressVariants = cva(
-  "relative w-full overflow-hidden transition-all duration-300",
+  "relative w-full overflow-hidden transition-all duration-300 border-2 border-[var(--border)] bg-[var(--muted)]",
   {
     variants: {
       size: {
-        default: "h-2",
-        sm: "h-1",
-        lg: "h-3",
-        xl: "h-4",
-      },
-      variant: {
-        default: "rounded-full bg-slate-100 dark:bg-slate-800",
-        rounded: "rounded-md bg-slate-100 dark:bg-slate-800",
-        flat: "rounded-none bg-slate-100 dark:bg-slate-800",
-        glow: "rounded-full bg-slate-100 dark:bg-slate-800 shadow-[0_0_10px_rgba(139,92,246,0.2)]",
+        default: "h-3",
+        sm: "h-2",
+        lg: "h-4",
+        xl: "h-5",
       },
     },
     defaultVariants: {
       size: "default",
-      variant: "default",
     },
   }
 )
@@ -39,38 +31,26 @@ const indicatorVariants = cva(
   {
     variants: {
       color: {
-        default: "bg-indigo-600",
-        primary: "bg-[oklch(0.58_0.20_285)]",
-        ai: "bg-[oklch(0.60_0.24_195)]",
-        success: "bg-[oklch(0.58_0.23_145)]",
-        warning: "bg-[oklch(0.64_0.26_85)]",
-        error: "bg-[oklch(0.58_0.27_25)]",
-        gradient: "bg-gradient-to-r from-[oklch(0.58_0.20_285)] to-[oklch(0.65_0.22_45)]",
-        "gradient-ai": "bg-gradient-to-r from-[oklch(0.70_0.20_195)] to-[oklch(0.60_0.24_195)]",
-      },
-      animated: {
-        true: "relative overflow-hidden",
-        false: "",
+        default: "bg-[var(--primary)]",
+        primary: "bg-[var(--primary)]",
+        accent: "bg-[var(--accent)]",
+        success: "bg-[var(--success)]",
+        warning: "bg-[var(--warning)]",
+        error: "bg-[var(--destructive)]",
       },
       striped: {
-        true: "",
+        true: "bg-[length:1rem_1rem] bg-[linear-gradient(45deg,rgba(255,255,255,0.15)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.15)_50%,rgba(255,255,255,0.15)_75%,transparent_75%,transparent)]",
         false: "",
       },
     },
     compoundVariants: [
       {
         striped: true,
-        className: "bg-[length:1rem_1rem] bg-[linear-gradient(45deg,rgba(255,255,255,0.15)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.15)_50%,rgba(255,255,255,0.15)_75%,transparent_75%,transparent)]",
-      },
-      {
-        striped: true,
-        animated: true,
-        className: "animate-[stripe_1s_linear_infinite]",
+        className: "animate-stripe",
       },
     ],
     defaultVariants: {
       color: "default",
-      animated: false,
       striped: false,
     },
   }
@@ -92,7 +72,7 @@ export interface ProgressProps
 const Progress = React.forwardRef<
   React.ElementRef<typeof ProgressPrimitive.Root>,
   ProgressProps
->(({ className, size, variant, color, animated, striped, showLabel, labelPosition = "top", labelFormat = "percentage", value = 0, max = 100, ...props }, ref) => {
+>(({ className, size, color, striped, showLabel, labelPosition = "top", labelFormat = "percentage", value = 0, max = 100, ...props }, ref) => {
   const safeValue = value ?? 0
   const percentage = Math.min(Math.max((safeValue / max) * 100, 0), 100)
 
@@ -107,7 +87,7 @@ const Progress = React.forwardRef<
 
     if (labelPosition === "inner") {
       return (
-        <span className="absolute inset-0 flex items-center justify-center text-xs font-medium text-white mix-blend-difference">
+        <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white mix-blend-difference">
           {formatLabel()}
         </span>
       )
@@ -115,11 +95,11 @@ const Progress = React.forwardRef<
 
     return (
       <div className={cn(
-        "flex justify-between text-xs font-medium text-muted-foreground mb-1",
-        labelPosition === "bottom" && "flex-col-reverse mt-1 mb-0"
+        "flex justify-between text-xs font-bold uppercase tracking-wider text-[var(--muted-foreground)] mb-2",
+        labelPosition === "bottom" && "flex-col-reverse mt-2 mb-0"
       )}>
         <span>{props.children || "Progress"}</span>
-        <span>{formatLabel()}</span>
+        <span className="font-mono">{formatLabel()}</span>
       </div>
     )
   }
@@ -129,11 +109,11 @@ const Progress = React.forwardRef<
       {labelPosition === "top" && renderLabel()}
       <ProgressPrimitive.Root
         ref={ref}
-        className={cn(progressVariants({ size, variant }), className)}
+        className={cn(progressVariants({ size }), className)}
         {...props}
       >
         <ProgressPrimitive.Indicator
-          className={cn(indicatorVariants({ color, animated, striped }))}
+          className={cn(indicatorVariants({ color, striped }))}
           style={{ transform: `translateX(-${100 - percentage}%)` }}
         >
           {labelPosition === "inner" && percentage > 15 && renderLabel()}
@@ -180,14 +160,12 @@ const CircularProgress = React.forwardRef<HTMLDivElement, CircularProgressProps>
     const offset = circumference - (percentage / 100) * circumference
 
     const colorMap = {
-      default: "#4f46e5",
-      primary: "oklch(0.58 0.20 285)",
-      ai: "oklch(0.60 0.24 195)",
-      success: "oklch(0.58 0.23 145)",
-      warning: "oklch(0.64 0.26 85)",
-      error: "oklch(0.58 0.27 25)",
-      gradient: "url(#gradient)",
-      "gradient-ai": "url(#gradient-ai)",
+      default: "var(--primary)",
+      primary: "var(--primary)",
+      accent: "var(--accent)",
+      success: "var(--success)",
+      warning: "var(--warning)",
+      error: "var(--destructive)",
     }
 
     const formatLabel = () => {
@@ -199,22 +177,12 @@ const CircularProgress = React.forwardRef<HTMLDivElement, CircularProgressProps>
     return (
       <div ref={ref} className={cn("relative inline-flex items-center justify-center", className)} {...props}>
         <svg width={size} height={size} className="transform -rotate-90">
-          <defs>
-            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="oklch(0.58 0.20 285)" />
-              <stop offset="100%" stopColor="oklch(0.65 0.22 45)" />
-            </linearGradient>
-            <linearGradient id="gradient-ai" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="oklch(0.70 0.20 195)" />
-              <stop offset="100%" stopColor="oklch(0.60 0.24 195)" />
-            </linearGradient>
-          </defs>
           <circle
             cx={size / 2}
             cy={size / 2}
             r={radius}
             fill="none"
-            stroke="oklch(0.90 0.015 265)"
+            stroke="var(--muted)"
             strokeWidth={strokeWidth}
           />
           <circle
@@ -226,12 +194,12 @@ const CircularProgress = React.forwardRef<HTMLDivElement, CircularProgressProps>
             strokeWidth={strokeWidth}
             strokeDasharray={circumference}
             strokeDashoffset={offset}
-            strokeLinecap="round"
+            strokeLinecap="square"
             className="transition-all duration-300"
           />
         </svg>
         {showLabel && (
-          <span className="absolute text-xs font-medium tabular-nums">
+          <span className="absolute text-xs font-bold tabular-nums">
             {formatLabel()}
           </span>
         )}
@@ -255,10 +223,10 @@ export interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
 const Skeleton = React.forwardRef<HTMLDivElement, SkeletonProps>(
   ({ className, variant = "default", width, height, count = 1, ...props }, ref) => {
     const variantClasses = {
-      default: "rounded-md",
-      circle: "rounded-full",
-      text: "h-4 rounded",
-      rect: "rounded-sm",
+      default: "border-2 border-[var(--border)]",
+      circle: "rounded-full border-2 border-[var(--border)]",
+      text: "h-4",
+      rect: "",
     }
 
     const skeletons = Array.from({ length: count }, (_, i) => (
@@ -266,7 +234,7 @@ const Skeleton = React.forwardRef<HTMLDivElement, SkeletonProps>(
         key={i}
         ref={i === 0 ? ref : null}
         className={cn(
-          "animate-pulse bg-muted",
+          "animate-pulse bg-[var(--muted)]",
           variantClasses[variant],
           className
         )}
@@ -286,7 +254,7 @@ Skeleton.displayName = "Skeleton"
 
 export interface SpinnerProps extends React.HTMLAttributes<HTMLDivElement> {
   size?: "xs" | "sm" | "md" | "lg" | "xl"
-  color?: "default" | "primary" | "ai" | "success" | "warning" | "error"
+  color?: "default" | "primary" | "accent" | "success" | "warning" | "error"
 }
 
 const sizeMap = {
@@ -298,12 +266,12 @@ const sizeMap = {
 }
 
 const borderColors = {
-  default: "border-foreground",
-  primary: "border-[oklch(0.58_0.20_285)]",
-  ai: "border-[oklch(0.60_0.24_195)]",
-  success: "border-[oklch(0.58_0.23_145)]",
-  warning: "border-[oklch(0.64_0.26_85)]",
-  error: "border-[oklch(0.58_0.27_25)]",
+  default: "border-[var(--foreground)]",
+  primary: "border-[var(--primary)]",
+  accent: "border-[var(--accent)]",
+  success: "border-[var(--success)]",
+  warning: "border-[var(--warning)]",
+  error: "border-[var(--destructive)]",
 }
 
 const Spinner = React.forwardRef<HTMLDivElement, SpinnerProps>(
@@ -325,7 +293,7 @@ const Spinner = React.forwardRef<HTMLDivElement, SpinnerProps>(
 Spinner.displayName = "Spinner"
 
 // ============================================
-// Dots Spinner Component (creative variant)
+// Dots Spinner Component
 // ============================================
 
 export interface DotsSpinnerProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -335,8 +303,8 @@ export interface DotsSpinnerProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const dotsSizeMap = {
   sm: "size-1",
-  md: "size-1.5",
-  lg: "size-2",
+  md: "size-2",
+  lg: "size-3",
 }
 
 const DotsSpinner = React.forwardRef<HTMLDivElement, DotsSpinnerProps>(
@@ -351,7 +319,7 @@ const DotsSpinner = React.forwardRef<HTMLDivElement, DotsSpinnerProps>(
           <span
             key={i}
             className={cn(
-              "rounded-full animate-bounce",
+              "rounded-full animate-bounce-dot",
               dotsSizeMap[size]
             )}
             style={{

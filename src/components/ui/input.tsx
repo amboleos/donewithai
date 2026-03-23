@@ -2,38 +2,41 @@
 
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
-
 import { cn } from "@/lib/utils"
 
 // ============================================
-// Input Variants
+// Input Variants - Neo-Brutalist Style
 // ============================================
 
 const inputVariants = cva(
-  "flex w-full rounded-lg text-sm transition-all duration-200 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+  "flex w-full border-2 bg-[var(--card)] text-sm transition-all duration-150 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-[var(--muted-foreground)] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
   {
     variants: {
       variant: {
+        // Default - Brutal shadow
         default:
-          "border border-input bg-background ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+          "border-[var(--border)] [box-shadow:var(--shadow-brutal-sm)] focus-visible:translate-x-[2px] focus-visible:translate-y-[2px] focus-visible:shadow-none focus-visible:border-[var(--primary)]",
+        // Filled - No shadow
         filled:
-          "border-0 bg-muted/50 focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring",
+          "border-[var(--border)] bg-[var(--muted)] focus-visible:bg-[var(--card)] focus-visible:border-[var(--primary)]",
+        // Underline - Bottom border only
         underline:
-          "border-0 border-b-2 border-input bg-transparent rounded-none focus-visible:border-primary focus-visible:ring-0 px-0",
+          "border-0 border-b-2 border-[var(--border)] bg-transparent rounded-none focus-visible:border-[var(--primary)] px-0",
+        // Ghost - Minimal
         ghost:
-          "border-0 bg-transparent focus-visible:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring",
+          "border-transparent bg-transparent focus-visible:bg-[var(--muted)] focus-visible:border-[var(--border)]",
       },
       size: {
-        default: "h-10 px-3 py-2",
-        sm: "h-8 px-2.5 py-1.5 text-xs",
-        lg: "h-12 px-4 py-3",
-        xl: "h-14 px-5 py-4 text-base",
+        default: "h-11 px-4 py-2",
+        sm: "h-9 px-3 py-1.5 text-xs",
+        lg: "h-12 px-5 py-3",
+        xl: "h-14 px-6 py-4 text-base",
       },
       state: {
         default: "",
-        error: "border-error focus-visible:ring-error",
-        success: "border-success focus-visible:ring-success",
-        warning: "border-warning focus-visible:ring-warning",
+        error: "border-[var(--destructive)] focus-visible:border-[var(--destructive)]",
+        success: "border-[var(--success)] focus-visible:border-[var(--success)]",
+        warning: "border-[var(--warning)] focus-visible:border-[var(--warning)]",
       },
     },
     defaultVariants: {
@@ -99,22 +102,22 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             className={cn(
-              "absolute left-3 pointer-events-none transition-all duration-200 z-10",
-              variant === "default" && "-top-2.5 left-2 bg-background px-1 text-xs font-medium text-foreground",
+              "absolute left-4 pointer-events-none transition-all duration-200 z-10 font-semibold text-xs uppercase tracking-wider",
+              variant === "default" && "-top-2.5 left-3 bg-[var(--card)] px-1 text-[var(--foreground)]",
               variant === "filled" && [
-                "text-muted-foreground",
+                "text-[var(--muted-foreground)]",
                 hasValue || focused
-                  ? "top-2.5 text-xs"
-                  : "top-3 text-sm base-text",
+                  ? "top-2 text-xs"
+                  : "top-3 text-sm",
               ],
               variant === "underline" && [
-                "left-0 text-muted-foreground",
+                "left-0 text-[var(--muted-foreground)]",
                 hasValue || focused
                   ? "-top-5 text-xs"
                   : "top-2.5 text-sm",
               ],
-              inputState === "error" && "text-error",
-              inputState === "success" && "text-success"
+              inputState === "error" && "text-[var(--destructive)]",
+              inputState === "success" && "text-[var(--success)]"
             )}
           >
             {label}
@@ -152,12 +155,12 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
         {/* Bottom row: hint, error, character count */}
         {(error || hint || hasCharacterCount) && (
-          <div className="flex items-center justify-between mt-1.5 px-1">
+          <div className="flex items-center justify-between mt-2 px-1">
             <div className="flex-1">
               {error && (
                 <span
                   id={`${props.id || props.name}-error`}
-                  className="text-xs text-error flex items-center gap-1"
+                  className="text-xs text-[var(--destructive)] font-semibold uppercase flex items-center gap-1"
                 >
                   <svg
                     className="size-3"
@@ -172,7 +175,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               {!error && hint && (
                 <span
                   id={`${props.id || props.name}-hint`}
-                  className="text-xs text-muted-foreground"
+                  className="text-xs text-[var(--muted-foreground)]"
                 >
                   {hint}
                 </span>
@@ -182,12 +185,12 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             {hasCharacterCount && (
               <span
                 className={cn(
-                  "text-xs tabular-nums",
+                  "text-xs font-mono tabular-nums",
                   characterCount > maxLength * 0.9
-                    ? "text-error"
+                    ? "text-[var(--destructive)]"
                     : characterCount > maxLength * 0.7
-                      ? "text-warning"
-                      : "text-muted-foreground"
+                      ? "text-[var(--warning)]"
+                      : "text-[var(--muted-foreground)]"
                 )}
               >
                 {characterCount}/{maxLength}
@@ -206,30 +209,30 @@ Input.displayName = "Input"
 // ============================================
 
 const textareaVariants = cva(
-  "flex w-full rounded-lg text-sm transition-all duration-200 placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 resize-none",
+  "flex w-full border-2 bg-[var(--card)] text-sm transition-all duration-150 placeholder:text-[var(--muted-foreground)] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 resize-none",
   {
     variants: {
       variant: {
         default:
-          "border border-input bg-background ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+          "border-[var(--border)] [box-shadow:var(--shadow-brutal-sm)] focus-visible:translate-x-[2px] focus-visible:translate-y-[2px] focus-visible:shadow-none focus-visible:border-[var(--primary)]",
         filled:
-          "border-0 bg-muted/50 focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring",
+          "border-[var(--border)] bg-[var(--muted)] focus-visible:bg-[var(--card)] focus-visible:border-[var(--primary)]",
         underline:
-          "border-0 border-b-2 border-input bg-transparent rounded-none focus-visible:border-primary focus-visible:ring-0 px-0",
+          "border-0 border-b-2 border-[var(--border)] bg-transparent rounded-none focus-visible:border-[var(--primary)] px-0",
         ghost:
-          "border-0 bg-transparent focus-visible:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring",
+          "border-transparent bg-transparent focus-visible:bg-[var(--muted)] focus-visible:border-[var(--border)]",
       },
       size: {
-        default: "px-3 py-2 min-h-[80px]",
-        sm: "px-2.5 py-1.5 text-xs min-h-[60px]",
-        lg: "px-4 py-3 min-h-[120px]",
-        xl: "px-5 py-4 text-base min-h-[160px]",
+        default: "px-4 py-3 min-h-[100px]",
+        sm: "px-3 py-2 text-xs min-h-[80px]",
+        lg: "px-5 py-4 min-h-[140px]",
+        xl: "px-6 py-5 text-base min-h-[180px]",
       },
       state: {
         default: "",
-        error: "border-error focus-visible:ring-error",
-        success: "border-success focus-visible:ring-success",
-        warning: "border-warning focus-visible:ring-warning",
+        error: "border-[var(--destructive)] focus-visible:border-[var(--destructive)]",
+        success: "border-[var(--success)] focus-visible:border-[var(--success)]",
+        warning: "border-[var(--warning)] focus-visible:border-[var(--warning)]",
       },
     },
     defaultVariants: {
@@ -304,22 +307,22 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         {label && (
           <label
             className={cn(
-              "absolute left-3 pointer-events-none transition-all duration-200 z-10",
-              variant === "default" && "-top-2.5 left-2 bg-background px-1 text-xs font-medium text-foreground",
+              "absolute left-4 pointer-events-none transition-all duration-200 z-10 font-semibold text-xs uppercase tracking-wider",
+              variant === "default" && "-top-2.5 left-3 bg-[var(--card)] px-1 text-[var(--foreground)]",
               variant === "filled" && [
-                "text-muted-foreground",
+                "text-[var(--muted-foreground)]",
                 hasValue || focused
-                  ? "top-2.5 text-xs"
+                  ? "top-2 text-xs"
                   : "top-3 text-sm",
               ],
               variant === "underline" && [
-                "left-0 text-muted-foreground",
+                "left-0 text-[var(--muted-foreground)]",
                 hasValue || focused
                   ? "-top-5 text-xs"
                   : "top-2.5 text-sm",
               ],
-              inputState === "error" && "text-error",
-              inputState === "success" && "text-success"
+              inputState === "error" && "text-[var(--destructive)]",
+              inputState === "success" && "text-[var(--success)]"
             )}
           >
             {label}
@@ -358,12 +361,12 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
 
         {/* Bottom row: hint, error, character count */}
         {(error || hint || hasCharacterCount) && (
-          <div className="flex items-center justify-between mt-1.5 px-1">
+          <div className="flex items-center justify-between mt-2 px-1">
             <div className="flex-1">
               {error && (
                 <span
                   id={`${props.id || props.name}-error`}
-                  className="text-xs text-error flex items-center gap-1"
+                  className="text-xs text-[var(--destructive)] font-semibold uppercase flex items-center gap-1"
                 >
                   <svg
                     className="size-3"
@@ -378,7 +381,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
               {!error && hint && (
                 <span
                   id={`${props.id || props.name}-hint`}
-                  className="text-xs text-muted-foreground"
+                  className="text-xs text-[var(--muted-foreground)]"
                 >
                   {hint}
                 </span>
@@ -388,12 +391,12 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             {hasCharacterCount && (
               <span
                 className={cn(
-                  "text-xs tabular-nums",
+                  "text-xs font-mono tabular-nums",
                   characterCount > maxLength * 0.9
-                    ? "text-error"
+                    ? "text-[var(--destructive)]"
                     : characterCount > maxLength * 0.7
-                      ? "text-warning"
-                      : "text-muted-foreground"
+                      ? "text-[var(--warning)]"
+                      : "text-[var(--muted-foreground)]"
                 )}
               >
                 {characterCount}/{maxLength}

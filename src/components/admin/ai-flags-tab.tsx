@@ -254,9 +254,9 @@ export default function AIFlagsTab() {
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="flex items-center gap-3 text-green-500 font-mono">
-          <RefreshCw className="h-5 w-5 animate-spin" />
-          <span>[LOADING AI FLAGS...]</span>
+        <div className="flex items-center gap-3 font-mono" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+          <RefreshCw className="h-5 w-5 animate-spin text-[var(--primary)]" />
+          <span className="text-[var(--primary)]">[LOADING AI FLAGS...]</span>
         </div>
       </div>
     );
@@ -273,41 +273,41 @@ export default function AIFlagsTab() {
   return (
     <div className="space-y-4">
       {/* Stats bar */}
-      <div className="flex items-center gap-6 bg-slate-900/50 px-4 py-3 rounded border border-slate-800">
-        <div className="flex items-center gap-2 font-mono text-sm">
-          <span className="text-green-500">$</span>
-          <span className="text-slate-400">stats</span>
+      <div className="flex items-center gap-6 bg-[var(--muted)] px-4 py-3 rounded border-2 border-[var(--border)] [box-shadow:var(--shadow-brutal-sm)]">
+        <div className="flex items-center gap-2 font-mono text-sm" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+          <span className="text-[var(--primary)]">$</span>
+          <span className="text-[var(--muted-foreground)]">stats</span>
         </div>
-        <div className="flex items-center gap-4 text-sm font-mono">
+        <div className="flex items-center gap-4 text-sm font-mono" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
           <div className="flex items-center gap-2">
-            <GitCommit className="h-4 w-4 text-slate-500" />
-            <span className="text-slate-500">commits:</span>
-            <span className="text-slate-300">{commits.length}</span>
+            <GitCommit className="h-4 w-4 text-[var(--muted-foreground)]" />
+            <span className="text-[var(--muted-foreground)]">commits:</span>
+            <span className="text-[var(--foreground)]">{commits.length}</span>
           </div>
           <div className="flex items-center gap-2">
-            <GitBranch className="h-4 w-4 text-slate-500" />
-            <span className="text-slate-500">branches:</span>
-            <span className="text-slate-300">{branches.length}</span>
+            <GitBranch className="h-4 w-4 text-[var(--muted-foreground)]" />
+            <span className="text-[var(--muted-foreground)]">branches:</span>
+            <span className="text-[var(--foreground)]">{branches.length}</span>
           </div>
           <div className="flex items-center gap-2">
-            <Brain className="h-4 w-4 text-purple-500" />
-            <span className="text-slate-500">pattern_ai:</span>
-            <span className="text-purple-400">{aiCommitsCount + aiBranchesCount}</span>
+            <Brain className="h-4 w-4" style={{ color: 'var(--accent)' }} />
+            <span className="text-[var(--muted-foreground)]">pattern_ai:</span>
+            <span style={{ color: 'var(--accent)' }}>{aiCommitsCount + aiBranchesCount}</span>
           </div>
-          <div className="flex items-center gap-2 border-l border-slate-700 pl-4">
-            <Sparkles className="h-4 w-4 text-red-500" />
-            <span className="text-slate-500">agentic:</span>
-            <span className="text-red-400">{agenticCount}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <User className="h-4 w-4 text-blue-500" />
-            <span className="text-slate-500">human_assisted:</span>
-            <span className="text-blue-400">{humanAssistedCount}</span>
+          <div className="flex items-center gap-2 border-l-2 border-[var(--border)] pl-4">
+            <Sparkles className="h-4 w-4 text-[var(--destructive)]" />
+            <span className="text-[var(--muted-foreground)]">agentic:</span>
+            <span className="text-[var(--destructive)]">{agenticCount}</span>
           </div>
           <div className="flex items-center gap-2">
-            <Code2 className="h-4 w-4 text-slate-500" />
-            <span className="text-slate-500">not_analyzed:</span>
-            <span className="text-slate-400">{notAnalyzedCount}</span>
+            <User className="h-4 w-4" style={{ color: 'var(--primary)' }} />
+            <span className="text-[var(--muted-foreground)]">human_assisted:</span>
+            <span style={{ color: 'var(--primary)' }}>{humanAssistedCount}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Code2 className="h-4 w-4 text-[var(--muted-foreground)]" />
+            <span className="text-[var(--muted-foreground)]">not_analyzed:</span>
+            <span className="text-[var(--muted-foreground)]">{notAnalyzedCount}</span>
           </div>
         </div>
       </div>
@@ -317,12 +317,13 @@ export default function AIFlagsTab() {
         <button
           onClick={() => { setActiveTab('commits'); setSearchQuery(''); setPatternFilter('all'); setCodeAnalysisFilter('all'); }}
           className={`
-            flex items-center gap-2 px-4 py-2 rounded font-mono text-sm transition-all
+            flex items-center gap-2 px-4 py-2 rounded font-mono text-sm transition-all border-2
             ${activeTab === 'commits'
-              ? 'bg-green-500/20 text-green-400 border border-green-500/50'
-              : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 border border-transparent'
+              ? 'bg-[var(--primary)] text-[var(--primary-foreground)] border-[var(--border)] [box-shadow:var(--shadow-brutal-sm)]'
+              : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--card)] border-transparent'
             }
           `}
+          style={{ fontFamily: 'JetBrains Mono, monospace' }}
         >
           <GitCommit className="h-4 w-4" />
           COMMITS
@@ -331,12 +332,13 @@ export default function AIFlagsTab() {
         <button
           onClick={() => { setActiveTab('branches'); setSearchQuery(''); setPatternFilter('all'); setCodeAnalysisFilter('all'); }}
           className={`
-            flex items-center gap-2 px-4 py-2 rounded font-mono text-sm transition-all
+            flex items-center gap-2 px-4 py-2 rounded font-mono text-sm transition-all border-2
             ${activeTab === 'branches'
-              ? 'bg-green-500/20 text-green-400 border border-green-500/50'
-              : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 border border-transparent'
+              ? 'bg-[var(--primary)] text-[var(--primary-foreground)] border-[var(--border)] [box-shadow:var(--shadow-brutal-sm)]'
+              : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--card)] border-transparent'
             }
           `}
+          style={{ fontFamily: 'JetBrains Mono, monospace' }}
         >
           <GitBranch className="h-4 w-4" />
           BRANCHES
@@ -345,19 +347,21 @@ export default function AIFlagsTab() {
       </div>
 
       {/* Search */}
-      <div className="flex items-center gap-2 bg-slate-900/50 px-3 py-2 rounded border border-slate-800">
-        <Search className="h-4 w-4 text-slate-500" />
+      <div className="flex items-center gap-2 bg-[var(--muted)] px-3 py-2 rounded border-2 border-[var(--border)] [box-shadow:var(--shadow-brutal-sm)]">
+        <Search className="h-4 w-4 text-[var(--muted-foreground)]" />
         <input
           type="text"
           placeholder={`Search ${activeTab}...`}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="flex-1 bg-transparent border-none outline-none text-slate-200 font-mono text-sm placeholder:text-slate-600"
+          className="flex-1 bg-transparent border-none outline-none font-mono text-sm placeholder:text-[var(--muted-foreground)]"
+          style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--foreground)' }}
         />
         {searchQuery && (
           <button
             onClick={() => setSearchQuery('')}
-            className="text-xs text-slate-500 hover:text-slate-300 font-mono"
+            className="text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)] font-mono"
+            style={{ fontFamily: 'JetBrains Mono, monospace' }}
           >
             [ESC]
           </button>
@@ -368,19 +372,20 @@ export default function AIFlagsTab() {
       <div className="flex flex-wrap items-center gap-4">
         {/* Pattern Status Filter */}
         <div className="flex items-center gap-2">
-          <span className="text-xs font-mono text-slate-500">PATTERN:</span>
+          <span className="text-xs font-mono" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--muted-foreground)' }}>PATTERN:</span>
           <div className="flex gap-1">
             {(['all', 'ai', 'human', 'unknown'] as PatternFilter[]).map((filter) => (
               <button
                 key={filter}
                 onClick={() => setPatternFilter(filter)}
                 className={`
-                  px-2 py-1 rounded text-xs font-mono transition-colors
+                  px-2 py-1 rounded text-xs font-mono transition-colors border-2
                   ${patternFilter === filter
-                    ? 'bg-purple-500/20 text-purple-400 border border-purple-500/50'
-                    : 'bg-slate-800 text-slate-500 border border-slate-700 hover:text-slate-300 hover:border-slate-600'
+                    ? 'bg-[var(--accent-light)] text-[var(--accent)] border-[var(--accent)] [box-shadow:var(--shadow-brutal-sm)]'
+                    : 'bg-[var(--muted)] text-[var(--muted-foreground)] border-[var(--border)] hover:text-[var(--foreground)] hover:border-[var(--border)]'
                   }
                 `}
+                style={{ fontFamily: 'JetBrains Mono, monospace' }}
               >
                 {filter.toUpperCase()}
               </button>
@@ -390,25 +395,26 @@ export default function AIFlagsTab() {
 
         {/* Code Analysis Filter */}
         <div className="flex items-center gap-2">
-          <span className="text-xs font-mono text-slate-500">CODE:</span>
+          <span className="text-xs font-mono" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--muted-foreground)' }}>CODE:</span>
           <div className="flex gap-1">
             {(['all', 'agentic', 'human_assisted', 'not_analyzed'] as CodeAnalysisFilter[]).map((filter) => (
               <button
                 key={filter}
                 onClick={() => setCodeAnalysisFilter(filter)}
                 className={`
-                  px-2 py-1 rounded text-xs font-mono transition-colors
+                  px-2 py-1 rounded text-xs font-mono transition-colors border-2
                   ${codeAnalysisFilter === filter
                     ? filter === 'agentic'
-                      ? 'bg-red-500/20 text-red-400 border border-red-500/50'
+                      ? 'bg-[var(--destructive)]/10 text-[var(--destructive)] border-[var(--destructive)] [box-shadow:var(--shadow-brutal-sm)]'
                       : filter === 'human_assisted'
-                        ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50'
+                        ? 'bg-[var(--primary-light)] text-[var(--primary)] border-[var(--primary)] [box-shadow:var(--shadow-brutal-sm)]'
                         : filter === 'not_analyzed'
-                          ? 'bg-slate-600 text-slate-300 border border-slate-500'
-                          : 'bg-green-500/20 text-green-400 border border-green-500/50'
-                    : 'bg-slate-800 text-slate-500 border border-slate-700 hover:text-slate-300 hover:border-slate-600'
+                          ? 'bg-[var(--muted)] text-[var(--foreground)] border-[var(--border)] [box-shadow:var(--shadow-brutal-sm)]'
+                          : 'bg-[var(--primary-light)] text-[var(--primary)] border-[var(--primary)] [box-shadow:var(--shadow-brutal-sm)]'
+                    : 'bg-[var(--muted)] text-[var(--muted-foreground)] border-[var(--border)] hover:text-[var(--foreground)] hover:border-[var(--border)]'
                   }
                 `}
+                style={{ fontFamily: 'JetBrains Mono, monospace' }}
               >
                 {filter === 'all' ? 'ALL' : filter === 'human_assisted' ? 'HUMAN' : filter.toUpperCase().replace('_', ' ')}
               </button>
@@ -423,7 +429,8 @@ export default function AIFlagsTab() {
               setPatternFilter('all');
               setCodeAnalysisFilter('all');
             }}
-            className="text-xs font-mono text-slate-500 hover:text-slate-300 transition-colors"
+            className="text-xs font-mono text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
+            style={{ fontFamily: 'JetBrains Mono, monospace' }}
           >
             [CLEAR FILTERS]
           </button>
@@ -432,46 +439,46 @@ export default function AIFlagsTab() {
 
       {/* Commits Table */}
       {activeTab === 'commits' && (
-        <div className="bg-slate-900/50 border border-slate-800 rounded-lg overflow-hidden">
+        <div className="bg-[var(--card)] border-2 border-[var(--border)] [box-shadow:var(--shadow-brutal)] rounded-lg overflow-hidden">
           {filteredAndSortedCommits.length === 0 ? (
             <div className="text-center py-12">
-              <GitCommit className="h-12 w-12 text-slate-700 mx-auto mb-4" />
-              <p className="font-mono text-slate-500">
+              <GitCommit className="h-12 w-12 text-[var(--muted-foreground)] mx-auto mb-4" />
+              <p className="font-mono text-[var(--muted-foreground)]" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
                 {searchQuery ? 'No matching commits found.' : 'No commits to manage. Add repositories first.'}
               </p>
             </div>
           ) : (
             <div className="max-h-[600px] overflow-y-auto">
               <table className="w-full border-collapse">
-                <thead className="sticky top-0 bg-slate-900">
-                  <tr className="border-b border-green-900/30">
-                    <th className="px-4 py-3 text-left font-mono text-xs text-green-500 cursor-pointer hover:text-green-400" onClick={() => handleSort('name')}>
+                <thead className="sticky top-0 bg-[var(--muted)]">
+                  <tr className="border-b-2 border-[var(--border)]">
+                    <th className="px-4 py-3 text-left font-mono text-xs cursor-pointer hover:text-[var(--primary)]" onClick={() => handleSort('name')} style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>
                       <div className="flex items-center gap-1">MESSAGE <SortIndicator field="name" /></div>
                     </th>
-                    <th className="px-4 py-3 text-left font-mono text-xs text-green-500 cursor-pointer hover:text-green-400" onClick={() => handleSort('author')}>
+                    <th className="px-4 py-3 text-left font-mono text-xs cursor-pointer hover:text-[var(--primary)]" onClick={() => handleSort('author')} style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>
                       <div className="flex items-center gap-1">AUTHOR <SortIndicator field="author" /></div>
                     </th>
-                    <th className="px-4 py-3 text-left font-mono text-xs text-green-500 cursor-pointer hover:text-green-400" onClick={() => handleSort('repo')}>
+                    <th className="px-4 py-3 text-left font-mono text-xs cursor-pointer hover:text-[var(--primary)]" onClick={() => handleSort('repo')} style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>
                       <div className="flex items-center gap-1">REPO <SortIndicator field="repo" /></div>
                     </th>
-                    <th className="px-4 py-3 text-left font-mono text-xs text-green-500 cursor-pointer hover:text-green-400" onClick={() => handleSort('status')}>
+                    <th className="px-4 py-3 text-left font-mono text-xs cursor-pointer hover:text-[var(--primary)]" onClick={() => handleSort('status')} style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>
                       <div className="flex items-center gap-1">PATTERN <SortIndicator field="status" /></div>
                     </th>
-                    <th className="px-4 py-3 text-left font-mono text-xs text-green-500">CODE ANALYSIS</th>
-                    <th className="px-4 py-3 text-right font-mono text-xs text-green-500">ACTION</th>
+                    <th className="px-4 py-3 text-left font-mono text-xs" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>CODE ANALYSIS</th>
+                    <th className="px-4 py-3 text-right font-mono text-xs" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>ACTION</th>
                   </tr>
                 </thead>
-                <tbody className="font-mono text-sm">
+                <tbody className="font-mono text-sm" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
                   {filteredAndSortedCommits.map((commit) => (
-                    <tr key={commit.id} className="border-b border-slate-800 hover:bg-slate-800/30 transition-colors">
+                    <tr key={commit.id} className="border-b-2 border-[var(--border)] hover:bg-[var(--muted)] transition-colors">
                       <td className="px-4 py-3">
                         <div className="max-w-md">
-                          <p className="text-slate-200 truncate">{commit.message.split('\n')[0]}</p>
-                          <p className="text-xs text-slate-600">{commit.sha.substring(0, 7)}</p>
+                          <p className="text-[var(--foreground)] truncate" style={{ fontFamily: 'Sora, sans-serif' }}>{commit.message.split('\n')[0]}</p>
+                          <p className="text-xs text-[var(--muted-foreground)]">{commit.sha.substring(0, 7)}</p>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-slate-400">{commit.author}</td>
-                      <td className="px-4 py-3 text-slate-500">{commit.repo_name}</td>
+                      <td className="px-4 py-3 text-[var(--muted-foreground)]">{commit.author}</td>
+                      <td className="px-4 py-3 text-[var(--muted-foreground)]">{commit.repo_name}</td>
                       <td className="px-4 py-3">
                         <PatternBadge isAIDetected={commit.is_ai_detected} />
                       </td>
@@ -486,12 +493,13 @@ export default function AIFlagsTab() {
                             disabled={analyzingId === commit.id}
                             title="Analyze code for AI patterns"
                             className={`
-                              px-3 py-1 rounded font-mono text-xs transition-colors flex items-center gap-1
+                              px-3 py-1 rounded font-mono text-xs transition-colors flex items-center gap-1 border-2
                               ${analyzingId === commit.id
-                                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 cursor-wait'
-                                : 'bg-amber-500/10 text-amber-500 border border-amber-500/30 hover:bg-amber-500/20'
+                                ? 'bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)] cursor-wait'
+                                : 'bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)] hover:bg-[var(--warning)]/20'
                               }
                             `}
+                            style={{ fontFamily: 'JetBrains Mono, monospace' }}
                           >
                             {analyzingId === commit.id ? (
                               <>
@@ -510,12 +518,13 @@ export default function AIFlagsTab() {
                           <button
                             onClick={() => toggleAI('commit', commit.id, commit.is_ai_detected)}
                             className={`
-                              px-3 py-1 rounded font-mono text-xs transition-colors
+                              px-3 py-1 rounded font-mono text-xs transition-colors border-2
                               ${commit.is_ai_detected
-                                ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30 hover:bg-purple-500/30'
-                                : 'bg-slate-700 text-slate-400 border border-slate-600 hover:bg-slate-600'
+                                ? 'bg-[var(--accent-light)] text-[var(--accent)] border-[var(--accent)] hover:bg-[var(--accent-light)]'
+                                : 'bg-[var(--muted)] text-[var(--muted-foreground)] border-[var(--border)] hover:bg-[var(--muted)]'
                               }
                             `}
+                            style={{ fontFamily: 'JetBrains Mono, monospace' }}
                           >
                             {commit.is_ai_detected ? 'SET_HUMAN' : 'SET_AI'}
                           </button>
@@ -532,42 +541,42 @@ export default function AIFlagsTab() {
 
       {/* Branches Table */}
       {activeTab === 'branches' && (
-        <div className="bg-slate-900/50 border border-slate-800 rounded-lg overflow-hidden">
+        <div className="bg-[var(--card)] border-2 border-[var(--border)] [box-shadow:var(--shadow-brutal)] rounded-lg overflow-hidden">
           {filteredAndSortedBranches.length === 0 ? (
             <div className="text-center py-12">
-              <GitBranch className="h-12 w-12 text-slate-700 mx-auto mb-4" />
-              <p className="font-mono text-slate-500">
+              <GitBranch className="h-12 w-12 text-[var(--muted-foreground)] mx-auto mb-4" />
+              <p className="font-mono text-[var(--muted-foreground)]" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
                 {searchQuery ? 'No matching branches found.' : 'No branches to manage. Add repositories first.'}
               </p>
             </div>
           ) : (
             <div className="max-h-[600px] overflow-y-auto">
               <table className="w-full border-collapse">
-                <thead className="sticky top-0 bg-slate-900">
-                  <tr className="border-b border-green-900/30">
-                    <th className="px-4 py-3 text-left font-mono text-xs text-green-500 cursor-pointer hover:text-green-400" onClick={() => handleSort('name')}>
+                <thead className="sticky top-0 bg-[var(--muted)]">
+                  <tr className="border-b-2 border-[var(--border)]">
+                    <th className="px-4 py-3 text-left font-mono text-xs cursor-pointer hover:text-[var(--primary)]" onClick={() => handleSort('name')} style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>
                       <div className="flex items-center gap-1">NAME <SortIndicator field="name" /></div>
                     </th>
-                    <th className="px-4 py-3 text-left font-mono text-xs text-green-500 cursor-pointer hover:text-green-400" onClick={() => handleSort('repo')}>
+                    <th className="px-4 py-3 text-left font-mono text-xs cursor-pointer hover:text-[var(--primary)]" onClick={() => handleSort('repo')} style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>
                       <div className="flex items-center gap-1">REPO <SortIndicator field="repo" /></div>
                     </th>
-                    <th className="px-4 py-3 text-left font-mono text-xs text-green-500 cursor-pointer hover:text-green-400" onClick={() => handleSort('status')}>
+                    <th className="px-4 py-3 text-left font-mono text-xs cursor-pointer hover:text-[var(--primary)]" onClick={() => handleSort('status')} style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>
                       <div className="flex items-center gap-1">PATTERN <SortIndicator field="status" /></div>
                     </th>
-                    <th className="px-4 py-3 text-left font-mono text-xs text-green-500">CODE ANALYSIS</th>
-                    <th className="px-4 py-3 text-right font-mono text-xs text-green-500">ACTION</th>
+                    <th className="px-4 py-3 text-left font-mono text-xs" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>CODE ANALYSIS</th>
+                    <th className="px-4 py-3 text-right font-mono text-xs" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>ACTION</th>
                   </tr>
                 </thead>
-                <tbody className="font-mono text-sm">
+                <tbody className="font-mono text-sm" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
                   {filteredAndSortedBranches.map((branch) => (
-                    <tr key={branch.id} className="border-b border-slate-800 hover:bg-slate-800/30 transition-colors">
+                    <tr key={branch.id} className="border-b-2 border-[var(--border)] hover:bg-[var(--muted)] transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <GitBranch className="h-4 w-4 text-indigo-400" />
-                          <span className="text-slate-200">{branch.name}</span>
+                          <GitBranch className="h-4 w-4" style={{ color: 'var(--accent)' }} />
+                          <span className="text-[var(--foreground)]" style={{ fontFamily: 'Sora, sans-serif' }}>{branch.name}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-slate-500">{branch.repo_name}</td>
+                      <td className="px-4 py-3 text-[var(--muted-foreground)]">{branch.repo_name}</td>
                       <td className="px-4 py-3">
                         <PatternBadge isAIDetected={branch.is_ai_detected} />
                       </td>
@@ -582,12 +591,13 @@ export default function AIFlagsTab() {
                             disabled={analyzingId === branch.id}
                             title="Analyze code for AI patterns"
                             className={`
-                              px-3 py-1 rounded font-mono text-xs transition-colors flex items-center gap-1
+                              px-3 py-1 rounded font-mono text-xs transition-colors flex items-center gap-1 border-2
                               ${analyzingId === branch.id
-                                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 cursor-wait'
-                                : 'bg-amber-500/10 text-amber-500 border border-amber-500/30 hover:bg-amber-500/20'
+                                ? 'bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)] cursor-wait'
+                                : 'bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)] hover:bg-[var(--warning)]/20'
                               }
                             `}
+                            style={{ fontFamily: 'JetBrains Mono, monospace' }}
                           >
                             {analyzingId === branch.id ? (
                               <>
@@ -606,12 +616,13 @@ export default function AIFlagsTab() {
                           <button
                             onClick={() => toggleAI('branch', branch.id, branch.is_ai_detected)}
                             className={`
-                              px-3 py-1 rounded font-mono text-xs transition-colors
+                              px-3 py-1 rounded font-mono text-xs transition-colors border-2
                               ${branch.is_ai_detected
-                                ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30 hover:bg-purple-500/30'
-                                : 'bg-slate-700 text-slate-400 border border-slate-600 hover:bg-slate-600'
+                                ? 'bg-[var(--accent-light)] text-[var(--accent)] border-[var(--accent)] hover:bg-[var(--accent-light)]'
+                                : 'bg-[var(--muted)] text-[var(--muted-foreground)] border-[var(--border)] hover:bg-[var(--muted)]'
                               }
                             `}
+                            style={{ fontFamily: 'JetBrains Mono, monospace' }}
                           >
                             {branch.is_ai_detected ? 'SET_HUMAN' : 'SET_AI'}
                           </button>

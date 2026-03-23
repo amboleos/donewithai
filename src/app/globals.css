@@ -406,6 +406,12 @@
   100% { background-position: 0 0; }
 }
 
+/* Stripe move animation for progress bars */
+@keyframes stripe-move {
+  0% { background-position: 1rem 0; }
+  100% { background-position: 0 0; }
+}
+
 /* Bounce for dots */
 @keyframes bounce-dot {
   0%, 100% { transform: translateY(0); }
@@ -435,6 +441,10 @@
 
 .animate-stripe {
   animation: stripe 1s linear infinite;
+}
+
+.animate-stripe-move {
+  animation: stripe-move 1s linear infinite;
 }
 
 .animate-bounce-dot {

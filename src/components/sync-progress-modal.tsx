@@ -230,21 +230,21 @@ function StageIndicator({ currentStage }: { currentStage: SyncProgress['stage'] 
           <div key={stage} className="flex items-center flex-1">
             <div className="flex flex-col items-center flex-1">
               <div className={`
-                w-10 h-10 border-2 flex items-center justify-center transition-all rounded-xl
-                ${isActive ? 'border-white/50 bg-white/20 backdrop-blur' : isCompleted ? 'border-green-400/50 bg-green-500/20 backdrop-blur' : 'border-white/20 bg-white/5 backdrop-blur'}
+                w-10 h-10 border-2 flex items-center justify-center transition-all
+                ${isActive ? 'border-[var(--primary)] bg-[var(--primary)] text-white' : isCompleted ? 'border-[var(--success)] bg-[var(--success)]/20' : 'border-[var(--border)] bg-[var(--muted)]'}
               `}>
                 {isCompleted ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-400" />
+                  <CheckCircle2 className="h-5 w-5 text-[var(--success)]" />
                 ) : (
-                  <StageIcon className={`h-5 w-5 ${isActive ? 'text-white animate-spin' : 'text-white/40'}`} />
+                  <StageIcon className={`h-5 w-5 ${isActive ? 'text-white animate-spin' : 'text-[var(--muted-foreground)]'}`} />
                 )}
               </div>
-              <span className={`text-[10px] uppercase font-bold tracking-wider mt-2 ${isActive ? 'text-white' : isCompleted ? 'text-green-400' : 'text-white/40'}`} style={{ fontFamily: 'Outfit, sans-serif' }}>
+              <span className={`text-[10px] uppercase font-bold tracking-wider mt-2 ${isActive ? 'text-[var(--foreground)]' : isCompleted ? 'text-[var(--success)]' : 'text-[var(--muted-foreground)]'}`} style={{ fontFamily: 'Sora, sans-serif' }}>
                 {config.label.split(' ')[0]}
               </span>
             </div>
             {index < stages.length - 1 && (
-              <div className={`flex-1 h-0.5 mx-1 ${index < displayIndex ? 'bg-green-400/50' : 'bg-white/10'}`} />
+              <div className={`flex-1 h-0.5 mx-1 ${index < displayIndex ? 'bg-[var(--success)]' : 'bg-[var(--border)]'}`} />
             )}
           </div>
         );
@@ -263,21 +263,21 @@ export function SyncProgressModal({ isOpen, progress }: SyncProgressModalProps) 
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-md">
-      <div className="w-full max-w-md mx-4 border border-white/20 bg-white/10 backdrop-blur-xl shadow-2xl rounded-2xl overflow-hidden">
+      <div className="w-full max-w-md mx-4 border-2 border-[var(--border)] bg-[var(--card)] [box-shadow:var(--shadow-brutal-lg)] overflow-hidden">
         {/* Header */}
-        <div className="p-6 border-b border-white/10">
+        <div className="p-6 border-b-2 border-[var(--border)]">
           <div className="flex items-center gap-4">
             <div className={`
-              p-3 border border-white/30 rounded-xl transition-all backdrop-blur
-              ${isCompleted ? 'bg-green-500/20' : isError ? 'bg-red-500/20' : 'bg-violet-500/20'}
+              p-3 border-2 border-[var(--border)] transition-all
+              ${isCompleted ? 'bg-[var(--success)]' : isError ? 'bg-[var(--destructive)]' : 'bg-[var(--primary)]'}
             `}>
-              <StageIcon className={`h-6 w-6 ${isCompleted ? 'text-green-400' : isError ? 'text-red-400' : 'text-white'} ${progress.stage === 'fetching_commits' ? 'animate-spin' : ''}`} />
+              <StageIcon className={`h-6 w-6 text-white ${progress.stage === 'fetching_commits' ? 'animate-spin' : ''}`} />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-xl font-bold tracking-wide text-white" style={{ fontFamily: 'Outfit, sans-serif' }}>
+              <h3 className="text-xl font-bold tracking-wide text-[var(--foreground)]" style={{ fontFamily: 'Sora, sans-serif' }}>
                 {isCompleted ? 'Sync Complete!' : isError ? 'Sync Failed' : 'Syncing...'}
               </h3>
-              <p className="text-sm text-white/60 truncate" style={{ fontFamily: 'Inter, sans-serif' }}>
+              <p className="text-sm text-[var(--muted-foreground)] truncate font-mono">
                 {progress.repoName}
               </p>
             </div>
@@ -290,33 +290,36 @@ export function SyncProgressModal({ isOpen, progress }: SyncProgressModalProps) 
           {!isError && <StageIndicator currentStage={progress.stage} />}
 
           {/* Stage Description */}
-          <p className="text-sm text-white/70 font-medium" style={{ fontFamily: 'Inter, sans-serif' }}>
+          <p className="text-sm text-[var(--muted-foreground)] font-medium" style={{ fontFamily: 'Sora, sans-serif' }}>
             {config.description}
           </p>
 
           {/* Progress Bar */}
           {!isCompleted && !isError && (
             <div className="space-y-3">
-              <div className="flex justify-between text-sm" style={{ fontFamily: 'Inter, sans-serif' }}>
-                <span className="text-white/60">
+              <div className="flex justify-between text-sm font-mono">
+                <span className="text-[var(--muted-foreground)]">
                   {progress.processed.toLocaleString()} / {progress.totalCommits.toLocaleString()} commits
                 </span>
-                <span className="font-bold text-white">{progress.percentage}%</span>
+                <span className="font-bold text-[var(--foreground)]">{progress.percentage}%</span>
               </div>
-              <div className="h-3 border border-white/20 bg-white/5 backdrop-blur rounded-full overflow-hidden">
+              <div className="h-4 border-2 border-[var(--border)] bg-[var(--muted)] overflow-hidden relative">
                 <div
-                  className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-300 ease-out rounded-full"
+                  className="h-full bg-[var(--primary)] transition-all duration-300 ease-out relative"
                   style={{ width: `${progress.percentage}%` }}
-                />
+                >
+                  {/* Striped animation */}
+                  <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,.15)_25%,transparent_25%,transparent_50%,rgba(255,255,255,.15)_50%,rgba(255,255,255,.15)_75%,transparent_75%,transparent)] bg-[length:1rem_1rem] [animation:stripe-move_1s_linear_infinite]" />
+                </div>
               </div>
             </div>
           )}
 
           {/* Current Commit/Status */}
           {(progress.currentCommit && progress.stage !== 'completed' && progress.stage !== 'error') && (
-            <div className="p-3 border border-white/20 bg-white/5 backdrop-blur rounded-xl">
-              <p className="text-xs font-bold uppercase tracking-wider text-white/50 mb-1" style={{ fontFamily: 'Outfit, sans-serif' }}>Current</p>
-              <p className="text-sm text-white/80 truncate" style={{ fontFamily: 'Inter, sans-serif' }}>
+            <div className="p-4 border-2 border-[var(--border)] bg-[var(--muted)]">
+              <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-foreground)] mb-2" style={{ fontFamily: 'Sora, sans-serif' }}>Current</p>
+              <p className="text-sm text-[var(--foreground)] truncate font-mono">
                 {progress.currentCommit}
               </p>
             </div>
@@ -324,9 +327,9 @@ export function SyncProgressModal({ isOpen, progress }: SyncProgressModalProps) 
 
           {/* Branch Info */}
           {progress.stage === 'branches_fetched' && (
-            <div className="p-3 border border-green-400/30 bg-green-500/10 backdrop-blur rounded-xl">
-              <p className="text-xs font-bold uppercase tracking-wider text-green-400 mb-1" style={{ fontFamily: 'Outfit, sans-serif' }}>Branches Found</p>
-              <p className="text-sm text-green-300" style={{ fontFamily: 'Inter, sans-serif' }}>
+            <div className="p-4 border-2 border-[var(--success)] bg-[var(--success)]/10">
+              <p className="text-xs font-bold uppercase tracking-wider text-[var(--success)] mb-2" style={{ fontFamily: 'Sora, sans-serif' }}>Branches Found</p>
+              <p className="text-sm text-[var(--foreground)] font-mono">
                 {progress.branchesTotal} total, {progress.branchesNew} new
               </p>
             </div>
@@ -334,9 +337,9 @@ export function SyncProgressModal({ isOpen, progress }: SyncProgressModalProps) 
 
           {/* AI Jobs Found */}
           {progress.aiJobsFound > 0 && (
-            <div className="p-3 border border-pink-400/30 bg-pink-500/10 backdrop-blur rounded-xl">
-              <p className="text-xs font-bold uppercase tracking-wider text-pink-400 mb-1" style={{ fontFamily: 'Outfit, sans-serif' }}>AI Detected</p>
-              <p className="text-sm text-pink-300" style={{ fontFamily: 'Inter, sans-serif' }}>
+            <div className="p-4 border-2 border-[var(--accent)] bg-[var(--accent)]/10">
+              <p className="text-xs font-bold uppercase tracking-wider text-[var(--accent)] mb-2" style={{ fontFamily: 'Sora, sans-serif' }}>AI Detected</p>
+              <p className="text-sm text-[var(--foreground)] font-mono">
                 {progress.aiJobsFound.toLocaleString()} AI-generated commits found
               </p>
             </div>
@@ -344,8 +347,8 @@ export function SyncProgressModal({ isOpen, progress }: SyncProgressModalProps) 
 
           {/* Error Message */}
           {isError && (
-            <div className="p-4 border border-red-400/30 bg-red-500/10 backdrop-blur rounded-xl">
-              <p className="text-sm text-red-300" style={{ fontFamily: 'Inter, sans-serif' }}>
+            <div className="p-4 border-2 border-[var(--destructive)] bg-[var(--destructive)]/10">
+              <p className="text-sm text-[var(--destructive)] font-mono">
                 {progress.errorMessage}
               </p>
             </div>

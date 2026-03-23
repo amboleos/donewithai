@@ -2,6 +2,7 @@
 
 import { memo } from 'react';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 import { Trash2, GitBranch, RefreshCw, Calendar, Container, AlertTriangle, RotateCcw, Brain, ExternalLink, CheckCircle2, XCircle } from 'lucide-react';
 
 interface Repo {
@@ -45,9 +46,9 @@ const RepoCard = memo(({ repo, onDelete, onSync, onFullSync, onRecheckAI, canSyn
   const getSyncStatus = () => {
     if (repo.sync_error) {
       return (
-        <div className="flex items-center gap-2 text-xs font-mono text-red-400">
+        <div className="flex items-center gap-2 text-xs font-mono text-[var(--destructive)]">
           <XCircle className="h-3 w-3" />
-          <span>SYNC ERROR</span>
+          <span className="uppercase tracking-wider">Sync Error</span>
         </div>
       );
     }
@@ -55,41 +56,41 @@ const RepoCard = memo(({ repo, onDelete, onSync, onFullSync, onRecheckAI, canSyn
       const daysAgo = Math.floor((Date.now() - new Date(repo.last_synced).getTime()) / (1000 * 60 * 60 * 24));
       if (daysAgo === 0) {
         return (
-          <div className="flex items-center gap-2 text-xs font-mono text-green-400">
+          <div className="flex items-center gap-2 text-xs font-mono text-[var(--success)]">
             <CheckCircle2 className="h-3 w-3" />
-            <span>SYNCED TODAY</span>
+            <span className="uppercase tracking-wider">Synced Today</span>
           </div>
         );
       }
       return (
-        <div className="text-xs font-mono text-white/50">
+        <div className="text-xs font-mono text-[var(--muted-foreground)]">
           {daysAgo} day{daysAgo !== 1 ? 's' : ''} ago
         </div>
       );
     }
     return (
-      <div className="text-xs font-mono text-white/40">
-        NOT SYNCED
+      <div className="text-xs font-mono text-[var(--muted-foreground)] uppercase tracking-wider">
+        Not Synced
       </div>
     );
   };
 
   return (
-    <div className="group border border-white/20 bg-white/10 backdrop-blur-xl hover:bg-white/15 hover:border-white/30 transition-all rounded-2xl overflow-hidden">
+    <div className="group border-2 border-[var(--border)] bg-[var(--card)] [box-shadow:var(--shadow-brutal)] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:[box-shadow:var(--shadow-brutal-lg)] transition-all duration-200 overflow-hidden">
       {/* Card Header */}
-      <div className="p-4 border-b border-white/10">
+      <div className="p-4 border-b-2 border-[var(--border)]">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
             {/* Provider Icon */}
-            <div className="p-2 border border-white/30 bg-white/10 backdrop-blur rounded-lg shrink-0">
+            <div className="p-2 border-2 border-[var(--border)] bg-[var(--muted)]">
               {getProviderIcon()}
             </div>
             {/* Repo Name */}
             <div className="min-w-0">
-              <h3 className="font-bold text-white tracking-wide text-sm truncate" style={{ fontFamily: 'Outfit, sans-serif' }}>
+              <h3 className="font-bold text-[var(--foreground)] tracking-wide text-sm truncate uppercase" style={{ fontFamily: 'Sora, sans-serif' }}>
                 {repo.name}
               </h3>
-              <p className="text-xs text-white/60 font-mono truncate">
+              <p className="text-xs text-[var(--muted-foreground)] font-mono truncate">
                 {repo.owner}
               </p>
             </div>
@@ -101,8 +102,8 @@ const RepoCard = memo(({ repo, onDelete, onSync, onFullSync, onRecheckAI, canSyn
 
         {/* Error Badge */}
         {repo.sync_error && (
-          <div className="mt-3 p-2 border border-red-400/30 bg-red-500/20 backdrop-blur rounded-lg">
-            <p className="text-xs text-red-300 font-mono line-clamp-1">
+          <div className="mt-3 p-2 border-2 border-[var(--destructive)] bg-[var(--destructive)]/10">
+            <p className="text-xs text-[var(--destructive)] font-mono line-clamp-1">
               {repo.sync_error}
             </p>
           </div>
@@ -110,8 +111,8 @@ const RepoCard = memo(({ repo, onDelete, onSync, onFullSync, onRecheckAI, canSyn
       </div>
 
       {/* Card Body - URL */}
-      <div className="px-4 py-3 bg-white/5 border-b border-white/10">
-        <p className="text-xs font-mono text-white/50 truncate">
+      <div className="px-4 py-3 bg-[var(--muted)] border-b-2 border-[var(--border)]">
+        <p className="text-xs font-mono text-[var(--muted-foreground)] truncate">
           {repo.url}
         </p>
       </div>
@@ -120,59 +121,58 @@ const RepoCard = memo(({ repo, onDelete, onSync, onFullSync, onRecheckAI, canSyn
       <div className="p-3 flex items-center gap-2 flex-wrap">
         {/* View Details - Primary Action */}
         <Link href={`/repo/${repo.id}`} className="flex-1 min-w-[140px]">
-          <button className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white text-purple-700 text-xs font-bold uppercase tracking-wider hover:bg-white/90 hover:scale-[1.02] active:scale-[0.98] transition-all rounded-lg" style={{ fontFamily: 'Outfit, sans-serif' }}>
-            <span>View</span>
-            <ExternalLink className="h-3 w-3" />
-          </button>
+          <Button variant="default" size="sm" className="w-full">
+            View <ExternalLink className="h-3 w-3" />
+          </Button>
         </Link>
 
         {/* Sync Button */}
-        <button
+        <Button
+          variant="outline"
+          size="icon"
           onClick={() => onSync(repo.url)}
           disabled={!canSync}
           title={canSync ? 'Sync repository (incremental)' : 'Sync is on cooldown'}
-          className={`p-2.5 border transition-all rounded-lg ${
-            canSync
-              ? 'border-white/30 bg-white/10 text-white hover:bg-white/20 hover:border-white/50'
-              : 'border-white/10 bg-white/5 text-white/30 cursor-not-allowed'
-          }`}
         >
           <RefreshCw className="h-4 w-4" />
-        </button>
+        </Button>
 
         {/* Admin Actions */}
         {isAdmin && (
           <>
             {onFullSync && (
-              <button
+              <Button
+                variant="secondary"
+                size="icon"
                 onClick={() => onFullSync(repo.url)}
                 title="Full sync (re-fetch all commits)"
-                className="p-2.5 border border-violet-400/30 bg-violet-500/20 text-violet-300 hover:bg-violet-500/40 hover:border-violet-400/50 transition-all rounded-lg"
               >
                 <RotateCcw className="h-4 w-4" />
-              </button>
+              </Button>
             )}
             {onRecheckAI && (
-              <button
+              <Button
+                variant="accent"
+                size="icon"
                 onClick={() => onRecheckAI(repo.id)}
                 title="Re-check AI for all 2026 commits/branches"
-                className="p-2.5 border border-pink-400/30 bg-pink-500/20 text-pink-300 hover:bg-pink-500/40 hover:border-pink-400/50 transition-all rounded-lg"
               >
                 <Brain className="h-4 w-4" />
-              </button>
+              </Button>
             )}
             {onDelete && (
-              <button
+              <Button
+                variant="destructive"
+                size="icon"
                 onClick={() => {
                   if (confirm('Are you sure you want to delete this repository?')) {
                     onDelete(repo.id);
                   }
                 }}
                 title="Delete repository"
-                className="p-2.5 border border-red-400/30 bg-red-500/20 text-red-300 hover:bg-red-500/40 hover:border-red-400/50 transition-all rounded-lg"
               >
                 <Trash2 className="h-4 w-4" />
-              </button>
+              </Button>
             )}
           </>
         )}

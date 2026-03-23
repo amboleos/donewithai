@@ -140,9 +140,9 @@ export default function KeywordsTab() {
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="flex items-center gap-3 text-green-500 font-mono">
-          <Plus className="h-5 w-5 animate-pulse" />
-          <span>[LOADING KEYWORDS...]</span>
+        <div className="flex items-center gap-3 font-mono" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+          <Plus className="h-5 w-5 animate-pulse text-[var(--primary)]" />
+          <span className="text-[var(--primary)]">[LOADING KEYWORDS...]</span>
         </div>
       </div>
     );
@@ -152,48 +152,52 @@ export default function KeywordsTab() {
     <div className="space-y-4">
       {/* Header with stats */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4 text-sm font-mono text-slate-500">
-          <span className="text-green-500">$</span>
-          <span>keywords</span>
-          <span className="text-slate-600">:: total={keywords.length}</span>
-          <span className="text-slate-600">:: active={keywords.filter(k => k.is_active).length}</span>
+        <div className="flex items-center gap-4 text-sm font-mono" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+          <span className="text-[var(--primary)]">$</span>
+          <span className="text-[var(--muted-foreground)]">keywords</span>
+          <span className="text-[var(--muted-foreground)]">:: total={keywords.length}</span>
+          <span className="text-[var(--muted-foreground)]">:: active={keywords.filter(k => k.is_active).length}</span>
         </div>
       </div>
 
       {/* Add keyword input */}
-      <div className="flex gap-2 items-center bg-slate-900/50 p-3 rounded border border-slate-800">
-        <span className="text-green-500 font-mono text-sm">$</span>
+      <div className="flex gap-2 items-center bg-[var(--muted)] p-3 rounded border-2 border-[var(--border)] [box-shadow:var(--shadow-brutal-sm)]">
+        <span className="text-[var(--primary)] font-mono text-sm" style={{ fontFamily: 'JetBrains Mono, monospace' }}>$</span>
         <input
           type="text"
           placeholder="add keyword (e.g., 'copilot', 'gpt')..."
           value={newKeyword}
           onChange={(e) => setNewKeyword(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && addKeyword()}
-          className="flex-1 bg-transparent border-none outline-none text-slate-200 font-mono text-sm placeholder:text-slate-600"
+          className="flex-1 bg-transparent border-none outline-none font-mono text-sm placeholder:text-[var(--muted-foreground)]"
+          style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--foreground)' }}
         />
         <button
           onClick={addKeyword}
           disabled={!newKeyword.trim()}
-          className="px-4 py-1.5 bg-green-600 hover:bg-green-700 disabled:bg-slate-700 disabled:text-slate-500 text-white font-mono text-xs rounded transition-colors"
+          className="px-4 py-1.5 bg-[var(--primary)] hover:bg-[var(--primary-hover)] disabled:bg-[var(--muted)] disabled:text-[var(--muted-foreground)] text-[var(--primary-foreground)] font-mono text-xs rounded transition-colors border-2 border-[var(--border)] [box-shadow:var(--shadow-brutal-sm)] disabled:shadow-none hover:translate-x-px hover:translate-y-px hover:shadow-none"
+          style={{ fontFamily: 'JetBrains Mono, monospace' }}
         >
           ADD
         </button>
       </div>
 
       {/* Search */}
-      <div className="flex items-center gap-2 bg-slate-900/50 px-3 py-2 rounded border border-slate-800">
-        <Search className="h-4 w-4 text-slate-500" />
+      <div className="flex items-center gap-2 bg-[var(--muted)] px-3 py-2 rounded border-2 border-[var(--border)] [box-shadow:var(--shadow-brutal-sm)]">
+        <Search className="h-4 w-4 text-[var(--muted-foreground)]" />
         <input
           type="text"
           placeholder="Filter keywords..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="flex-1 bg-transparent border-none outline-none text-slate-200 font-mono text-sm placeholder:text-slate-600"
+          className="flex-1 bg-transparent border-none outline-none font-mono text-sm placeholder:text-[var(--muted-foreground)]"
+          style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--foreground)' }}
         />
         {searchQuery && (
           <button
             onClick={() => setSearchQuery('')}
-            className="text-xs text-slate-500 hover:text-slate-300 font-mono"
+            className="text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)] font-mono"
+            style={{ fontFamily: 'JetBrains Mono, monospace' }}
           >
             [ESC]
           </button>
@@ -201,77 +205,77 @@ export default function KeywordsTab() {
       </div>
 
       {/* Info box */}
-      <div className="flex items-start gap-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded">
-        <AlertTriangle className="h-5 w-5 text-blue-400 shrink-0" />
-        <p className="text-sm font-mono text-blue-300">
+      <div className="flex items-start gap-3 p-3 bg-[var(--primary-light)] border-2 border-[var(--primary)] rounded [box-shadow:var(--shadow-brutal-sm)]">
+        <AlertTriangle className="h-5 w-5 text-[var(--primary)] shrink-0" />
+        <p className="text-sm font-mono" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>
           Commits containing these keywords will be auto-flagged as AI-generated.
           <br />
-          <span className="text-slate-500">Use sparingly to avoid false positives.</span>
+          <span className="text-[var(--muted-foreground)]">Use sparingly to avoid false positives.</span>
         </p>
       </div>
 
       {/* Keywords table */}
       {filteredAndSortedKeywords.length === 0 ? (
-        <div className="text-center py-12 border border-dashed border-slate-700 rounded-lg">
-          <p className="font-mono text-slate-500">
+        <div className="text-center py-12 border-2 border-dashed border-[var(--border)] rounded-lg">
+          <p className="font-mono text-[var(--muted-foreground)]" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
             {searchQuery ? 'No matching keywords found.' : 'No keywords configured.'}
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto border-2 border-[var(--border)] rounded-lg">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b border-green-900/30">
-                <th className="px-4 py-3 text-left font-mono text-xs text-green-500 cursor-pointer hover:text-green-400" onClick={() => handleSort('keyword')}>
+              <tr className="border-b-2 border-[var(--border)]">
+                <th className="px-4 py-3 text-left font-mono text-xs cursor-pointer hover:text-[var(--primary)]" onClick={() => handleSort('keyword')} style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>
                   <div className="flex items-center gap-1">KEYWORD <SortIndicator field="keyword" /></div>
                 </th>
-                <th className="px-4 py-3 text-left font-mono text-xs text-green-500 cursor-pointer hover:text-green-400" onClick={() => handleSort('status')}>
+                <th className="px-4 py-3 text-left font-mono text-xs cursor-pointer hover:text-[var(--primary)]" onClick={() => handleSort('status')} style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>
                   <div className="flex items-center gap-1">STATUS <SortIndicator field="status" /></div>
                 </th>
-                <th className="px-4 py-3 text-left font-mono text-xs text-green-500 cursor-pointer hover:text-green-400" onClick={() => handleSort('created_at')}>
+                <th className="px-4 py-3 text-left font-mono text-xs cursor-pointer hover:text-[var(--primary)]" onClick={() => handleSort('created_at')} style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>
                   <div className="flex items-center gap-1">CREATED <SortIndicator field="created_at" /></div>
                 </th>
-                <th className="px-4 py-3 text-right font-mono text-xs text-green-500">ACTIONS</th>
+                <th className="px-4 py-3 text-right font-mono text-xs" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>ACTIONS</th>
               </tr>
             </thead>
-            <tbody className="font-mono text-sm">
+            <tbody className="font-mono text-sm" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
               {filteredAndSortedKeywords.map((kw) => (
-                <tr key={kw.id} className="border-b border-slate-800 hover:bg-slate-800/30 transition-colors">
+                <tr key={kw.id} className="border-b-2 border-[var(--border)] hover:bg-[var(--muted)] transition-colors">
                   <td className="px-4 py-3">
-                    <code className="text-green-400 bg-green-500/10 px-2 py-0.5 rounded">
+                    <code className="text-[var(--primary)] bg-[var(--primary-light)] px-2 py-0.5 rounded border-2 border-[var(--primary)]">
                       {kw.keyword}
                     </code>
                   </td>
                   <td className="px-4 py-3">
                     {kw.is_active ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded bg-green-500/20 text-green-400 border border-green-500/30">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded bg-[var(--success)]/10 text-[var(--success)] border-2 border-[var(--success)]">
                         ACTIVE
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded bg-slate-700 text-slate-400 border border-slate-600">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded bg-[var(--muted)] text-[var(--muted-foreground)] border-2 border-[var(--border)]">
                         INACTIVE
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-slate-500">
+                  <td className="px-4 py-3 text-[var(--muted-foreground)]">
                     {new Date(kw.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => toggleKeyword(kw.id, !!kw.is_active)}
-                        className="p-1.5 text-slate-400 hover:text-yellow-400 hover:bg-yellow-500/10 rounded transition-colors"
+                        className="p-1.5 text-[var(--muted-foreground)] hover:text-[var(--warning)] hover:bg-[var(--warning)]/10 rounded transition-colors border-2 border-transparent hover:border-[var(--warning)]"
                         title={kw.is_active ? 'Disable' : 'Enable'}
                       >
                         {kw.is_active ? (
-                          <ToggleRight className="h-4 w-4 text-green-400" />
+                          <ToggleRight className="h-4 w-4 text-[var(--success)]" />
                         ) : (
                           <ToggleLeft className="h-4 w-4" />
                         )}
                       </button>
                       <button
                         onClick={() => setDeleteConfirm({ open: true, keyword: kw })}
-                        className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                        className="p-1.5 text-[var(--muted-foreground)] hover:text-[var(--destructive)] hover:bg-[var(--destructive)]/10 rounded transition-colors border-2 border-transparent hover:border-[var(--destructive)]"
                         title="Delete"
                       >
                         <Trash2 className="h-4 w-4" />

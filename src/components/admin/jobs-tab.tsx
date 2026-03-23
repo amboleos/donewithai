@@ -86,19 +86,19 @@ export default function JobsTab() {
 
   const getDetectionMethodColor = (method: string) => {
     switch (method.toLowerCase()) {
-      case 'keyword': return 'text-orange-400 bg-orange-500/10 border-orange-500/30';
-      case 'llm': return 'text-purple-400 bg-purple-500/10 border-purple-500/30';
-      case 'manual': return 'text-blue-400 bg-blue-500/10 border-blue-500/30';
-      default: return 'text-slate-400 bg-slate-500/10 border-slate-500/30';
+      case 'keyword': return 'text-[var(--warning)] bg-[var(--warning)]/10 border-[var(--warning)]';
+      case 'llm': return 'text-[var(--accent)] bg-[var(--accent-light)] border-[var(--accent)]';
+      case 'manual': return 'text-[var(--primary)] bg-[var(--primary-light)] border-[var(--primary)]';
+      default: return 'text-[var(--muted-foreground)] bg-[var(--muted)] border-[var(--border)]';
     }
   };
 
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="flex items-center gap-3 text-green-500 font-mono">
-          <Trophy className="h-5 w-5 animate-pulse" />
-          <span>[LOADING JOBS REPORT...]</span>
+        <div className="flex items-center gap-3 font-mono" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+          <Trophy className="h-5 w-5 animate-pulse text-[var(--primary)]" />
+          <span className="text-[var(--primary)]">[LOADING JOBS REPORT...]</span>
         </div>
       </div>
     );
@@ -107,22 +107,23 @@ export default function JobsTab() {
   return (
     <div className="space-y-6">
       {/* Period selector */}
-      <div className="flex items-center gap-3 bg-slate-900/50 px-4 py-3 rounded border border-slate-800">
-        <span className="text-green-500 font-mono text-sm">$</span>
-        <span className="font-mono text-sm text-slate-400">period</span>
-        <span className="text-slate-600">=</span>
+      <div className="flex items-center gap-3 bg-[var(--muted)] px-4 py-3 rounded border-2 border-[var(--border)] [box-shadow:var(--shadow-brutal-sm)]">
+        <span className="text-[var(--primary)] font-mono text-sm" style={{ fontFamily: 'JetBrains Mono, monospace' }}>$</span>
+        <span className="font-mono text-sm" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--muted-foreground)' }}>period</span>
+        <span style={{ color: 'var(--muted-foreground)' }}>=</span>
         <div className="flex gap-2 flex-wrap">
           {periods.map((p) => (
             <button
               key={p.value}
               onClick={() => setPeriod(p.value)}
               className={`
-                px-3 py-1 rounded font-mono text-xs transition-colors
+                px-3 py-1 rounded font-mono text-xs transition-colors border-2
                 ${period === p.value
-                  ? 'bg-green-500/20 text-green-400 border border-green-500/50'
-                  : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 border border-transparent'
+                  ? 'bg-[var(--primary)] text-[var(--primary-foreground)] border-[var(--border)] [box-shadow:var(--shadow-brutal-sm)]'
+                  : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--card)] border-transparent'
                 }
               `}
+              style={{ fontFamily: 'JetBrains Mono, monospace' }}
             >
               {p.label}
             </button>
@@ -132,77 +133,77 @@ export default function JobsTab() {
 
       {/* Stats grid */}
       <div className="grid md:grid-cols-3 gap-4">
-        <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4">
+        <div className="bg-[var(--card)] border-2 border-[var(--border)] [box-shadow:var(--shadow-brutal)] rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-mono text-slate-500">Total Jobs</p>
-              <p className="text-3xl font-mono font-bold text-green-400 mt-1">
+              <p className="text-xs font-mono" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--muted-foreground)' }}>Total Jobs</p>
+              <p className="text-3xl font-mono font-bold mt-1" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>
                 {report?.summary.total_jobs || 0}
               </p>
             </div>
-            <Brain className="h-10 w-10 text-slate-700" />
+            <Brain className="h-10 w-10 text-[var(--muted-foreground)]" />
           </div>
         </div>
 
-        <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4">
+        <div className="bg-[var(--card)] border-2 border-[var(--border)] [box-shadow:var(--shadow-brutal)] rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-mono text-slate-500">Total Points</p>
-              <p className="text-3xl font-mono font-bold text-purple-400 mt-1">
+              <p className="text-xs font-mono" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--muted-foreground)' }}>Total Points</p>
+              <p className="text-3xl font-mono font-bold mt-1" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--accent)' }}>
                 {report?.summary.total_points || 0}
               </p>
             </div>
-            <TrendingUp className="h-10 w-10 text-purple-900/50" />
+            <TrendingUp className="h-10 w-10" style={{ color: 'var(--accent-light)' }} />
           </div>
         </div>
 
-        <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4">
+        <div className="bg-[var(--card)] border-2 border-[var(--border)] [box-shadow:var(--shadow-brutal)] rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-mono text-slate-500">Top Contributor</p>
-              <p className="text-xl font-mono font-bold text-yellow-400 mt-1">
+              <p className="text-xs font-mono" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--muted-foreground)' }}>Top Contributor</p>
+              <p className="text-xl font-mono font-bold mt-1" style={{ fontFamily: 'Sora, sans-serif', color: 'var(--warning)' }}>
                 {report?.topContributor?.name || 'N/A'}
               </p>
-              <p className="text-xs font-mono text-slate-500">
+              <p className="text-xs font-mono" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--muted-foreground)' }}>
                 {report?.topContributor?.total_points || 0} pts
               </p>
             </div>
-            <Trophy className="h-10 w-10 text-yellow-600/50" />
+            <Trophy className="h-10 w-10" style={{ color: 'var(--warning-light)' }} />
           </div>
         </div>
       </div>
 
       {/* Leaderboard */}
       <div>
-        <div className="flex items-center gap-2 text-sm font-mono text-slate-500 mb-3">
-          <span className="text-green-500">$</span>
-          <span>leaderboard</span>
-          <span className="text-slate-600">:: period={period}</span>
+        <div className="flex items-center gap-2 text-sm font-mono mb-3" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+          <span className="text-[var(--primary)]">$</span>
+          <span className="text-[var(--muted-foreground)]">leaderboard</span>
+          <span className="text-[var(--muted-foreground)]">:: period={period}</span>
         </div>
 
-        <div className="bg-slate-900/50 border border-slate-800 rounded-lg overflow-hidden">
+        <div className="bg-[var(--card)] border-2 border-[var(--border)] [box-shadow:var(--shadow-brutal)] rounded-lg overflow-hidden">
           {report?.byDeveloper.length === 0 ? (
             <div className="text-center py-12">
-              <Trophy className="h-12 w-12 text-slate-700 mx-auto mb-4" />
-              <p className="font-mono text-slate-500">No job data for this period.</p>
+              <Trophy className="h-12 w-12 text-[var(--muted-foreground)] mx-auto mb-4" />
+              <p className="font-mono text-[var(--muted-foreground)]" style={{ fontFamily: 'JetBrains Mono, monospace' }}>No job data for this period.</p>
             </div>
           ) : (
             <table className="w-full border-collapse">
               <thead>
-                <tr className="border-b border-green-900/30">
-                  <th className="px-4 py-3 text-left font-mono text-xs text-green-500 w-16">RANK</th>
-                  <th className="px-4 py-3 text-left font-mono text-xs text-green-500">DEVELOPER</th>
-                  <th className="px-4 py-3 text-right font-mono text-xs text-green-500">JOBS</th>
-                  <th className="px-4 py-3 text-right font-mono text-xs text-green-500">POINTS</th>
+                <tr className="border-b-2 border-[var(--border)]">
+                  <th className="px-4 py-3 text-left font-mono text-xs w-16" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>RANK</th>
+                  <th className="px-4 py-3 text-left font-mono text-xs" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>DEVELOPER</th>
+                  <th className="px-4 py-3 text-right font-mono text-xs" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>JOBS</th>
+                  <th className="px-4 py-3 text-right font-mono text-xs" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>POINTS</th>
                 </tr>
               </thead>
-              <tbody className="font-mono text-sm">
+              <tbody className="font-mono text-sm" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
                 {report?.byDeveloper.map((dev, idx) => (
                   <tr
                     key={dev.user_id}
                     className={`
-                      border-b border-slate-800 transition-colors
-                      ${idx === 0 ? 'bg-yellow-500/5' : 'hover:bg-slate-800/30'}
+                      border-b-2 border-[var(--border)] transition-colors
+                      ${idx === 0 ? 'bg-[var(--warning-light)]' : 'hover:bg-[var(--muted)]'}
                     `}
                   >
                     <td className="px-4 py-3">
@@ -211,13 +212,13 @@ export default function JobsTab() {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={idx === 0 ? 'text-yellow-400 font-bold' : 'text-slate-200'}>
+                      <span className={idx === 0 ? 'text-[var(--warning)] font-bold' : 'text-[var(--foreground)]'} style={{ fontFamily: 'Sora, sans-serif' }}>
                         {dev.user_name}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right text-slate-400">{dev.total_jobs}</td>
+                    <td className="px-4 py-3 text-right text-[var(--muted-foreground)]">{dev.total_jobs}</td>
                     <td className="px-4 py-3 text-right">
-                      <span className="inline-block px-2 py-0.5 text-xs rounded bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                      <span className="inline-block px-2 py-0.5 text-xs rounded bg-[var(--accent-light)] text-[var(--accent)] border-2 border-[var(--accent)]">
                         {dev.total_points} pts
                       </span>
                     </td>
@@ -231,44 +232,44 @@ export default function JobsTab() {
 
       {/* Job Details */}
       <div>
-        <div className="flex items-center gap-2 text-sm font-mono text-slate-500 mb-3">
-          <span className="text-green-500">$</span>
-          <span>job_details</span>
+        <div className="flex items-center gap-2 text-sm font-mono mb-3" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+          <span className="text-[var(--primary)]">$</span>
+          <span className="text-[var(--muted-foreground)]">job_details</span>
         </div>
 
-        <div className="bg-slate-900/50 border border-slate-800 rounded-lg overflow-hidden">
+        <div className="bg-[var(--card)] border-2 border-[var(--border)] [box-shadow:var(--shadow-brutal)] rounded-lg overflow-hidden">
           {jobs.length === 0 ? (
             <div className="text-center py-8">
-              <Zap className="h-10 w-10 text-slate-700 mx-auto mb-3" />
-              <p className="font-mono text-sm text-slate-500">No job details available.</p>
+              <Zap className="h-10 w-10 text-[var(--muted-foreground)] mx-auto mb-3" />
+              <p className="font-mono text-sm text-[var(--muted-foreground)]" style={{ fontFamily: 'JetBrains Mono, monospace' }}>No job details available.</p>
             </div>
           ) : (
             <div className="max-h-96 overflow-y-auto">
               <table className="w-full border-collapse">
-                <thead className="sticky top-0 bg-slate-900">
-                  <tr className="border-b border-green-900/30">
-                    <th className="px-4 py-3 text-left font-mono text-xs text-green-500">USER</th>
-                    <th className="px-4 py-3 text-left font-mono text-xs text-green-500">REPO</th>
-                    <th className="px-4 py-3 text-left font-mono text-xs text-green-500">TYPE</th>
-                    <th className="px-4 py-3 text-left font-mono text-xs text-green-500">METHOD</th>
-                    <th className="px-4 py-3 text-right font-mono text-xs text-green-500">POINTS</th>
+                <thead className="sticky top-0 bg-[var(--muted)]">
+                  <tr className="border-b-2 border-[var(--border)]">
+                    <th className="px-4 py-3 text-left font-mono text-xs" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>USER</th>
+                    <th className="px-4 py-3 text-left font-mono text-xs" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>REPO</th>
+                    <th className="px-4 py-3 text-left font-mono text-xs" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>TYPE</th>
+                    <th className="px-4 py-3 text-left font-mono text-xs" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>METHOD</th>
+                    <th className="px-4 py-3 text-right font-mono text-xs" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>POINTS</th>
                   </tr>
                 </thead>
-                <tbody className="font-mono text-sm">
+                <tbody className="font-mono text-sm" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
                   {jobs.map((job) => (
-                    <tr key={job.id} className="border-b border-slate-800 hover:bg-slate-800/30 transition-colors">
-                      <td className="px-4 py-3 text-slate-200">
-                        {job.user_name || <span className="text-slate-500">Unassigned</span>}
+                    <tr key={job.id} className="border-b-2 border-[var(--border)] hover:bg-[var(--muted)] transition-colors">
+                      <td className="px-4 py-3 text-[var(--foreground)]" style={{ fontFamily: 'Sora, sans-serif' }}>
+                        {job.user_name || <span className="text-[var(--muted-foreground)]">Unassigned</span>}
                       </td>
-                      <td className="px-4 py-3 text-slate-400">{job.repo_name}</td>
-                      <td className="px-4 py-3 text-slate-500">{job.source_type}</td>
+                      <td className="px-4 py-3 text-[var(--muted-foreground)]">{job.repo_name}</td>
+                      <td className="px-4 py-3 text-[var(--muted-foreground)]">{job.source_type}</td>
                       <td className="px-4 py-3">
-                        <span className={`inline-block px-2 py-0.5 text-xs rounded border ${getDetectionMethodColor(job.detection_method)}`}>
+                        <span className={`inline-block px-2 py-0.5 text-xs rounded border-2 ${getDetectionMethodColor(job.detection_method)}`}>
                           {job.detection_method}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <span className="inline-block px-2 py-0.5 text-xs rounded bg-green-500/20 text-green-400 border border-green-500/30">
+                        <span className="inline-block px-2 py-0.5 text-xs rounded bg-[var(--primary-light)] text-[var(--primary)] border-2 border-[var(--primary)]">
                           +{job.points}
                         </span>
                       </td>

@@ -167,7 +167,7 @@ export default function ReposTab() {
   const getStatusBadge = (repo: Repo) => {
     if (repo.sync_error) {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-mono rounded bg-red-500/20 text-red-400 border border-red-500/30">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-mono border-2 rounded bg-[var(--destructive)]/10 text-[var(--destructive)] border-[var(--destructive)]" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
           <AlertCircle className="h-3 w-3" />
           ERROR
         </span>
@@ -175,7 +175,7 @@ export default function ReposTab() {
     }
     if (!repo.last_synced) {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-mono rounded bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-mono border-2 rounded bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)]" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
           PENDING
         </span>
       );
@@ -185,24 +185,24 @@ export default function ReposTab() {
 
     if (hoursAgo > 24) {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-mono rounded bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-mono border-2 rounded bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)]" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
           STALE
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-mono rounded bg-green-500/20 text-green-400 border border-green-500/30">
-        SYNCED
-      </span>
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-mono border-2 rounded bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+          SYNCED
+        </span>
     );
   };
 
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="flex items-center gap-3 text-green-500 font-mono">
-          <RefreshCw className="h-5 w-5 animate-spin" />
-          <span>[LOADING REPOSITORIES...]</span>
+        <div className="flex items-center gap-3 font-mono" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+          <RefreshCw className="h-5 w-5 animate-spin text-[var(--primary)]" />
+          <span className="text-[var(--primary)]">[LOADING REPOSITORIES...]</span>
         </div>
       </div>
     );
@@ -212,14 +212,16 @@ export default function ReposTab() {
     <div className="space-y-4">
       {/* Header with action */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm font-mono text-slate-500">
-          <span className="text-green-500">$</span>
-          <span>repos</span>
-          <span className="text-slate-600">:: count={repos.length}</span>
+        <div className="flex items-center gap-2 text-sm font-mono" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+          <span className="text-[var(--primary)]">$</span>
+          <span className="text-[var(--muted-foreground)]">repos</span>
+          <span className="text-[var(--muted-foreground)]">:: count={repos.length}</span>
         </div>
         <Button
           onClick={() => setAddDialogOpen(true)}
-          className="font-mono text-xs bg-green-600 hover:bg-green-700"
+          variant="default"
+          className="font-mono text-xs"
+          style={{ fontFamily: 'JetBrains Mono, monospace' }}
         >
           <Plus className="h-4 w-4 mr-2" />
           ADD_REPO
@@ -228,51 +230,53 @@ export default function ReposTab() {
 
       {/* Data table */}
       {repos.length === 0 ? (
-        <div className="text-center py-12 border border-dashed border-slate-700 rounded-lg">
-          <Database className="h-12 w-12 text-slate-700 mx-auto mb-4" />
-          <p className="font-mono text-slate-500">No repositories found.</p>
-          <p className="font-mono text-sm text-slate-600 mt-2">Add a repository to get started.</p>
+        <div className="text-center py-12 border-2 border-dashed border-[var(--border)] rounded-lg">
+          <Database className="h-12 w-12 text-[var(--muted-foreground)] mx-auto mb-4" />
+          <p className="font-mono text-[var(--muted-foreground)]" style={{ fontFamily: 'JetBrains Mono, monospace' }}>No repositories found.</p>
+          <p className="font-mono text-sm text-[var(--muted-foreground)] mt-2" style={{ fontFamily: 'JetBrains Mono, monospace' }}>Add a repository to get started.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto border-2 border-[var(--border)] rounded-lg">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b border-green-900/30">
-                <th className="px-4 py-3 text-left font-mono text-xs text-green-500 cursor-pointer hover:text-green-400" onClick={() => handleSort('name')}>
+              <tr className="border-b-2 border-[var(--border)]">
+                <th className="px-4 py-3 text-left font-mono text-xs cursor-pointer hover:text-[var(--primary)]" onClick={() => handleSort('name')} style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>
                   <div className="flex items-center gap-1">NAME <SortIndicator field="name" /></div>
                 </th>
-                <th className="px-4 py-3 text-left font-mono text-xs text-green-500 cursor-pointer hover:text-green-400" onClick={() => handleSort('provider')}>
+                <th className="px-4 py-3 text-left font-mono text-xs cursor-pointer hover:text-[var(--primary)]" onClick={() => handleSort('provider')} style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>
                   <div className="flex items-center gap-1">PROVIDER <SortIndicator field="provider" /></div>
                 </th>
-                <th className="px-4 py-3 text-left font-mono text-xs text-green-500 cursor-pointer hover:text-green-400" onClick={() => handleSort('last_synced')}>
+                <th className="px-4 py-3 text-left font-mono text-xs cursor-pointer hover:text-[var(--primary)]" onClick={() => handleSort('last_synced')} style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>
                   <div className="flex items-center gap-1">LAST_SYNCED <SortIndicator field="last_synced" /></div>
                 </th>
-                <th className="px-4 py-3 text-left font-mono text-xs text-green-500 cursor-pointer hover:text-green-400" onClick={() => handleSort('status')}>
+                <th className="px-4 py-3 text-left font-mono text-xs cursor-pointer hover:text-[var(--primary)]" onClick={() => handleSort('status')} style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>
                   <div className="flex items-center gap-1">STATUS <SortIndicator field="status" /></div>
                 </th>
-                <th className="px-4 py-3 text-right font-mono text-xs text-green-500">ACTIONS</th>
+                <th className="px-4 py-3 text-right font-mono text-xs" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>ACTIONS</th>
               </tr>
             </thead>
-            <tbody className="font-mono text-sm">
+            <tbody className="font-mono text-sm" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
               {sortedRepos.map((repo) => (
-                <tr key={repo.id} className="border-b border-slate-800 hover:bg-slate-800/30 transition-colors">
+                <tr key={repo.id} className="border-b-2 border-[var(--border)] hover:bg-[var(--muted)] transition-colors">
                   <td className="px-4 py-3">
                     <div>
-                      <div className="text-slate-200">{repo.name}</div>
-                      <div className="text-xs text-slate-600 truncate max-w-[200px]">{repo.url}</div>
+                      <div className="text-[var(--foreground)]" style={{ fontFamily: 'Sora, sans-serif' }}>{repo.name}</div>
+                      <div className="text-xs text-[var(--muted-foreground)] truncate max-w-[200px]">{repo.url}</div>
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`inline-block px-2 py-0.5 text-xs rounded ${
-                      repo.provider === 'github' ? 'bg-slate-700 text-slate-300' : 'bg-blue-900/50 text-blue-300'
-                    }`}>
+                    <span className={`inline-block px-2 py-0.5 text-xs border-2 ${
+                      repo.provider === 'github'
+                        ? 'bg-[var(--muted)] text-[var(--foreground)] border-[var(--border)]'
+                        : 'bg-[var(--accent-light)] text-[var(--accent)] border-[var(--accent)]'
+                    }`} style={{ fontFamily: 'JetBrains Mono, monospace' }}>
                       {repo.provider.toUpperCase()}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-slate-400">
+                  <td className="px-4 py-3 text-[var(--muted-foreground)]">
                     {repo.last_synced
                       ? new Date(repo.last_synced).toLocaleString()
-                      : <span className="text-slate-600">Never</span>
+                      : <span className="text-[var(--muted-foreground)]">Never</span>
                     }
                   </td>
                   <td className="px-4 py-3">{getStatusBadge(repo)}</td>
@@ -280,21 +284,21 @@ export default function ReposTab() {
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => handleSyncRepo(repo.url, repo.name)}
-                        className="p-1.5 text-slate-400 hover:text-green-400 hover:bg-green-500/10 rounded transition-colors"
+                        className="p-1.5 text-[var(--muted-foreground)] hover:text-[var(--primary)] hover:bg-[var(--primary-light)] rounded transition-colors border-2 border-transparent hover:border-[var(--primary)]"
                         title="Sync"
                       >
                         <RotateCcw className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handleRecheckAI(repo.id, repo.name)}
-                        className="p-1.5 text-slate-400 hover:text-purple-400 hover:bg-purple-500/10 rounded transition-colors"
+                        className="p-1.5 text-[var(--muted-foreground)] hover:text-[var(--accent)] hover:bg-[var(--accent-light)] rounded transition-colors border-2 border-transparent hover:border-[var(--accent)]"
                         title="Recheck AI"
                       >
                         <Brain className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => setDeleteConfirm({ open: true, repo })}
-                        className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                        className="p-1.5 text-[var(--muted-foreground)] hover:text-[var(--destructive)] hover:bg-[var(--destructive)]/10 rounded transition-colors border-2 border-transparent hover:border-[var(--destructive)]"
                         title="Delete"
                       >
                         <Trash2 className="h-4 w-4" />
