@@ -43,10 +43,10 @@ export class RepoPage extends BasePage {
     this.analyticsTab = page.locator('button:has-text("Developer Stats")');
 
     // Stats cards
-    this.totalCommitsCard = page.locator('text=Total Commits').locator('..');
-    this.aiCommitsCard = page.locator('text=AI Generated').locator('..');
-    this.linesAddedCard = page.locator('text=Lines Added').locator('..');
-    this.linesRemovedCard = page.locator('text=Lines Removed').locator('..');
+    this.totalCommitsCard = page.locator('[class*="border-2"]').filter({ hasText: 'Total Commits' });
+    this.aiCommitsCard = page.locator('[class*="border-2"]').filter({ hasText: 'AI Generated' });
+    this.linesAddedCard = page.locator('[class*="border-2"]').filter({ hasText: 'Lines Added' });
+    this.linesRemovedCard = page.locator('[class*="border-2"]').filter({ hasText: 'Lines Removed' });
   }
 
   /**
@@ -110,8 +110,9 @@ export class RepoPage extends BasePage {
     try {
       await this.page.waitForFunction(
         () => {
-          const btn = document.querySelector('button:has-text("AI Recheck")');
-          return btn && !btn.hasAttribute('disabled');
+          const buttons = Array.from(document.querySelectorAll('button'));
+          const btn = buttons.find(b => b.textContent?.includes('AI Recheck'));
+          return btn && !btn.disabled;
         },
         { timeout }
       );
