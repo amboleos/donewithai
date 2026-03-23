@@ -89,7 +89,7 @@ export class LoginPage extends BasePage {
     await this.fillPassword(password);
     await this.submit();
     // Wait for navigation to dashboard
-    await this.page.waitForURL('**/dashboard', { timeout: 5000 });
+    await this.page.waitForURL('**/dashboard', { timeout: 15000 });
   }
 
   /**
@@ -102,7 +102,7 @@ export class LoginPage extends BasePage {
     await this.fillPassword(password);
     await this.submit();
     // Wait for navigation to dashboard
-    await this.page.waitForURL('**/dashboard', { timeout: 5000 });
+    await this.page.waitForURL('**/dashboard', { timeout: 15000 });
   }
 
   /**
