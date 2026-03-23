@@ -1,14 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { Database, GitBranch, Brain, Key, Trophy } from 'lucide-react';
+import { Database, GitBranch, Brain, Key, Trophy, Users } from 'lucide-react';
 import ReposTab from '@/components/admin/repos-tab';
 import MappingsTab from '@/components/admin/mappings-tab';
 import AIFlagsTab from '@/components/admin/ai-flags-tab';
 import KeywordsTab from '@/components/admin/keywords-tab';
 import JobsTab from '@/components/admin/jobs-tab';
+import UsersTab from '@/components/admin/users-tab';
 
-type TabType = 'repos' | 'mappings' | 'ai-flags' | 'keywords' | 'jobs';
+type TabType = 'repos' | 'mappings' | 'ai-flags' | 'keywords' | 'jobs' | 'users';
 
 interface TabConfig {
   id: TabType;
@@ -23,6 +24,7 @@ const tabs: TabConfig[] = [
   { id: 'ai-flags', label: 'AI Flags', icon: Brain, shortcut: '3' },
   { id: 'keywords', label: 'Keywords', icon: Key, shortcut: '4' },
   { id: 'jobs', label: 'Jobs Report', icon: Trophy, shortcut: '5' },
+  { id: 'users', label: 'Users', icon: Users, shortcut: '6' },
 ];
 
 export default function AdminTabs() {
@@ -81,6 +83,7 @@ export default function AdminTabs() {
           {activeTab === 'ai-flags' && <AIFlagsTab isAdmin={true} />}
           {activeTab === 'keywords' && <KeywordsTab />}
           {activeTab === 'jobs' && <JobsTab />}
+          {activeTab === 'users' && <UsersTab />}
         </div>
       </div>
     </div>
