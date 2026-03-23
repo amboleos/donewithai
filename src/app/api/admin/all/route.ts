@@ -3,7 +3,7 @@ import { client } from '@/lib/db';
 import { verifyToken } from '@/lib/simple-auth';
 
 export async function GET(req: NextRequest) {
-  // Verify admin
+  // Verify authenticated user (any role can read)
   let token = req.cookies.get('auth_token')?.value;
 
   // Fallback to Authorization header
@@ -15,8 +15,8 @@ export async function GET(req: NextRequest) {
   }
 
   const payload = verifyToken(token || '');
-  if (!payload || payload.role !== 'admin') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!payload) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {

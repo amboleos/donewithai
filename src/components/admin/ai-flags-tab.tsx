@@ -36,7 +36,13 @@ type SortOrder = 'asc' | 'desc';
 type PatternFilter = 'all' | 'ai' | 'human' | 'unknown';
 type CodeAnalysisFilter = 'all' | 'agentic' | 'human_assisted' | 'not_analyzed';
 
-export default function AIFlagsTab() {
+interface AIFlagsTabProps {
+  isAdmin?: boolean;
+  repoId?: number; // Optional: filter by repo
+  repoName?: string; // Optional: for display purposes
+}
+
+export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlagsTabProps) {
   const [commits, setCommits] = useState<Commit[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,13 +64,23 @@ export default function AIFlagsTab() {
     setLoading(true);
     try {
       const res = await fetch('/api/admin/all');
-      if (!res.ok) throw new Error('Failed to fetch admin data');
+      if (!res.ok) throw new Error('Failed to fetch AI flags data');
 
       const data = await res.json();
-      setCommits(data.commits || []);
-      setBranches(data.branches || []);
+
+      // Filter by repoId if provided
+      let filteredCommits = data.commits || [];
+      let filteredBranches = data.branches || [];
+
+      if (repoId) {
+        filteredCommits = filteredCommits.filter((c: Commit) => c.repo_id === repoId);
+        filteredBranches = filteredBranches.filter((b: Branch) => b.repo_id === repoId);
+      }
+
+      setCommits(filteredCommits);
+      setBranches(filteredBranches);
     } catch (error) {
-      toast.error('Failed to fetch admin data');
+      toast.error('Failed to fetch AI flags data');
     } finally {
       setLoading(false);
     }
@@ -463,9 +479,11 @@ export default function AIFlagsTab() {
                     <th className="px-4 py-3 text-left font-mono text-xs cursor-pointer hover:text-[var(--primary)]" onClick={() => handleSort('author')} style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>
                       <div className="flex items-center gap-1">AUTHOR <SortIndicator field="author" /></div>
                     </th>
-                    <th className="px-4 py-3 text-left font-mono text-xs cursor-pointer hover:text-[var(--primary)]" onClick={() => handleSort('repo')} style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>
-                      <div className="flex items-center gap-1">REPO <SortIndicator field="repo" /></div>
-                    </th>
+                    {!repoId && (
+                      <th className="px-4 py-3 text-left font-mono text-xs cursor-pointer hover:text-[var(--primary)]" onClick={() => handleSort('repo')} style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>
+                        <div className="flex items-center gap-1">REPO <SortIndicator field="repo" /></div>
+                      </th>
+                    )}
                     <th className="px-4 py-3 text-left font-mono text-xs cursor-pointer hover:text-[var(--primary)]" onClick={() => handleSort('date')} style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>
                       <div className="flex items-center gap-1">DATE <SortIndicator field="date" /></div>
                     </th>
@@ -473,7 +491,9 @@ export default function AIFlagsTab() {
                       <div className="flex items-center gap-1">PATTERN <SortIndicator field="status" /></div>
                     </th>
                     <th className="px-4 py-3 text-left font-mono text-xs" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>CODE ANALYSIS</th>
-                    <th className="px-4 py-3 text-right font-mono text-xs" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>ACTION</th>
+                    {isAdmin && (
+                      <th className="px-4 py-3 text-right font-mono text-xs" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>ACTION</th>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="font-mono text-sm" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
@@ -486,7 +506,9 @@ export default function AIFlagsTab() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-[var(--muted-foreground)]">{commit.author}</td>
-                      <td className="px-4 py-3 text-[var(--muted-foreground)]">{commit.repo_name}</td>
+                      {!repoId && (
+                        <td className="px-4 py-3 text-[var(--muted-foreground)]">{commit.repo_name}</td>
+                      )}
                       <td className="px-4 py-3 text-xs text-[var(--muted-foreground)] font-mono" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
                         {new Date(commit.date).toLocaleString('sv-SE')}
                       </td>
@@ -496,51 +518,53 @@ export default function AIFlagsTab() {
                       <td className="px-4 py-3">
                         <CodeAnalysisBadge isAgentic={commit.code_is_agentic} confidence={commit.code_confidence} />
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-2">
-                          {/* Analyze Button */}
-                          <button
-                            onClick={() => analyzeCode(commit.repo_id, 'commit', commit.id)}
-                            disabled={analyzingId === commit.id}
-                            title="Analyze code for AI patterns"
-                            className={`
-                              px-3 py-1 rounded font-mono text-xs transition-colors flex items-center gap-1 border-2
-                              ${analyzingId === commit.id
-                                ? 'bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)] cursor-wait'
-                                : 'bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)] hover:bg-[var(--warning)]/20'
-                              }
-                            `}
-                            style={{ fontFamily: 'JetBrains Mono, monospace' }}
-                          >
-                            {analyzingId === commit.id ? (
-                              <>
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                                ANALYZING
-                              </>
-                            ) : (
-                              <>
-                                <Sparkles className="h-3 w-3" />
-                                ANALYZE
-                              </>
-                            )}
-                          </button>
+                      {isAdmin && (
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-end gap-2">
+                            {/* Analyze Button */}
+                            <button
+                              onClick={() => analyzeCode(commit.repo_id, 'commit', commit.id)}
+                              disabled={analyzingId === commit.id}
+                              title="Analyze code for AI patterns"
+                              className={`
+                                px-3 py-1 rounded font-mono text-xs transition-colors flex items-center gap-1 border-2
+                                ${analyzingId === commit.id
+                                  ? 'bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)] cursor-wait'
+                                  : 'bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)] hover:bg-[var(--warning)]/20'
+                                }
+                              `}
+                              style={{ fontFamily: 'JetBrains Mono, monospace' }}
+                            >
+                              {analyzingId === commit.id ? (
+                                <>
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                  ANALYZING
+                                </>
+                              ) : (
+                                <>
+                                  <Sparkles className="h-3 w-3" />
+                                  ANALYZE
+                                </>
+                              )}
+                            </button>
 
-                          {/* Toggle AI Button */}
-                          <button
-                            onClick={() => toggleAI('commit', commit.id, commit.is_ai_detected)}
-                            className={`
-                              px-3 py-1 rounded font-mono text-xs transition-colors border-2
-                              ${commit.is_ai_detected
-                                ? 'bg-[var(--accent-light)] text-[var(--accent)] border-[var(--accent)] hover:bg-[var(--accent-light)]'
-                                : 'bg-[var(--muted)] text-[var(--muted-foreground)] border-[var(--border)] hover:bg-[var(--muted)]'
-                              }
-                            `}
-                            style={{ fontFamily: 'JetBrains Mono, monospace' }}
-                          >
-                            {commit.is_ai_detected ? 'SET_HUMAN' : 'SET_AI'}
-                          </button>
-                        </div>
-                      </td>
+                            {/* Toggle AI Button */}
+                            <button
+                              onClick={() => toggleAI('commit', commit.id, commit.is_ai_detected)}
+                              className={`
+                                px-3 py-1 rounded font-mono text-xs transition-colors border-2
+                                ${commit.is_ai_detected
+                                  ? 'bg-[var(--accent-light)] text-[var(--accent)] border-[var(--accent)] hover:bg-[var(--accent-light)]'
+                                  : 'bg-[var(--muted)] text-[var(--muted-foreground)] border-[var(--border)] hover:bg-[var(--muted)]'
+                                }
+                              `}
+                              style={{ fontFamily: 'JetBrains Mono, monospace' }}
+                            >
+                              {commit.is_ai_detected ? 'SET_HUMAN' : 'SET_AI'}
+                            </button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -568,14 +592,18 @@ export default function AIFlagsTab() {
                     <th className="px-4 py-3 text-left font-mono text-xs cursor-pointer hover:text-[var(--primary)]" onClick={() => handleSort('name')} style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>
                       <div className="flex items-center gap-1">NAME <SortIndicator field="name" /></div>
                     </th>
-                    <th className="px-4 py-3 text-left font-mono text-xs cursor-pointer hover:text-[var(--primary)]" onClick={() => handleSort('repo')} style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>
-                      <div className="flex items-center gap-1">REPO <SortIndicator field="repo" /></div>
-                    </th>
+                    {!repoId && (
+                      <th className="px-4 py-3 text-left font-mono text-xs cursor-pointer hover:text-[var(--primary)]" onClick={() => handleSort('repo')} style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>
+                        <div className="flex items-center gap-1">REPO <SortIndicator field="repo" /></div>
+                      </th>
+                    )}
                     <th className="px-4 py-3 text-left font-mono text-xs cursor-pointer hover:text-[var(--primary)]" onClick={() => handleSort('status')} style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>
                       <div className="flex items-center gap-1">PATTERN <SortIndicator field="status" /></div>
                     </th>
                     <th className="px-4 py-3 text-left font-mono text-xs" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>CODE ANALYSIS</th>
-                    <th className="px-4 py-3 text-right font-mono text-xs" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>ACTION</th>
+                    {isAdmin && (
+                      <th className="px-4 py-3 text-right font-mono text-xs" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>ACTION</th>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="font-mono text-sm" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
@@ -587,58 +615,62 @@ export default function AIFlagsTab() {
                           <span className="text-[var(--foreground)]" style={{ fontFamily: 'Sora, sans-serif' }}>{branch.name}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-[var(--muted-foreground)]">{branch.repo_name}</td>
+                      {!repoId && (
+                        <td className="px-4 py-3 text-[var(--muted-foreground)]">{branch.repo_name}</td>
+                      )}
                       <td className="px-4 py-3">
                         <PatternBadge isAIDetected={branch.is_ai_detected} />
                       </td>
                       <td className="px-4 py-3">
                         <CodeAnalysisBadge isAgentic={branch.code_is_agentic} confidence={branch.code_confidence} />
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-2">
-                          {/* Analyze Button */}
-                          <button
-                            onClick={() => analyzeCode(branch.repo_id, 'branch', branch.id)}
-                            disabled={analyzingId === branch.id}
-                            title="Analyze code for AI patterns"
-                            className={`
-                              px-3 py-1 rounded font-mono text-xs transition-colors flex items-center gap-1 border-2
-                              ${analyzingId === branch.id
-                                ? 'bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)] cursor-wait'
-                                : 'bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)] hover:bg-[var(--warning)]/20'
-                              }
-                            `}
-                            style={{ fontFamily: 'JetBrains Mono, monospace' }}
-                          >
-                            {analyzingId === branch.id ? (
-                              <>
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                                ANALYZING
-                              </>
-                            ) : (
-                              <>
-                                <Sparkles className="h-3 w-3" />
-                                ANALYZE
-                              </>
-                            )}
-                          </button>
+                      {isAdmin && (
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-end gap-2">
+                            {/* Analyze Button */}
+                            <button
+                              onClick={() => analyzeCode(branch.repo_id, 'branch', branch.id)}
+                              disabled={analyzingId === branch.id}
+                              title="Analyze code for AI patterns"
+                              className={`
+                                px-3 py-1 rounded font-mono text-xs transition-colors flex items-center gap-1 border-2
+                                ${analyzingId === branch.id
+                                  ? 'bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)] cursor-wait'
+                                  : 'bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)] hover:bg-[var(--warning)]/20'
+                                }
+                              `}
+                              style={{ fontFamily: 'JetBrains Mono, monospace' }}
+                            >
+                              {analyzingId === branch.id ? (
+                                <>
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                  ANALYZING
+                                </>
+                              ) : (
+                                <>
+                                  <Sparkles className="h-3 w-3" />
+                                  ANALYZE
+                                </>
+                              )}
+                            </button>
 
-                          {/* Toggle AI Button */}
-                          <button
-                            onClick={() => toggleAI('branch', branch.id, branch.is_ai_detected)}
-                            className={`
-                              px-3 py-1 rounded font-mono text-xs transition-colors border-2
-                              ${branch.is_ai_detected
-                                ? 'bg-[var(--accent-light)] text-[var(--accent)] border-[var(--accent)] hover:bg-[var(--accent-light)]'
-                                : 'bg-[var(--muted)] text-[var(--muted-foreground)] border-[var(--border)] hover:bg-[var(--muted)]'
-                              }
-                            `}
-                            style={{ fontFamily: 'JetBrains Mono, monospace' }}
-                          >
-                            {branch.is_ai_detected ? 'SET_HUMAN' : 'SET_AI'}
-                          </button>
-                        </div>
-                      </td>
+                            {/* Toggle AI Button */}
+                            <button
+                              onClick={() => toggleAI('branch', branch.id, branch.is_ai_detected)}
+                              className={`
+                                px-3 py-1 rounded font-mono text-xs transition-colors border-2
+                                ${branch.is_ai_detected
+                                  ? 'bg-[var(--accent-light)] text-[var(--accent)] border-[var(--accent)] hover:bg-[var(--accent-light)]'
+                                  : 'bg-[var(--muted)] text-[var(--muted-foreground)] border-[var(--border)] hover:bg-[var(--muted)]'
+                                }
+                              `}
+                              style={{ fontFamily: 'JetBrains Mono, monospace' }}
+                            >
+                              {branch.is_ai_detected ? 'SET_HUMAN' : 'SET_AI'}
+                            </button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>

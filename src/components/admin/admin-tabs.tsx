@@ -78,7 +78,7 @@ export default function AdminTabs() {
         <div className="p-6">
           {activeTab === 'repos' && <ReposTab />}
           {activeTab === 'mappings' && <MappingsTab />}
-          {activeTab === 'ai-flags' && <AIFlagsTab />}
+          {activeTab === 'ai-flags' && <AIFlagsTab isAdmin={true} />}
           {activeTab === 'keywords' && <KeywordsTab />}
           {activeTab === 'jobs' && <JobsTab />}
         </div>
