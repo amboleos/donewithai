@@ -35,6 +35,12 @@ export class AdminPage extends BasePage {
   readonly dateSortButton: Locator;
   readonly statusSortButton: Locator;
 
+  // AI Flags tab analyze buttons
+  readonly analyzeCommitButton: Locator;
+  readonly analyzeBranchButton: Locator;
+  readonly analysisModal: Locator;
+  readonly closeModalButton: Locator;
+
   constructor(page: Page) {
     super(page);
     this.url = '/admin';
@@ -65,6 +71,12 @@ export class AdminPage extends BasePage {
     this.branchesTable = page.locator('table:has(th:has-text("NAME"))');
     this.dateSortButton = page.locator('th:has-text("DATE")');
     this.statusSortButton = page.locator('th:has-text("STATUS")');
+
+    // Analyze button locators
+    this.analyzeCommitButton = this.commitsTable.locator('button:has-text("ANALYZE")');
+    this.analyzeBranchButton = this.branchesTable.locator('button:has-text("ANALYZE")');
+    this.analysisModal = page.locator('[class*="modal"], [role="dialog"]');
+    this.closeModalButton = page.locator('button:has-text("Close"), button[aria-label="Close"]');
   }
 
   /**
@@ -341,6 +353,75 @@ export class AdminPage extends BasePage {
     const row = this.branchesTable.locator('tbody tr').nth(rowIndex);
     const toggleButton = row.locator('button:has-text("SET_AI"), button:has-text("SET_HUMAN")');
     await toggleButton.click();
+  }
+
+  /**
+   * Click ANALYZE button for a commit
+   */
+  async clickAnalyzeCommit(rowIndex: number) {
+    const row = this.commitsTable.locator('tbody tr').nth(rowIndex);
+    const analyzeButton = row.locator('button:has-text("ANALYZE")');
+    await analyzeButton.click();
+  }
+
+  /**
+   * Click ANALYZE button for a branch
+   */
+  async clickAnalyzeBranch(rowIndex: number) {
+    const row = this.branchesTable.locator('tbody tr').nth(rowIndex);
+    const analyzeButton = row.locator('button:has-text("ANALYZE")');
+    await analyzeButton.click();
+  }
+
+  /**
+   * Check if analyze button is disabled (analyzing in progress)
+   */
+  async isAnalyzeInProgress(rowIndex: number, type: 'commit' | 'branch' = 'commit'): Promise<boolean> {
+    const table = type === 'commit' ? this.commitsTable : this.branchesTable;
+    const row = table.locator('tbody tr').nth(rowIndex);
+    const analyzeButton = row.locator('button:has-text("ANALYZING"), button:has-text("ANALYZE")');
+    const text = await analyzeButton.textContent();
+    return text?.includes('ANALYZING') || false;
+  }
+
+  /**
+   * Wait for analyze to complete
+   */
+  async waitForAnalyzeComplete(rowIndex: number, type: 'commit' | 'branch' = 'commit', timeout: number = 60000): Promise<boolean> {
+    const startTime = Date.now();
+    while (Date.now() - startTime < timeout) {
+      if (!(await this.isAnalyzeInProgress(rowIndex, type))) {
+        return true;
+      }
+      await this.page.waitForTimeout(1000);
+    }
+    return false;
+  }
+
+  /**
+   * Check if analysis modal is visible
+   */
+  async isAnalysisModalVisible(): Promise<boolean> {
+    return await this.isVisible(this.analysisModal);
+  }
+
+  /**
+   * Close analysis modal
+   */
+  async closeAnalysisModal() {
+    if (await this.isAnalysisModalVisible()) {
+      await this.page.keyboard.press('Escape');
+      await this.page.waitForTimeout(500);
+    }
+  }
+
+  /**
+   * Click Recheck AI button in Repos tab for a specific repo
+   */
+  async clickRecheckAI(repoName: string) {
+    const repoRow = this.page.locator(`tr:has-text("${repoName}")`);
+    const recheckButton = repoRow.locator('button[title="Recheck AI"], button:has(svg[class*="brain"])');
+    await recheckButton.click();
   }
 
   /**
