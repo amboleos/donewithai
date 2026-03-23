@@ -329,7 +329,9 @@ export default function DashboardPage() {
                     <span className="hidden sm:inline">Logout</span>
                   </button>
                   <div className="px-4 py-2 border-2 border-[var(--border)] bg-[var(--card)] [box-shadow:var(--shadow-brutal-sm)]">
-                    <span className="text-sm font-mono text-[var(--foreground)]">{user?.name}</span>
+                    <span className="text-sm font-mono text-[var(--foreground)]">
+                      {user && user.name ? user.name : <span className="italic text-[var(--muted-foreground)]">No user</span>}
+                    </span>
                   </div>
                 </div>
               </div>

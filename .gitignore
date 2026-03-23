@@ -12,6 +12,15 @@
 
 # testing
 /coverage
+/playwright-report/
+/test-results/
+test.db
+
+# QA output
+/dogfood-output/
+
+# backup files
+*.bak
 
 # next.js
 /.next/

@@ -52,8 +52,8 @@ export class RepoPage extends BasePage {
   /**
    * Navigate to repo detail page
    */
-  async goto(repoId: string | number) {
-    await super.goto(`${this.url}${repoId}`);
+  async goto(repoId?: string | number) {
+    await super.goto(`${this.url}${repoId ?? ''}`);
     await this.waitForStable();
   }
 
