@@ -4,6 +4,11 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ============================================
+   DONEWITHAI DESIGN SYSTEM v2.0
+   Neo-Brutalist Technical Aesthetic
+   ============================================ */
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -48,74 +53,149 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* ============================================
+   LIGHT MODE - Neo-Brutalist
+   ============================================ */
+
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* Core Colors */
+  --background: #FDFBF7;
+  --foreground: #1A1A1A;
+
+  /* Primary - Deep Teal */
+  --primary: #0D9488;
+  --primary-foreground: #FFFFFF;
+  --primary-hover: #0F766E;
+  --primary-light: #CCFBF1;
+
+  /* Accent - Vibrant Coral */
+  --accent: #F97316;
+  --accent-foreground: #FFFFFF;
+  --accent-hover: #EA580C;
+  --accent-light: #FFEDD5;
+
+  /* Secondary */
+  --secondary: #F4F4F5;
+  --secondary-foreground: #18181B;
+
+  /* Muted */
+  --muted: #F4F4F5;
+  --muted-foreground: #71717A;
+
+  /* Cards & Surfaces */
+  --card: #FFFFFF;
+  --card-foreground: #18181B;
+  --popover: #FFFFFF;
+  --popover-foreground: #18181B;
+
+  /* Borders & Inputs */
+  --border: #27272A;
+  --input: #E4E4E7;
+  --ring: #0D9488;
+
+  /* Status Colors */
+  --destructive: #DC2626;
+  --success: #16A34A;
+  --warning: #CA8A04;
+
+  /* Chart Colors */
+  --chart-1: #0D9488;
+  --chart-2: #F97316;
+  --chart-3: #8B5CF6;
+  --chart-4: #EC4899;
+  --chart-5: #06B6D4;
+
+  /* Radius - Sharp corners for brutalist feel */
+  --radius: 0.25rem;
+
+  /* Sidebar */
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #18181B;
+  --sidebar-primary: #0D9488;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #F4F4F5;
+  --sidebar-accent-foreground: #18181B;
+  --sidebar-border: #27272A;
+  --sidebar-ring: #0D9488;
+
+  /* Neo-Brutalist Shadow */
+  --shadow-brutal: 4px 4px 0px 0px var(--border);
+  --shadow-brutal-sm: 2px 2px 0px 0px var(--border);
+  --shadow-brutal-lg: 6px 6px 0px 0px var(--border);
+  --shadow-brutal-accent: 4px 4px 0px 0px var(--accent);
+  --shadow-brutal-primary: 4px 4px 0px 0px var(--primary);
 }
 
+/* ============================================
+   DARK MODE - Neo-Brutalist
+   ============================================ */
+
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: #18181B;
+  --foreground: #FAFAFA;
+
+  /* Primary - Bright Teal */
+  --primary: #2DD4BF;
+  --primary-foreground: #18181B;
+  --primary-hover: #5EEAD4;
+  --primary-light: #134E4A;
+
+  /* Accent - Bright Coral */
+  --accent: #FB923C;
+  --accent-foreground: #18181B;
+  --accent-hover: #FDBA74;
+  --accent-light: #431407;
+
+  /* Secondary */
+  --secondary: #27272A;
+  --secondary-foreground: #FAFAFA;
+
+  /* Muted */
+  --muted: #27272A;
+  --muted-foreground: #A1A1AA;
+
+  /* Cards & Surfaces */
+  --card: #27272A;
+  --card-foreground: #FAFAFA;
+  --popover: #27272A;
+  --popover-foreground: #FAFAFA;
+
+  /* Borders & Inputs */
+  --border: #FAFAFA;
+  --input: #3F3F46;
+  --ring: #2DD4BF;
+
+  /* Status Colors */
+  --destructive: #EF4444;
+  --success: #22C55E;
+  --warning: #EAB308;
+
+  /* Chart Colors */
+  --chart-1: #2DD4BF;
+  --chart-2: #FB923C;
+  --chart-3: #A78BFA;
+  --chart-4: #F472B6;
+  --chart-5: #22D3EE;
+
+  /* Sidebar */
+  --sidebar: #27272A;
+  --sidebar-foreground: #FAFAFA;
+  --sidebar-primary: #2DD4BF;
+  --sidebar-primary-foreground: #18181B;
+  --sidebar-accent: #3F3F46;
+  --sidebar-accent-foreground: #FAFAFA;
+  --sidebar-border: #FAFAFA;
+  --sidebar-ring: #2DD4BF;
+
+  /* Neo-Brutalist Shadow - Dark mode */
+  --shadow-brutal: 4px 4px 0px 0px var(--border);
+  --shadow-brutal-sm: 2px 2px 0px 0px var(--border);
+  --shadow-brutal-lg: 6px 6px 0px 0px var(--border);
 }
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
 
 @layer base {
   * {
@@ -123,204 +203,474 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
   html {
-    @apply font-sans;
+    font-family: var(--font-sans);
   }
 }
 
 /* ============================================
-   Custom Animations for UI Components
+   TYPOGRAPHY - Sora + JetBrains Mono
    ============================================ */
 
-/* Ripple effect for buttons */
-@keyframes ripple {
-  0% {
-    transform: scale(0);
-    opacity: 0.5;
-  }
-  100% {
-    transform: scale(4);
-    opacity: 0;
+.font-display {
+  font-family: 'Sora', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.font-body {
+  font-family: 'Sora', sans-serif;
+  font-weight: 400;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* ============================================
+   NEO-BRUTALIST COMPONENTS
+   ============================================ */
+
+/* Brutal Button Base */
+.btn-brutal {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-family: 'Sora', sans-serif;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 2px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: var(--shadow-brutal);
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.btn-brutal:hover {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px 0px var(--border);
+}
+
+.btn-brutal:active {
+  transform: translate(4px, 4px);
+  box-shadow: none;
+}
+
+/* Brutal Card */
+.card-brutal {
+  background: var(--card);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow-brutal);
+  transition: all 0.2s ease;
+}
+
+.card-brutal:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px 0px var(--border);
+}
+
+/* Brutal Input */
+.input-brutal {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-family: 'Sora', sans-serif;
+  font-size: 0.875rem;
+  border: 2px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: var(--shadow-brutal-sm);
+  transition: all 0.15s ease;
+}
+
+.input-brutal:focus {
+  outline: none;
+  transform: translate(2px, 2px);
+  box-shadow: none;
+  border-color: var(--primary);
+}
+
+.input-brutal::placeholder {
+  color: var(--muted-foreground);
+}
+
+/* Brutal Badge */
+.badge-brutal {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 2px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+}
+
+/* ============================================
+   GLASSMORPHISM
+   ============================================ */
+
+/* Glass card - for dashboard stats and repo cards */
+.card-glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.2s ease;
+}
+
+.dark .card-glass {
+  background: rgba(39, 39, 46, 0.2);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.card-glass:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.dark .card-glass:hover {
+  background: rgba(39, 39, 46, 0.3);
+}
+
+@supports not (backdrop-filter: blur(12px)) {
+  .card-glass {
+    background: var(--card);
   }
 }
 
-.animate-ripple {
-  animation: ripple 600ms ease-out forwards;
-}
-
-/* Stripe animation for progress bars */
-@keyframes stripe {
-  0% {
-    background-position: 1rem 0;
-  }
-  100% {
-    background-position: 0 0;
-  }
-}
-
-/* Pulse glow effect for badges */
-@keyframes pulse-glow {
-  0%, 100% {
-    box-shadow: 0 0 5px currentColor;
-  }
-  50% {
-    box-shadow: 0 0 20px currentColor;
-  }
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
-/* Spin slow for large spinners */
-@keyframes spin-slow {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-.animate-spin-slow {
-  animation: spin-slow 3s linear infinite;
-}
+/* ============================================
+   CUSTOM ANIMATIONS
+   ============================================ */
 
 /* Fade in animation */
 @keyframes fade-in {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-.animate-fade-in {
-  animation: fade-in 200ms ease-out;
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* Slide up animation */
 @keyframes slide-up {
-  0% {
-    transform: translateY(10px);
+  from {
     opacity: 0;
+    transform: translateY(20px);
   }
-  100% {
-    transform: translateY(0);
+  to {
     opacity: 1;
+    transform: translateY(0);
   }
-}
-
-.animate-slide-up {
-  animation: slide-up 200ms ease-out;
 }
 
 /* Scale in animation */
 @keyframes scale-in {
-  0% {
-    transform: scale(0.9);
+  from {
     opacity: 0;
+    transform: scale(0.95);
   }
-  100% {
-    transform: scale(1);
+  to {
     opacity: 1;
+    transform: scale(1);
   }
 }
 
-.animate-scale-in {
-  animation: scale-in 200ms ease-out;
+/* Pulse for status indicators */
+@keyframes pulse-dot {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Spin for loading */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Stripe animation for progress bars */
+@keyframes stripe {
+  0% { background-position: 1rem 0; }
+  100% { background-position: 0 0; }
 }
 
 /* Bounce for dots */
 @keyframes bounce-dot {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-25%);
-  }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-25%); }
+}
+
+/* Utility Classes */
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.4s ease-out;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.3s ease-out;
+}
+
+.animate-pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-stripe {
+  animation: stripe 1s linear infinite;
 }
 
 .animate-bounce-dot {
   animation: bounce-dot 0.6s ease-in-out infinite;
 }
 
+/* Staggered animation delays */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+
+/* Floating Orb Animations - for Dashboard background */
+@keyframes float-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -30px) scale(1.05); }
+  66% { transform: translate(-20px, 20px) scale(0.95); }
+}
+
+@keyframes float-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-30px, 20px) scale(1.1); }
+  66% { transform: translate(20px, -20px) scale(0.9); }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.2; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.3; transform: translate(-50%, -50%) scale(1.1); }
+}
+
+/* Float animation utilities */
+.animate-float-1 { animation: float-1 20s ease-in-out infinite; }
+.animate-float-2 { animation: float-2 25s ease-in-out infinite; }
+.animate-pulse-slow { animation: pulse-slow 4s ease-in-out infinite; }
+
 /* ============================================
-   Custom Design Token Colors
+   PATTERNS & BACKGROUNDS
    ============================================ */
 
-:root {
-  /* Primary - Electric Violet */
-  --color-primary-50: oklch(0.97 0.015 285);
-  --color-primary-100: oklch(0.94 0.03 285);
-  --color-primary-200: oklch(0.89 0.055 285);
-  --color-primary-300: oklch(0.81 0.095 285);
-  --color-primary-400: oklch(0.68 0.15 285);
-  --color-primary-500: oklch(0.58 0.20 285);
-  --color-primary-600: oklch(0.50 0.22 285);
-  --color-primary-700: oklch(0.42 0.20 285);
-  --color-primary-800: oklch(0.35 0.16 285);
-  --color-primary-900: oklch(0.28 0.12 285);
+/* Dot pattern */
+.bg-dots {
+  background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
 
-  /* Accent - Coral Orange */
-  --color-accent-50: oklch(0.98 0.02 45);
-  --color-accent-100: oklch(0.95 0.045 45);
-  --color-accent-200: oklch(0.90 0.08 45);
-  --color-accent-300: oklch(0.82 0.13 45);
-  --color-accent-400: oklch(0.72 0.18 45);
-  --color-accent-500: oklch(0.65 0.22 45);
-  --color-accent-600: oklch(0.58 0.24 45);
-  --color-accent-700: oklch(0.50 0.22 45);
-  --color-accent-800: oklch(0.42 0.18 45);
-  --color-accent-900: oklch(0.35 0.14 45);
+/* Grid pattern */
+.bg-grid {
+  background-image:
+    linear-gradient(to right, var(--border) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
 
-  /* AI Badge - Glowing Cyan */
-  --color-ai-50: oklch(0.98 0.03 195);
-  --color-ai-100: oklch(0.94 0.06 195);
-  --color-ai-200: oklch(0.88 0.10 195);
-  --color-ai-300: oklch(0.80 0.15 195);
-  --color-ai-400: oklch(0.70 0.20 195);
-  --color-ai-500: oklch(0.60 0.24 195);
-  --color-ai-600: oklch(0.52 0.25 195);
-  --color-ai-700: oklch(0.45 0.22 195);
-  --color-ai-800: oklch(0.38 0.18 195);
-  --color-ai-900: oklch(0.30 0.14 195);
+/* Diagonal stripes */
+.bg-stripes {
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    var(--muted) 10px,
+    var(--muted) 11px
+  );
+}
 
-  /* Success - Emerald */
-  --color-success-50: oklch(0.97 0.03 145);
-  --color-success-100: oklch(0.93 0.06 145);
-  --color-success-200: oklch(0.87 0.10 145);
-  --color-success-300: oklch(0.78 0.15 145);
-  --color-success-400: oklch(0.68 0.20 145);
-  --color-success-500: oklch(0.58 0.23 145);
-  --color-success-600: oklch(0.50 0.24 145);
-  --color-success-700: oklch(0.42 0.21 145);
-  --color-success-800: oklch(0.35 0.17 145);
-  --color-success-900: oklch(0.28 0.13 145);
+/* ============================================
+   STATUS COLORS
+   ============================================ */
 
-  /* Warning - Amber */
-  --color-warning-50: oklch(0.98 0.02 85);
-  --color-warning-100: oklch(0.95 0.05 85);
-  --color-warning-200: oklch(0.90 0.10 85);
-  --color-warning-300: oklch(0.82 0.16 85);
-  --color-warning-400: oklch(0.72 0.22 85);
-  --color-warning-500: oklch(0.64 0.26 85);
-  --color-warning-600: oklch(0.56 0.27 85);
-  --color-warning-700: oklch(0.48 0.24 85);
-  --color-warning-800: oklch(0.40 0.20 85);
-  --color-warning-900: oklch(0.32 0.15 85);
+.text-success { color: var(--success); }
+.text-warning { color: var(--warning); }
+.text-destructive { color: var(--destructive); }
+.text-primary { color: var(--primary); }
+.text-accent { color: var(--accent); }
 
-  /* Error - Rose */
-  --color-error-50: oklch(0.97 0.03 25);
-  --color-error-100: oklch(0.93 0.07 25);
-  --color-error-200: oklch(0.86 0.12 25);
-  --color-error-300: oklch(0.77 0.18 25);
-  --color-error-400: oklch(0.67 0.24 25);
-  --color-error-500: oklch(0.58 0.27 25);
-  --color-error-600: oklch(0.50 0.28 25);
-  --color-error-700: oklch(0.42 0.25 25);
-  --color-error-800: oklch(0.35 0.20 25);
-  --color-error-900: oklch(0.28 0.16 25);
+.bg-success { background-color: var(--success); }
+.bg-warning { background-color: var(--warning); }
+.bg-destructive { background-color: var(--destructive); }
+.bg-primary { background-color: var(--primary); }
+.bg-accent { background-color: var(--accent); }
+
+.border-success { border-color: var(--success); }
+.border-warning { border-color: var(--warning); }
+.border-destructive { border-color: var(--destructive); }
+.border-primary { border-color: var(--primary); }
+.border-accent { border-color: var(--accent); }
+
+/* ============================================
+   AI-SPECIFIC STYLING
+   ============================================ */
+
+/* AI Badge - Glowing Cyan */
+.ai-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 2px solid #06B6D4;
+  background: #ECFEFF;
+  color: #0891B2;
+}
+
+.dark .ai-badge {
+  background: #164E63;
+  color: #67E8F9;
+  border-color: #22D3EE;
+}
+
+/* Human Badge */
+.human-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 2px solid #22C55E;
+  background: #F0FDF4;
+  color: #16A34A;
+}
+
+.dark .human-badge {
+  background: #14532D;
+  color: #86EFAC;
+  border-color: #4ADE80;
+}
+
+/* Agentic AI Badge */
+.agentic-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 2px solid #EF4444;
+  background: #FEF2F2;
+  color: #DC2626;
+}
+
+.dark .agentic-badge {
+  background: #450A0A;
+  color: #FCA5A5;
+  border-color: #F87171;
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+/* Brutal shadow utilities */
+.shadow-brutal { box-shadow: var(--shadow-brutal); }
+.shadow-brutal-sm { box-shadow: var(--shadow-brutal-sm); }
+.shadow-brutal-lg { box-shadow: var(--shadow-brutal-lg); }
+.shadow-brutal-accent { box-shadow: var(--shadow-brutal-accent); }
+.shadow-brutal-primary { box-shadow: var(--shadow-brutal-primary); }
+
+/* Hover lift effect */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px 0px var(--border);
+}
+
+/* Focus ring */
+.focus-ring:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.dark .focus-ring:focus {
+  box-shadow: 0 0 0 3px var(--primary);
+}
+
+/* ============================================
+   SCROLLBAR STYLING
+   ============================================ */
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--muted);
+  border: 2px solid var(--border);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--foreground);
+  border: 2px solid var(--border);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+/* ============================================
+   SELECTION STYLING
+   ============================================ */
+
+::selection {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+/* ============================================
+   RESPONSIVE UTILITIES
+   ============================================ */
+
+@media (max-width: 640px) {
+  .btn-brutal {
+    padding: 0.625rem 1rem;
+    font-size: 0.8125rem;
+  }
+
+  .card-brutal {
+    box-shadow: var(--shadow-brutal-sm);
+  }
+
+  .card-brutal:hover {
+    transform: none;
+    box-shadow: var(--shadow-brutal-sm);
+  }
 }
