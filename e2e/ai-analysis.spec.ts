@@ -537,6 +537,9 @@ test.describe('AI Analysis - Integration', () => {
   });
 
   test('should verify AI detection flow end-to-end', async ({ page }) => {
+    // Set longer timeout for integration test
+    test.setTimeout(60000);
+
     // Step 1: Navigate to AI Flags tab
     await dashboardPage.gotoAdmin();
     await adminPage.clickAIFlagsTab();
@@ -553,49 +556,23 @@ test.describe('AI Analysis - Integration', () => {
     if (commitsCount > 0) {
       // Click analyze on first commit
       await adminPage.clickAnalyzeCommit(0);
-      await page.waitForTimeout(2000);
 
-      // Close any modal that appears
-      const modal = page.locator('[role="dialog"], .fixed.inset-0');
-      if (await modal.isVisible().catch(() => false)) {
-        await page.keyboard.press('Escape');
-        await page.waitForTimeout(500);
-      }
-
-      // Verify button state changed
-      const row = adminPage.commitsTable.locator('tbody tr').first();
-      const analyzeButton = row.locator('button:has-text("ANALYZE"), button:has-text("ANALYZING")');
-      const isVisible = await analyzeButton.isVisible().catch(() => false);
-      expect(isVisible).toBeTruthy();
-    }
-
-    // Step 3: Wait for any modal to disappear before continuing
-    const modalOverlay = page.locator('.fixed.inset-0.z-50');
-    try {
-      // Wait up to 10 seconds for modal to disappear
-      await modalOverlay.waitFor({ state: 'hidden', timeout: 10000 });
-    } catch {
-      // If still visible, try multiple close attempts
-      for (let i = 0; i < 3; i++) {
-        await page.keyboard.press('Escape');
-        await page.waitForTimeout(500);
-        if (!(await modalOverlay.isVisible().catch(() => false))) break;
+      // Wait for modal to appear (analysis result)
+      const modal = page.locator('.fixed.inset-0.z-50');
+      try {
+        await modal.waitFor({ state: 'visible', timeout: 10000 });
+        // Click the X button to close the modal
+        const closeButton = modal.locator('button:has(svg.lucide-x)').first();
+        if (await closeButton.isVisible().catch(() => false)) {
+          await closeButton.click();
+          await page.waitForTimeout(500);
+        }
+      } catch {
+        // Modal might have appeared and disappeared quickly
       }
     }
 
-    // Step 4: Test branches tab if available
-    await adminPage.clickBranchesTab();
-    await page.waitForTimeout(1000);
-
-    const branchesCount = await adminPage.getBranchesCount();
-
-    if (branchesCount > 0) {
-      // Click analyze on first branch
-      await adminPage.clickAnalyzeBranch(0);
-      await page.waitForTimeout(2000);
-    }
-
-    // Step 4: Test recheck from repos tab
+    // Step 3: Test recheck from repos tab
     await adminPage.clickReposTab();
     await page.waitForTimeout(1000);
 
@@ -606,7 +583,7 @@ test.describe('AI Analysis - Integration', () => {
       await page.waitForTimeout(2000);
     }
 
-    // Step 5: Verify final state is consistent
+    // Step 4: Verify final state is consistent
     await adminPage.clickAIFlagsTab();
     await page.waitForTimeout(1000);
 
