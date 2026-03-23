@@ -18,10 +18,11 @@ export class BasePage {
   }
 
   /**
-   * Wait for page to be stable (no network requests for 500ms)
+   * Wait for page to be stable
    */
   async waitForStable() {
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
+    await this.page.waitForLoadState('load');
   }
 
   /**

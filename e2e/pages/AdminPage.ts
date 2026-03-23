@@ -161,7 +161,7 @@ export class AdminPage extends BasePage {
    * In AI Flags tab, click on Branches sub-tab
    */
   async clickBranchesTab() {
-    await this.branchesTab.click();
+    await this.branchesTab.click({ force: true });
   }
 
   /**

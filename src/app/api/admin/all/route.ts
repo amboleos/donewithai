@@ -33,6 +33,7 @@ export async function GET(req: NextRequest) {
           c.author,
           c.repo_id,
           c.is_ai_detected,
+          c.date,
           r.name as repo_name,
           ca.is_agentic as code_is_agentic,
           ca.confidence as code_confidence

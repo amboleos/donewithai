@@ -88,7 +88,7 @@ test.describe('Authentication Flow', () => {
     const email = `testuser${timestamp}@example.com`;
 
     // Register new user
-    await loginPage.register('Test User', email, 'password123');
+    await loginPage.register('Test User', email, '3Fe19877891');
 
     // Should redirect to dashboard
     expect(page.url()).toContain('/dashboard');
@@ -99,7 +99,7 @@ test.describe('Authentication Flow', () => {
 
     // Login with valid credentials (assuming user exists from previous test)
     // Note: This test may fail if user doesn't exist, in which case registration happens first
-    await loginPage.login('testuser@example.com', 'password123');
+    await loginPage.login('efeturhan@gmail.com', '3Fe19877891');
 
     // Should redirect to dashboard
     expect(page.url()).toContain('/dashboard');
@@ -115,7 +115,7 @@ test.describe('Dashboard Page', () => {
     // Login first (assuming test user exists)
     const loginPage = new LoginPage(page);
     await loginPage.goto();
-    await loginPage.login('testuser@example.com', 'password123');
+    await loginPage.login('efeturhan@gmail.com', '3Fe19877891');
   });
 
   test('should display dashboard with Neo-Brutalist styling', async ({ page }) => {
@@ -221,7 +221,7 @@ test.describe('Repository Operations', () => {
     // Login as admin user
     const loginPage = new LoginPage(page);
     await loginPage.goto();
-    await loginPage.login('testuser@example.com', 'password123');
+    await loginPage.login('efeturhan@gmail.com', '3Fe19877891');
   });
 
   test('should open add repository dialog', async ({ page }) => {
@@ -309,7 +309,7 @@ test.describe('Admin AI Flags Tab', () => {
     // Login and navigate to admin
     const loginPage = new LoginPage(page);
     await loginPage.goto();
-    await loginPage.login('testuser@example.com', 'password123');
+    await loginPage.login('efeturhan@gmail.com', '3Fe19877891');
 
     dashboardPage = new DashboardPage(page);
     adminPage = new AdminPage(page);
@@ -638,7 +638,7 @@ test.describe('Full User Flow', () => {
     // 1. Register new user
     const loginPage = new LoginPage(page);
     await loginPage.goto();
-    await loginPage.register('Flow Test User', email, 'password123');
+    await loginPage.register('Flow Test User', email, '3Fe19877891');
 
     // 2. Verify dashboard
     const dashboardPage = new DashboardPage(page);
@@ -665,7 +665,7 @@ test.describe('Full User Flow', () => {
     expect(page.url()).toContain('/login');
 
     // 8. Login again
-    await loginPage.login(email, 'password123');
+    await loginPage.login(email, '3Fe19877891');
     expect(page.url()).toContain('/dashboard');
   });
 });

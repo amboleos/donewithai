@@ -35,7 +35,7 @@ export class DashboardPage extends BasePage {
     this.logoutButton = page.locator('button:has-text("Logout")');
     this.adminButton = page.locator('a[href="/admin"]');
     this.addRepoButton = page.locator('button:has-text("Add Repository")');
-    this.statsCards = page.locator('[class*="grid"]').filter({ has: page.locator('text=/Total Repos|GitHub|Bitbucket|Synced/i') });
+    this.statsCards = page.locator('[class*="grid-cols-2"]').filter({ has: page.locator('text=/Total Repos|GitHub|Bitbucket|Synced/i') }).first();
     this.repoList = page.locator('[class*="repo"]');
     this.emptyState = page.locator('text=No Repositories');
     this.themeToggle = page.locator('[data-testid="theme-toggle"]');

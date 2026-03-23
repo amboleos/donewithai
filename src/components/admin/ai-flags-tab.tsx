@@ -488,7 +488,13 @@ export default function AIFlagsTab() {
                       <td className="px-4 py-3 text-[var(--muted-foreground)]">{commit.author}</td>
                       <td className="px-4 py-3 text-[var(--muted-foreground)]">{commit.repo_name}</td>
                       <td className="px-4 py-3 text-xs text-[var(--muted-foreground)] font-mono" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                        {new Date(commit.date).toLocaleString('sv-SE')}
+                        {commit.date ? new Date(commit.date).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        }) : 'N/A'}
                       </td>
                       <td className="px-4 py-3">
                         <PatternBadge isAIDetected={commit.is_ai_detected} />
