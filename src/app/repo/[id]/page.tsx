@@ -430,6 +430,7 @@ function RepoDetailContent() {
   const [commitsPage, setCommitsPage] = useState(0);
   const COMMITS_PER_PAGE = 50;
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isAIRechecking, setIsAIRechecking] = useState(false);
 
   useEffect(() => {
     if (user && repoId) {
@@ -470,6 +471,29 @@ function RepoDetailContent() {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await fetchData();
+  };
+
+  const handleAIRecheck = async () => {
+    setIsAIRechecking(true);
+    try {
+      const res = await fetch('/api/sync/recheck-ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ repoId: repo.id }),
+      });
+
+      if (!res.ok) throw new Error('Failed to recheck AI');
+
+      const data = await res.json();
+      // Show success toast
+      console.log('AI recheck complete:', data);
+      // Refresh data to show updated AI flags
+      await fetchData();
+    } catch (error) {
+      console.error('AI recheck failed:', error);
+    } finally {
+      setIsAIRechecking(false);
+    }
   };
 
   if (loading || !data) {
@@ -537,6 +561,17 @@ function RepoDetailContent() {
                 </div>
                 <div className="flex items-center gap-2">
                   <ThemeToggle />
+                  <Button
+                    onClick={handleAIRecheck}
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    disabled={isAIRechecking}
+                    title="Recheck AI for all commits"
+                  >
+                    <Brain className={`h-4 w-4 ${isAIRechecking ? 'animate-pulse' : ''}`} />
+                    AI Recheck
+                  </Button>
                   <Button
                     onClick={handleRefresh}
                     variant="outline"
