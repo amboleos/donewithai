@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { toast } from 'sonner';
 
 interface Commit {
   id: number;
@@ -485,12 +486,12 @@ function RepoDetailContent() {
       if (!res.ok) throw new Error('Failed to recheck AI');
 
       const data = await res.json();
-      // Show success toast
-      console.log('AI recheck complete:', data);
+      toast.success('AI recheck complete');
       // Refresh data to show updated AI flags
       await fetchData();
     } catch (error) {
       console.error('AI recheck failed:', error);
+      toast.error('Failed to recheck AI');
     } finally {
       setIsAIRechecking(false);
     }
