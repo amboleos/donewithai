@@ -19,8 +19,8 @@
 - `src/app/api/admin/users/[id]/route.ts` - PUT and DELETE endpoints
 
 **Modified files:**
-- `src/components/admin/admin-tabs.tsx` - Add new "Users" tab
-- `src/lib/db.ts` - Add `updateUser`, `deleteUser`, `createUser`, `getUserByEmail` functions
+- `src/components/admin/admin-tabs.tsx` - Add new "Users" tab (shortcut: `6`)
+- `src/lib/db.ts` - Add `updateUser`, `deleteUser`, `createUser` functions
 
 **Data flow:**
 ```
@@ -33,6 +33,28 @@ UsersTab → ConfirmDialog → DELETE /api/admin/users/[id] → deleteUser()
 ---
 
 ## 2. Component Design
+
+### Types
+
+```typescript
+// PublicUser type (excludes password) - already exists in db.ts
+interface PublicUser {
+  id: number;
+  name: string;
+  email: string;
+  github_username: string | null;
+  role: string;
+  created_at: string;
+}
+
+// UserDialog props
+interface UserDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  user?: PublicUser | null;  // null/undefined = add mode, otherwise edit mode
+  onSave: (user: PublicUser) => void;
+}
+```
 
 ### UsersTab
 ```
@@ -49,6 +71,7 @@ UsersTab → ConfirmDialog → DELETE /api/admin/users/[id] → deleteUser()
 - **Sorting:** By name, email, role, created_at fields
 - **Search:** Filter by name and email
 - **Actions:** Edit (✏️) and Delete (🗑️) buttons at row end
+- **Tab shortcut:** `6` (following existing 1-5 pattern)
 
 ### UserDialog
 ```
@@ -66,10 +89,13 @@ UsersTab → ConfirmDialog → DELETE /api/admin/users/[id] → deleteUser()
 ```
 - Edit mode: Password field not shown (only for new users)
 - Required fields: Name, Email, Role, Password (for new users)
+- **Password update is out of scope** - separate feature if needed
 
 ---
 
 ## 3. API Design
+
+**Authentication pattern:** Use `verifyToken` from `simple-auth.ts` directly (same as existing `/api/admin/users/route.ts`).
 
 ### `POST /api/admin/users` - Create user
 ```typescript
@@ -77,10 +103,16 @@ UsersTab → ConfirmDialog → DELETE /api/admin/users/[id] → deleteUser()
 { name: string, email: string, github_username?: string, role: 'admin' | 'developer', password: string }
 
 // Response 201
-{ user: { id, name, email, github_username, role, created_at } }
+{ user: PublicUser }
 
 // Response 400 - Email exists
 { error: 'Email already exists' }
+
+// Response 400 - Missing fields
+{ error: 'Name, email, role and password are required' }
+
+// Response 403 - Not admin
+{ error: 'Forbidden' }
 ```
 
 ### `PUT /api/admin/users/[id]` - Update user
@@ -89,10 +121,13 @@ UsersTab → ConfirmDialog → DELETE /api/admin/users/[id] → deleteUser()
 { name?: string, email?: string, github_username?: string | null, role?: 'admin' | 'developer' }
 
 // Response 200
-{ user: { id, name, email, github_username, role, created_at } }
+{ user: PublicUser }
 
 // Response 404
 { error: 'User not found' }
+
+// Response 403 - Not admin
+{ error: 'Forbidden' }
 ```
 
 ### `DELETE /api/admin/users/[id]` - Delete user
@@ -102,9 +137,10 @@ UsersTab → ConfirmDialog → DELETE /api/admin/users/[id] → deleteUser()
 
 // Response 404
 { error: 'User not found' }
-```
 
-**Note:** All endpoints require admin role (same pattern as existing GET).
+// Response 403 - Not admin
+{ error: 'Forbidden' }
+```
 
 ---
 
@@ -113,14 +149,16 @@ UsersTab → ConfirmDialog → DELETE /api/admin/users/[id] → deleteUser()
 Functions to add in `src/lib/db.ts`:
 
 ```typescript
+// Create user - receives PRE-HASHED password from API route
 export async function createUser(data: {
   name: string;
   email: string;
-  password: string;
+  password: string;  // Already hashed with hashPassword() in API route
   role: string;
   github_username?: string | null;
 }): Promise<User>
 
+// Update user
 export async function updateUser(id: number, data: {
   name?: string;
   email?: string;
@@ -128,12 +166,15 @@ export async function updateUser(id: number, data: {
   github_username?: string | null;
 }): Promise<User | null>
 
+// Delete user
 export async function deleteUser(id: number): Promise<boolean>
-
-export async function getUserByEmail(email: string): Promise<User | null>
 ```
 
-**No schema changes** - Existing `users` table is sufficient.
+**Notes:**
+- **Password hashing:** Done in API route using `hashPassword()` from `simple-auth.ts` before passing to DB
+- **`getUserByEmail`:** Already exists in db.ts (returns `Promise<User | undefined>`) - use existing function
+- **`github_username` normalization:** Normalize to lowercase (consistent with existing `createUserMapping` pattern)
+- **No schema changes** - Existing `users` table is sufficient
 
 ---
 
@@ -145,8 +186,13 @@ export async function getUserByEmail(email: string): Promise<User | null>
 | User not found | 404: "User not found" |
 | Invalid role | 400: "Invalid role" |
 | Missing required field | 400: "Name, email, role and password are required" |
-| Unauthorized access | 403: "Forbidden" (existing pattern) |
+| Unauthorized access | 403: "Forbidden" (using verifyToken pattern) |
 | DB error | 500: "Internal server error" + toast |
+
+**Edge cases (intentionally allowed per requirements):**
+- Admin can delete their own account (no restriction)
+- Admin can demote themselves (even if last admin)
+- Admin can delete the last admin
 
 **Client-side:**
 - Form validation: Inline error messages for empty required fields
@@ -164,6 +210,8 @@ export async function getUserByEmail(email: string): Promise<User | null>
 5. Delete user with confirmation dialog
 6. Search/filter functionality
 7. Non-admin access (expect 403)
+8. Self-deletion (should succeed)
+9. Self-demotion (should succeed)
 
 **Automated test:** Last task will dispatch a separate agent to create the automated test task list.
 
@@ -173,9 +221,9 @@ export async function getUserByEmail(email: string): Promise<User | null>
 
 | # | Task | Files |
 |---|------|-------|
-| 1 | Add DB functions (`createUser`, `updateUser`, `deleteUser`, `getUserByEmail`) | `src/lib/db.ts` |
+| 1 | Add DB functions (`createUser`, `updateUser`, `deleteUser`) | `src/lib/db.ts` |
 | 2 | Add API endpoints (POST, PUT, DELETE) | `src/app/api/admin/users/route.ts`, `src/app/api/admin/users/[id]/route.ts` |
 | 3 | Create `UserDialog` component | `src/components/admin/user-dialog.tsx` |
 | 4 | Create `UsersTab` component | `src/components/admin/users-tab.tsx` |
-| 5 | Update `AdminTabs` (add new tab) | `src/components/admin/admin-tabs.tsx` |
+| 5 | Update `AdminTabs` (add new tab with shortcut 6) | `src/components/admin/admin-tabs.tsx` |
 | 6 | Dispatch test agent for automated test task list | - |
