@@ -32,8 +32,9 @@ export async function GET(req: NextRequest) {
           c.message,
           c.author,
           c.repo_id,
-          c.is_ai_detected,
           c.date,
+          c.lines_added,
+          c.lines_removed,
           r.name as repo_name,
           ca.is_agentic as code_is_agentic,
           ca.confidence as code_confidence
@@ -53,7 +54,6 @@ export async function GET(req: NextRequest) {
           b.id,
           b.name,
           b.repo_id,
-          b.is_ai_detected,
           r.name as repo_name,
           ca.is_agentic as code_is_agentic,
           ca.confidence as code_confidence

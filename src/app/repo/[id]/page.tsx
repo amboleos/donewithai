@@ -626,16 +626,16 @@ function RepoDetailContent() {
               {/* AI Commits */}
               <Card variant="primary" className="overflow-hidden group">
                 <CardHeader className="pb-2">
-                  <CardDescription className="flex items-center gap-2">
+                  <CardDescription className="flex items-center gap-2 text-[var(--muted-foreground)]">
                     <Brain className="h-4 w-4" />
                     AI Generated
                   </CardDescription>
-                  <CardTitle className="text-4xl font-bold text-white font-mono">
+                  <CardTitle className="text-4xl font-bold text-[var(--foreground)] font-mono">
                     <AnimatedCounter value={aiCommits} />
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-sm text-white/80 font-mono">
+                  <div className="text-sm text-[var(--muted-foreground)] font-mono">
                     {aiPercentage}% of all commits
                   </div>
                 </CardContent>
@@ -644,16 +644,16 @@ function RepoDetailContent() {
               {/* Lines Added */}
               <Card variant="accent" className="overflow-hidden group">
                 <CardHeader className="pb-2">
-                  <CardDescription className="flex items-center gap-2">
+                  <CardDescription className="flex items-center gap-2 text-[var(--muted-foreground)]">
                     <Plus className="h-4 w-4" />
                     Lines Added
                   </CardDescription>
-                  <CardTitle className="text-4xl font-bold text-white font-mono">
+                  <CardTitle className="text-4xl font-bold text-[var(--foreground)] font-mono">
                     <AnimatedCounter value={totalLinesAdded} />
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-sm text-white/80 flex items-center gap-1 font-mono">
+                  <div className="text-sm text-[var(--muted-foreground)] flex items-center gap-1 font-mono">
                     <Code2 className="h-3 w-3" />
                     Code growth
                   </div>
