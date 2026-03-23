@@ -74,6 +74,7 @@ export interface PublicUser {
   email: string;
   github_username: string | null;
   role: string;
+  created_at: string;  // ADD THIS LINE
 }
 
 export interface AIDetection {
@@ -709,6 +710,79 @@ export async function getUsers() {
   return result.rows as unknown as User[];
 }
 
+export async function createUser(data: {
+  name: string;
+  email: string;
+  password: string;
+  role: string;
+  github_username?: string | null;
+}): Promise<User> {
+  const githubUsername = data.github_username?.trim().toLowerCase() || null;
+
+  const result = await client.execute({
+    sql: `INSERT INTO users (name, email, password, role, github_username)
+          VALUES (?, ?, ?, ?, ?)
+          RETURNING id, name, email, role, github_username, password, created_at`,
+    args: [data.name.trim(), data.email.trim().toLowerCase(), data.password, data.role, githubUsername],
+  });
+
+  return result.rows[0] as unknown as User;
+}
+
+export async function updateUser(id: number, data: {
+  name?: string;
+  email?: string;
+  role?: string;
+  github_username?: string | null;
+}): Promise<User | null> {
+  const updates: string[] = [];
+  const args: any[] = [];
+
+  if (data.name !== undefined) {
+    updates.push('name = ?');
+    args.push(data.name.trim());
+  }
+  if (data.email !== undefined) {
+    updates.push('email = ?');
+    args.push(data.email.trim().toLowerCase());
+  }
+  if (data.role !== undefined) {
+    updates.push('role = ?');
+    args.push(data.role);
+  }
+  if (data.github_username !== undefined) {
+    updates.push('github_username = ?');
+    args.push(data.github_username?.trim().toLowerCase() || null);
+  }
+
+  if (updates.length === 0) {
+    return null;
+  }
+
+  args.push(id);
+
+  const result = await client.execute({
+    sql: `UPDATE users SET ${updates.join(', ')} WHERE id = ?
+          RETURNING id, name, email, role, github_username, password, created_at`,
+    args,
+  });
+
+  if (result.rows.length === 0) {
+    return null;
+  }
+
+  return result.rows[0] as unknown as User;
+}
+
+export async function deleteUser(id: number): Promise<boolean> {
+  const result = await client.execute({
+    sql: `DELETE FROM users WHERE id = ?`,
+    args: [id],
+  });
+
+  return result.rowsAffected > 0;
+}
+
 // User mapping operations
 export async function createUserMapping(
   repoId: number,
@@ -762,7 +836,7 @@ export async function getGithubUsersByRepo(repoId: number) {
 
 export async function getAllUsers(): Promise<PublicUser[]> {
   const result = await client.execute({
-    sql: `SELECT id, name, email, github_username, role FROM users ORDER BY name`,
+    sql: `SELECT id, name, email, github_username, role, created_at FROM users ORDER BY name`,
   });
   return result.rows as unknown as PublicUser[];
 }
