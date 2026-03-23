@@ -21,11 +21,13 @@ import {
   Users,
   Code2,
   Sparkles,
-  Clock
+  Clock,
+  Flag
 } from 'lucide-react';
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { toast } from 'sonner';
+import AIFlagsTab from '@/components/admin/ai-flags-tab';
 
 interface Commit {
   id: number;
@@ -427,17 +429,28 @@ function RepoDetailContent() {
 
   const [data, setData] = useState<RepoData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'commits' | 'branches' | 'analytics'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'commits' | 'branches' | 'analytics' | 'ai-flags'>('overview');
   const [commitsPage, setCommitsPage] = useState(0);
   const COMMITS_PER_PAGE = 50;
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isAIRechecking, setIsAIRechecking] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (user && repoId) {
       fetchData();
+      checkAdmin();
     }
   }, [user, repoId]);
+
+  const checkAdmin = async () => {
+    try {
+      const res = await fetch('/api/admin/verify');
+      setIsAdmin(res.ok);
+    } catch {
+      setIsAdmin(false);
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -700,6 +713,14 @@ function RepoDetailContent() {
               >
                 <Users className="h-4 w-4" />
                 Developer Stats
+              </Button>
+              <Button
+                variant={activeTab === 'ai-flags' ? 'default' : 'outline'}
+                onClick={() => setActiveTab('ai-flags')}
+                className="gap-2"
+              >
+                <Flag className="h-4 w-4" />
+                AI Flags
               </Button>
             </div>
 
@@ -1004,6 +1025,12 @@ function RepoDetailContent() {
                       )}
                     </CardContent>
                   </Card>
+                </div>
+              )}
+
+              {activeTab === 'ai-flags' && (
+                <div className="bg-[var(--card)] border-2 border-[var(--border)] [box-shadow:var(--shadow-brutal)] rounded-lg overflow-hidden p-6">
+                  <AIFlagsTab isAdmin={isAdmin} repoId={parseInt(repoId)} repoName={repo.name} />
                 </div>
               )}
             </div>
