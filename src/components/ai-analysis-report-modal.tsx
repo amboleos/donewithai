@@ -26,38 +26,38 @@ export default function AnalysisReportModal({ isOpen, onClose, analysis }: Analy
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-      <div className="w-full max-w-3xl max-h-[90vh] overflow-hidden bg-slate-900 border-2 border-slate-700 rounded-lg shadow-2xl">
+      <div className="w-full max-w-3xl max-h-[90vh] overflow-hidden bg-[var(--card)] border-2 border-[var(--border)] [box-shadow:var(--shadow-brutal-lg)]">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700">
+        <div className="flex items-center justify-between px-6 py-4 border-b-2 border-[var(--border)]">
           <div className="flex items-center gap-3">
             {isAgentic ? (
-              <div className="p-2 bg-purple-500/20 rounded border border-purple-500/30">
-                <Brain className="h-5 w-5 text-purple-400" />
+              <div className="p-2 border-2 border-[var(--accent)] bg-[var(--accent)]/10 [box-shadow:var(--shadow-brutal-sm)]">
+                <Brain className="h-5 w-5 text-[var(--accent)]" />
               </div>
             ) : (
-              <div className="p-2 bg-green-500/20 rounded border border-green-500/30">
-                <User className="h-5 w-5 text-green-400" />
+              <div className="p-2 border-2 border-[var(--success)] bg-[var(--success)]/10 [box-shadow:var(--shadow-brutal-sm)]">
+                <User className="h-5 w-5 text-[var(--success)]" />
               </div>
             )}
             <div>
-              <h2 className="text-lg font-bold text-white font-mono">
+              <h2 className="text-lg font-bold text-[var(--foreground)]" style={{ fontFamily: 'Sora, sans-serif' }}>
                 {isAgentic ? 'AGENTIC AI' : 'HUMAN ASSISTED'}
               </h2>
-              <p className="text-xs text-slate-400 font-mono">
+              <p className="text-xs text-[var(--muted-foreground)] font-mono">
                 {model} - {durationMs ? `${(durationMs / 1000).toFixed(1)}s` : 'N/A'}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <div className="text-2xl font-bold font-mono text-white">{confidencePercent}%</div>
-              <div className="text-xs text-slate-400 font-mono">confidence</div>
+              <div className="text-2xl font-bold font-mono text-[var(--foreground)]">{confidencePercent}%</div>
+              <div className="text-xs text-[var(--muted-foreground)] font-mono">confidence</div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-slate-700 rounded transition-colors"
+              className="p-2 border-2 border-[var(--border)] bg-[var(--muted)] hover:bg-[var(--muted-foreground)]/10 transition-colors"
             >
-              <X className="h-5 w-5 text-slate-400" />
+              <X className="h-5 w-5 text-[var(--foreground)]" />
             </button>
           </div>
         </div>
@@ -65,40 +65,40 @@ export default function AnalysisReportModal({ isOpen, onClose, analysis }: Analy
         {/* Content */}
         <div className="overflow-y-auto max-h-[calc(90vh-80px)] p-6 space-y-6">
           {/* Summary */}
-          <div className="bg-slate-800/50 border border-slate-700 rounded p-4">
-            <h3 className="text-sm font-bold text-green-500 font-mono mb-2 flex items-center gap-2">
+          <div className="p-4 border-2 border-[var(--border)] bg-[var(--muted)] [box-shadow:var(--shadow-brutal-sm)]">
+            <h3 className="text-sm font-bold text-[var(--primary)] font-mono mb-2 flex items-center gap-2" style={{ fontFamily: 'Sora, sans-serif' }}>
               <FileText className="h-4 w-4" />
               SUMMARY
             </h3>
-            <p className="text-slate-300 text-sm font-mono leading-relaxed">
+            <p className="text-[var(--foreground)] text-sm leading-relaxed" style={{ fontFamily: 'Sora, sans-serif' }}>
               {report.summary}
             </p>
           </div>
 
           {/* Stats Grid */}
           <div className="grid grid-cols-4 gap-3">
-            <div className="bg-slate-800/50 border border-slate-700 rounded p-3 text-center">
-              <div className="text-2xl font-bold text-white font-mono">{report.filesAnalyzed}</div>
-              <div className="text-xs text-slate-400 font-mono">files analyzed</div>
+            <div className="p-3 border-2 border-[var(--border)] bg-[var(--muted)] [box-shadow:var(--shadow-brutal-sm)] text-center">
+              <div className="text-2xl font-bold font-mono text-[var(--foreground)]">{report.filesAnalyzed}</div>
+              <div className="text-xs text-[var(--muted-foreground)] font-mono">files analyzed</div>
             </div>
-            <div className="bg-slate-800/50 border border-slate-700 rounded p-3 text-center">
-              <div className="text-2xl font-bold text-green-400 font-mono">+{report.linesAdded}</div>
-              <div className="text-xs text-slate-400 font-mono">lines added</div>
+            <div className="p-3 border-2 border-[var(--border)] bg-[var(--muted)] [box-shadow:var(--shadow-brutal-sm)] text-center">
+              <div className="text-2xl font-bold font-mono text-[var(--success)]">+{report.linesAdded}</div>
+              <div className="text-xs text-[var(--muted-foreground)] font-mono">lines added</div>
             </div>
-            <div className="bg-slate-800/50 border border-slate-700 rounded p-3 text-center">
-              <div className="text-2xl font-bold text-red-400 font-mono">-{report.linesRemoved}</div>
-              <div className="text-xs text-slate-400 font-mono">lines removed</div>
+            <div className="p-3 border-2 border-[var(--border)] bg-[var(--muted)] [box-shadow:var(--shadow-brutal-sm)] text-center">
+              <div className="text-2xl font-bold font-mono text-[var(--destructive)]">-{report.linesRemoved}</div>
+              <div className="text-xs text-[var(--muted-foreground)] font-mono">lines removed</div>
             </div>
-            <div className="bg-slate-800/50 border border-slate-700 rounded p-3 text-center">
-              <div className="text-2xl font-bold text-amber-400 font-mono">{tokensUsed || 'N/A'}</div>
-              <div className="text-xs text-slate-400 font-mono">tokens used</div>
+            <div className="p-3 border-2 border-[var(--border)] bg-[var(--muted)] [box-shadow:var(--shadow-brutal-sm)] text-center">
+              <div className="text-2xl font-bold font-mono text-[var(--warning)]">{tokensUsed || 'N/A'}</div>
+              <div className="text-xs text-[var(--muted-foreground)] font-mono">tokens used</div>
             </div>
           </div>
 
           {/* Patterns Found */}
           {report.patternsFound.length > 0 && (
             <div>
-              <h3 className="text-sm font-bold text-green-500 font-mono mb-3 flex items-center gap-2">
+              <h3 className="text-sm font-bold text-[var(--primary)] font-mono mb-3 flex items-center gap-2" style={{ fontFamily: 'Sora, sans-serif' }}>
                 <TrendingUp className="h-4 w-4" />
                 PATTERNS FOUND
               </h3>
@@ -106,7 +106,7 @@ export default function AnalysisReportModal({ isOpen, onClose, analysis }: Analy
                 {report.patternsFound.map((pattern, i) => (
                   <span
                     key={i}
-                    className="px-3 py-1 bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded text-xs font-mono"
+                    className="px-3 py-1 border-2 border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)] font-mono text-xs font-bold uppercase tracking-wider"
                   >
                     {pattern}
                   </span>
@@ -118,7 +118,7 @@ export default function AnalysisReportModal({ isOpen, onClose, analysis }: Analy
           {/* File Breakdown */}
           {report.fileBreakdown.length > 0 && (
             <div>
-              <h3 className="text-sm font-bold text-green-500 font-mono mb-3 flex items-center gap-2">
+              <h3 className="text-sm font-bold text-[var(--primary)] font-mono mb-3 flex items-center gap-2" style={{ fontFamily: 'Sora, sans-serif' }}>
                 <FileText className="h-4 w-4" />
                 FILE BREAKDOWN
               </h3>
@@ -126,29 +126,29 @@ export default function AnalysisReportModal({ isOpen, onClose, analysis }: Analy
                 {report.fileBreakdown.slice(0, 15).map((file, i) => (
                   <div
                     key={i}
-                    className={`flex items-center justify-between p-2 rounded border ${
+                    className={`flex items-center justify-between p-2 border-2 ${
                       file.isExcluded
-                        ? 'bg-slate-800/30 border-slate-700 text-slate-500'
-                        : 'bg-slate-800/50 border-slate-700'
+                        ? 'bg-[var(--muted)]/50 border-[var(--border)] text-[var(--muted-foreground)]'
+                        : 'bg-[var(--muted)] border-[var(--border)]'
                     }`}
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       {file.isExcluded ? (
-                        <AlertCircle className="h-4 w-4 text-slate-500 shrink-0" />
+                        <AlertCircle className="h-4 w-4 text-[var(--muted-foreground)] shrink-0" />
                       ) : (
-                        <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                        <CheckCircle className="h-4 w-4 text-[var(--success)] shrink-0" />
                       )}
                       <span className="text-sm font-mono truncate">{file.path}</span>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
-                      <span className="text-xs font-mono text-slate-400">{file.language}</span>
-                      <span className="text-xs font-mono text-green-400">+{file.additions}</span>
-                      <span className="text-xs font-mono text-red-400">-{file.deletions}</span>
+                      <span className="text-xs font-mono text-[var(--muted-foreground)]">{file.language}</span>
+                      <span className="text-xs font-mono text-[var(--success)]">+{file.additions}</span>
+                      <span className="text-xs font-mono text-[var(--destructive)]">-{file.deletions}</span>
                     </div>
                   </div>
                 ))}
                 {report.fileBreakdown.length > 15 && (
-                  <div className="text-xs text-slate-500 font-mono text-center py-2">
+                  <div className="text-xs text-[var(--muted-foreground)] font-mono text-center py-2">
                     +{report.fileBreakdown.length - 15} more files
                   </div>
                 )}
@@ -157,12 +157,12 @@ export default function AnalysisReportModal({ isOpen, onClose, analysis }: Analy
           )}
 
           {/* Reasoning */}
-          <div className="bg-slate-800/50 border border-slate-700 rounded p-4">
-            <h3 className="text-sm font-bold text-green-500 font-mono mb-2 flex items-center gap-2">
+          <div className="p-4 border-2 border-[var(--border)] bg-[var(--muted)] [box-shadow:var(--shadow-brutal-sm)]">
+            <h3 className="text-sm font-bold text-[var(--primary)] font-mono mb-2 flex items-center gap-2" style={{ fontFamily: 'Sora, sans-serif' }}>
               <Brain className="h-4 w-4" />
               REASONING
             </h3>
-            <p className="text-slate-300 text-sm font-mono leading-relaxed whitespace-pre-wrap">
+            <p className="text-[var(--foreground)] text-sm leading-relaxed whitespace-pre-wrap" style={{ fontFamily: 'Sora, sans-serif' }}>
               {report.reasoning}
             </p>
           </div>

@@ -14,6 +14,7 @@ interface Commit {
   repo_id: number;
   is_ai_detected: boolean | null;
   repo_name: string;
+  date: string;
   // Code analysis fields
   code_is_agentic: number | null;
   code_confidence: number | null;
@@ -30,7 +31,7 @@ interface Branch {
   code_confidence: number | null;
 }
 
-type SortField = 'name' | 'author' | 'repo' | 'status';
+type SortField = 'name' | 'author' | 'repo' | 'status' | 'date';
 type SortOrder = 'asc' | 'desc';
 type PatternFilter = 'all' | 'ai' | 'human' | 'unknown';
 type CodeAnalysisFilter = 'all' | 'agentic' | 'human_assisted' | 'not_analyzed';
@@ -87,7 +88,7 @@ export default function AIFlagsTab() {
   const CodeAnalysisBadge = ({ isAgentic, confidence }: { isAgentic: number | null; confidence: number | null }) => {
     if (isAgentic === null || isAgentic === undefined) {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded bg-slate-800 text-slate-500 border border-slate-700">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-mono font-bold uppercase tracking-wider border-2 border-[var(--muted-foreground)] bg-[var(--muted)] text-[var(--muted-foreground)]">
           <Code2 className="h-3 w-3" /> NOT ANALYZED
         </span>
       );
@@ -95,14 +96,14 @@ export default function AIFlagsTab() {
 
     if (isAgentic === 1) {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded bg-red-500/20 text-red-400 border border-red-500/30" title={`Confidence: ${((confidence || 0) * 100).toFixed(0)}%`}>
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-mono font-bold uppercase tracking-wider border-2 border-[var(--destructive)] bg-[var(--destructive)]/10 text-[var(--destructive)]" title={`Confidence: ${((confidence || 0) * 100).toFixed(0)}%`}>
           <Sparkles className="h-3 w-3" /> AGENTIC AI
         </span>
       );
     }
 
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded bg-blue-500/20 text-blue-400 border border-blue-500/30" title={`Confidence: ${((confidence || 0) * 100).toFixed(0)}%`}>
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-mono font-bold uppercase tracking-wider border-2 border-[var(--primary)] bg-[var(--primary)]/10 text-[var(--primary)]" title={`Confidence: ${((confidence || 0) * 100).toFixed(0)}%`}>
         <User className="h-3 w-3" /> HUMAN ASSISTED
       </span>
     );
@@ -112,13 +113,13 @@ export default function AIFlagsTab() {
   const PatternBadge = ({ isAIDetected }: { isAIDetected: boolean | null }) => {
     if (isAIDetected) {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded bg-purple-500/20 text-purple-400 border border-purple-500/30">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-mono font-bold uppercase tracking-wider border-2 border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]">
           <Brain className="h-3 w-3" /> AI
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded bg-slate-700 text-slate-400 border border-slate-600">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-mono font-bold uppercase tracking-wider border-2 border-[var(--success)] bg-[var(--success)]/10 text-[var(--success)]">
         <Check className="h-3 w-3" /> HUMAN
       </span>
     );
@@ -164,6 +165,10 @@ export default function AIFlagsTab() {
         case 'repo':
           aVal = a.repo_name.toLowerCase();
           bVal = b.repo_name.toLowerCase();
+          break;
+        case 'date':
+          aVal = new Date(a.date).getTime();
+          bVal = new Date(b.date).getTime();
           break;
         case 'status':
           aVal = a.is_ai_detected ? 0 : 1;
@@ -461,6 +466,9 @@ export default function AIFlagsTab() {
                     <th className="px-4 py-3 text-left font-mono text-xs cursor-pointer hover:text-[var(--primary)]" onClick={() => handleSort('repo')} style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>
                       <div className="flex items-center gap-1">REPO <SortIndicator field="repo" /></div>
                     </th>
+                    <th className="px-4 py-3 text-left font-mono text-xs cursor-pointer hover:text-[var(--primary)]" onClick={() => handleSort('date')} style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>
+                      <div className="flex items-center gap-1">DATE <SortIndicator field="date" /></div>
+                    </th>
                     <th className="px-4 py-3 text-left font-mono text-xs cursor-pointer hover:text-[var(--primary)]" onClick={() => handleSort('status')} style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>
                       <div className="flex items-center gap-1">PATTERN <SortIndicator field="status" /></div>
                     </th>
@@ -479,6 +487,9 @@ export default function AIFlagsTab() {
                       </td>
                       <td className="px-4 py-3 text-[var(--muted-foreground)]">{commit.author}</td>
                       <td className="px-4 py-3 text-[var(--muted-foreground)]">{commit.repo_name}</td>
+                      <td className="px-4 py-3 text-xs text-[var(--muted-foreground)] font-mono" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+                        {new Date(commit.date).toLocaleString('sv-SE')}
+                      </td>
                       <td className="px-4 py-3">
                         <PatternBadge isAIDetected={commit.is_ai_detected} />
                       </td>

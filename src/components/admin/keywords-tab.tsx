@@ -297,8 +297,8 @@ export default function KeywordsTab() {
         title="Delete Keyword"
         message={
           <div className="font-mono text-sm">
-            <p className="text-slate-300 mb-2">Are you sure you want to delete this keyword?</p>
-            <p className="text-green-400">&gt; "{deleteConfirm.keyword?.keyword}"</p>
+            <p className="text-[var(--foreground)] mb-2" style={{ fontFamily: 'Sora, sans-serif' }}>Are you sure you want to delete this keyword?</p>
+            <p className="text-[var(--success)]">&gt; "{deleteConfirm.keyword?.keyword}"</p>
           </div>
         }
         confirmText="DELETE"

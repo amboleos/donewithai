@@ -23,11 +23,13 @@ export function SyncProgress() {
 
   return (
     <div className="fixed bottom-4 right-4 z-50 max-w-md w-full">
-      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-lg border p-4">
+      <div className="border-2 border-[var(--border)] bg-[var(--card)] [box-shadow:var(--shadow-brutal)] p-4">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4 text-purple-600" />
-            <span className="font-medium">{progress.repoName}</span>
+            <div className="p-1.5 border-2 border-[var(--primary)] bg-[var(--primary)]/10">
+              <BarChart3 className="h-4 w-4 text-[var(--primary)]" />
+            </div>
+            <span className="font-medium font-mono text-[var(--foreground)]">{progress.repoName}</span>
           </div>
           <Button
             variant="ghost"
@@ -40,21 +42,21 @@ export function SyncProgress() {
 
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-slate-500">
+            <span className="text-[var(--muted-foreground)] font-mono">
               {progress.processed} / {progress.total} commits
             </span>
-            <span className="font-medium">{progress.percentage}%</span>
+            <span className="font-bold font-mono text-[var(--foreground)]">{progress.percentage}%</span>
           </div>
 
-          <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+          <div className="h-2 border-2 border-[var(--border)] bg-[var(--muted)] overflow-hidden">
             <div
-              className="h-full bg-purple-600 transition-all duration-300"
+              className="h-full bg-[var(--primary)] transition-all duration-300"
               style={{ width: `${progress.percentage}%` }}
             />
           </div>
 
           {progress.currentCommit && (
-            <p className="text-xs text-slate-500 truncate">
+            <p className="text-xs text-[var(--muted-foreground)] font-mono truncate">
               {progress.currentCommit}
             </p>
           )}

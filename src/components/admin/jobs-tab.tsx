@@ -77,10 +77,10 @@ export default function JobsTab() {
 
   const getRankIcon = (idx: number) => {
     switch (idx) {
-      case 0: return <Medal className="h-5 w-5 text-yellow-400" />;
-      case 1: return <Medal className="h-5 w-5 text-slate-400" />;
-      case 2: return <Medal className="h-5 w-5 text-amber-700" />;
-      default: return <span className="font-bold text-slate-600">#{idx + 1}</span>;
+      case 0: return <Medal className="h-5 w-5 text-[var(--warning)]" />;
+      case 1: return <Medal className="h-5 w-5 text-[var(--muted-foreground)]" />;
+      case 2: return <Medal className="h-5 w-5 text-[var(--warning)]/70" />;
+      default: return <span className="font-bold font-mono text-[var(--muted-foreground)]">#{idx + 1}</span>;
     }
   };
 

@@ -3,7 +3,8 @@ import { getServerSession } from '@/lib/server-auth';
 import { getRepos } from '@/lib/db';
 import { createProvider } from '@/lib/git';
 import { AIDetector } from '@/lib/ai-detector';
-import { updateCommitAIDetection, updateBranchAIDetection, getAllCommitsByRepo, getBranchesByRepo } from '@/lib/db';
+import { CodeAnalyzer } from '@/lib/code-analyzer';
+import { updateCommitAIDetection, updateBranchAIDetection, getAllCommitsByRepo, getBranchesByRepo, saveCodeAnalysis } from '@/lib/db';
 import { eventEmitter } from '../../events/route';
 
 export async function POST(req: NextRequest) {
@@ -43,6 +44,8 @@ export async function POST(req: NextRequest) {
     // Re-check commits (only 2026+, skip already marked as AI)
     const commits = await getAllCommitsByRepo(repo.id); // Get ALL commits
     const detector = new AIDetector(process.env.ZAI_API_KEY);
+    const codeAnalyzer = new CodeAnalyzer(process.env.ZAI_API_KEY);
+    const provider = createProvider(repo.url);
 
     let commitsChecked = 0;
     let commitsMarkedAI = 0;
@@ -80,8 +83,73 @@ export async function POST(req: NextRequest) {
         await updateCommitAIDetection(commit.id, true, detection.confidence);
         commitsMarkedAI++;
       } else {
-        await updateCommitAIDetection(commit.id, false, detection.confidence);
-        commitsMarkedNotAI++;
+        // No keyword found - run code analysis (same as sync route)
+        if (codeAnalyzer.canAnalyze() && provider.getCommitDiff) {
+          try {
+            eventEmitter.emit({
+              type: 'code_analysis_started',
+              data: { repoId: repo.id, sourceType: 'commit', sourceId: commit.id },
+            });
+
+            const analysis = await codeAnalyzer.analyzeCommit(
+              repo.url,
+              commit.sha,
+              provider,
+              (stage, message) => {
+                eventEmitter.emit({
+                  type: 'code_analysis_progress',
+                  data: { repoId: repo.id, sourceType: 'commit', sourceId: commit.id, stage, message },
+                });
+              }
+            );
+
+            // Save analysis result
+            await saveCodeAnalysis(
+              repo.id,
+              'commit',
+              commit.id,
+              analysis.isAgentic,
+              analysis.confidence,
+              analysis.report,
+              'z.ai-4.5-air',
+              analysis.tokensUsed,
+              analysis.durationMs
+            );
+
+            // Update commit AI detection based on analysis
+            const isAI = analysis.isAgentic; // Agentic AI = AI detected
+            await updateCommitAIDetection(commit.id, isAI, analysis.confidence);
+
+            if (isAI) {
+              console.log('[AI RECHECK] ✅ AI COMMIT (code analysis):', commit.sha.substring(0, 8), '| agentic:', analysis.isAgentic, '| confidence:', analysis.confidence.toFixed(2));
+              commitsMarkedAI++;
+            } else {
+              commitsMarkedNotAI++;
+            }
+
+            eventEmitter.emit({
+              type: 'code_analysis_completed',
+              data: {
+                id: commit.id,
+                repoId: repo.id,
+                sourceType: 'commit',
+                sourceId: commit.id,
+                isAgentic: analysis.isAgentic,
+                confidence: analysis.confidence,
+                summary: analysis.report.summary,
+              },
+            });
+          } catch (error: any) {
+            console.error('[AI RECHECK] Code analysis failed for', commit.sha.substring(0, 8), ':', error.message);
+            // Fallback to keyword-based result
+            await updateCommitAIDetection(commit.id, false, detection.confidence);
+            commitsMarkedNotAI++;
+          }
+        } else {
+          // No code analysis available, use keyword result
+          await updateCommitAIDetection(commit.id, false, detection.confidence);
+          commitsMarkedNotAI++;
+        }
       }
 
       // Emit progress every 50 commits

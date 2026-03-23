@@ -50,13 +50,15 @@ export function ConfirmDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-slate-900 border-slate-700 text-slate-100">
+      <DialogContent className="border-2 border-[var(--border)] bg-[var(--card)] [box-shadow:var(--shadow-brutal-lg)]">
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <AlertTriangle className={`h-6 w-6 ${iconColors[variant]}`} />
-            <DialogTitle className="font-mono">{title}</DialogTitle>
+            <div className={`p-2 border-2 ${variant === 'danger' ? 'border-[var(--destructive)] bg-[var(--destructive)]/10' : variant === 'warning' ? 'border-[var(--warning)] bg-[var(--warning)]/10' : 'border-[var(--success)] bg-[var(--success)]/10'}`}>
+              <AlertTriangle className={`h-6 w-6 ${iconColors[variant]}`} />
+            </div>
+            <DialogTitle className="font-mono" style={{ fontFamily: 'Sora, sans-serif' }}>{title}</DialogTitle>
           </div>
-          <DialogDescription className="font-mono text-sm text-slate-400 mt-2">
+          <DialogDescription className="font-mono text-sm text-[var(--muted-foreground)] mt-2" style={{ fontFamily: 'Sora, sans-serif' }}>
             {message}
           </DialogDescription>
         </DialogHeader>

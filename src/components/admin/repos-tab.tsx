@@ -327,9 +327,9 @@ export default function ReposTab() {
         title="Delete Repository"
         message={
           <div className="font-mono text-sm">
-            <p className="text-slate-300 mb-2">Are you sure you want to delete this repository?</p>
-            <p className="text-green-400">&gt; {deleteConfirm.repo?.name}</p>
-            <p className="text-slate-500 mt-2">This action cannot be undone.</p>
+            <p className="text-[var(--foreground)] mb-2" style={{ fontFamily: 'Sora, sans-serif' }}>Are you sure you want to delete this repository?</p>
+            <p className="text-[var(--success)]">&gt; {deleteConfirm.repo?.name}</p>
+            <p className="text-[var(--muted-foreground)] mt-2">This action cannot be undone.</p>
           </div>
         }
         confirmText="DELETE"

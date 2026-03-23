@@ -86,14 +86,14 @@ export default function AnalysisProgressModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-      <div className="w-full max-w-md bg-slate-900 border-2 border-slate-700 rounded-lg shadow-2xl">
+      <div className="w-full max-w-md bg-[var(--card)] border-2 border-[var(--border)] [box-shadow:var(--shadow-brutal-lg)]">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-700">
-          <h2 className="text-lg font-bold text-white font-mono flex items-center gap-2">
-            <Brain className="h-5 w-5 text-amber-400" />
+        <div className="px-6 py-4 border-b-2 border-[var(--border)]">
+          <h2 className="text-lg font-bold text-[var(--foreground)] flex items-center gap-2" style={{ fontFamily: 'Sora, sans-serif' }}>
+            <Brain className="h-5 w-5 text-[var(--accent)]" />
             CODE ANALYSIS
           </h2>
-          <p className="text-xs text-slate-400 font-mono">
+          <p className="text-xs text-[var(--muted-foreground)] font-mono">
             {sourceType === 'commit' ? `Commit #${sourceId}` : `Branch #${sourceId}`}
           </p>
         </div>
@@ -102,31 +102,31 @@ export default function AnalysisProgressModal({
         <div className="p-6">
           {/* Progress Animation */}
           <div className="flex flex-col items-center gap-4">
-            <div className={`p-4 rounded-full border-2 ${
+            <div className={`p-4 border-2 ${
               stage === 'completed'
-                ? 'bg-green-500/20 border-green-500/50'
-                : 'bg-amber-500/20 border-amber-500/50'
+                ? 'bg-[var(--success)]/10 border-[var(--success)]'
+                : 'bg-[var(--accent)]/10 border-[var(--accent)]'
             }`}>
               <StageIcon className={`h-8 w-8 ${
-                stage === 'completed' ? 'text-green-400' : 'text-amber-400'
+                stage === 'completed' ? 'text-[var(--success)]' : 'text-[var(--accent)]'
               } ${stage !== 'completed' ? 'animate-spin' : ''}`} />
             </div>
 
             {/* Stage Text */}
             <div className="text-center">
-              <div className="text-sm font-bold text-white font-mono uppercase">
+              <div className="text-sm font-bold text-[var(--foreground)] uppercase" style={{ fontFamily: 'Sora, sans-serif' }}>
                 {stage}
               </div>
-              <div className="text-xs text-slate-400 font-mono mt-1">
+              <div className="text-xs text-[var(--muted-foreground)] font-mono mt-1">
                 {message}
               </div>
             </div>
 
             {/* Progress Bar */}
-            <div className="w-full h-2 bg-slate-700 rounded overflow-hidden">
+            <div className="w-full h-2 border-2 border-[var(--border)] bg-[var(--muted)] overflow-hidden">
               <div
                 className={`h-full transition-all duration-500 ${
-                  stage === 'completed' ? 'bg-green-500' : 'bg-amber-500'
+                  stage === 'completed' ? 'bg-[var(--success)]' : 'bg-[var(--accent)]'
                 }`}
                 style={{ width: `${progressPercent}%` }}
               />
@@ -138,11 +138,11 @@ export default function AnalysisProgressModal({
                 <div
                   key={s}
                   className={`flex items-center gap-1 ${
-                    stageIndex >= i ? 'text-amber-400' : 'text-slate-600'
+                    stageIndex >= i ? 'text-[var(--accent)]' : 'text-[var(--muted-foreground)]'
                   }`}
                 >
-                  <div className={`w-2 h-2 rounded-full ${
-                    stageIndex >= i ? 'bg-amber-400' : 'bg-slate-600'
+                  <div className={`w-2 h-2 ${
+                    stageIndex >= i ? 'bg-[var(--accent)]' : 'bg-[var(--muted-foreground)]'
                   }`} />
                   <span className="hidden sm:inline">{s}</span>
                 </div>

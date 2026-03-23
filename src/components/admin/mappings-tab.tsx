@@ -311,9 +311,9 @@ export default function MappingsTab() {
         title="Delete Mapping"
         message={
           <div className="font-mono text-sm">
-            <p className="text-slate-300 mb-2">Are you sure you want to delete this mapping?</p>
-            <p className="text-purple-400">&gt; {deleteConfirm.mapping?.github_username}</p>
-            <p className="text-slate-500">&rarr; {deleteConfirm.mapping?.name}</p>
+            <p className="text-[var(--foreground)] mb-2" style={{ fontFamily: 'Sora, sans-serif' }}>Are you sure you want to delete this mapping?</p>
+            <p className="text-[var(--accent)]">&gt; {deleteConfirm.mapping?.github_username}</p>
+            <p className="text-[var(--muted-foreground)]">&rarr; {deleteConfirm.mapping?.name}</p>
           </div>
         }
         confirmText="DELETE"
