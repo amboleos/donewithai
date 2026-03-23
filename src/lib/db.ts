@@ -74,7 +74,7 @@ export interface PublicUser {
   email: string;
   github_username: string | null;
   role: string;
-  created_at: string;  // ADD THIS LINE
+  created_at: string;
 }
 
 export interface AIDetection {
