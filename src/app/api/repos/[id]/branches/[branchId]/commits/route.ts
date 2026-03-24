@@ -5,8 +5,9 @@ import {
   getBranchById,
   upsertCommit,
   linkCommitToBranch,
+  clearBranchCommits,
 } from '@/lib/db';
-import { createProvider, parseRepoUrl, getEnvVarName } from '@/lib/git';
+import { createProvider } from '@/lib/git';
 
 export async function GET(
   req: NextRequest,
@@ -17,12 +18,19 @@ export async function GET(
     const repoId = parseInt(id);
     const branchIdNum = parseInt(branchId);
 
-    // First check if we have cached commits in branch_commits
-    const cachedCommits = await getCommitsForBranch(branchIdNum);
+    // Check for refresh parameter
+    const url = new URL(req.url);
+    const refresh = url.searchParams.get('refresh') === 'true';
 
-    if (cachedCommits.length > 0) {
-      // Return cached commits
-      return NextResponse.json({ commits: cachedCommits });
+    // First check if we have cached commits in branch_commits (unless refresh requested)
+    if (!refresh) {
+      const cachedCommits = await getCommitsForBranch(branchIdNum);
+      if (cachedCommits.length > 0) {
+        return NextResponse.json({ commits: cachedCommits });
+      }
+    } else {
+      // Clear old cache before refresh
+      await clearBranchCommits(branchIdNum);
     }
 
     // No cached commits - fetch from Git provider
@@ -36,22 +44,8 @@ export async function GET(
       return NextResponse.json({ error: 'Branch not found' }, { status: 404 });
     }
 
-    // Parse repo URL to get provider info
-    const parsed = parseRepoUrl(repo.url);
-    if (!parsed) {
-      return NextResponse.json({ error: 'Invalid repo URL' }, { status: 400 });
-    }
-
-    // Get the token env var and token
-    const tokenEnvVar = getEnvVarName(parsed.name, parsed.provider);
-    const token = tokenEnvVar ? process.env[tokenEnvVar] : process.env.GITHUB_TOKEN;
-
-    if (!token) {
-      // Return empty commits if no token - can't fetch from provider
-      return NextResponse.json({ commits: [] });
-    }
-
-    const provider = createProvider(repo.url, token);
+    // Create the Git provider (reads token from env vars internally)
+    const provider = createProvider(repo.url);
 
     // Check if provider supports getCommitsForBranch
     if (!provider.getCommitsForBranch) {

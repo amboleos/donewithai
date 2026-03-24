@@ -1232,6 +1232,13 @@ export async function linkCommitToBranch(branchId: number, commitId: number) {
   });
 }
 
+export async function clearBranchCommits(branchId: number) {
+  await client.execute({
+    sql: `DELETE FROM branch_commits WHERE branch_id = ?`,
+    args: [branchId],
+  });
+}
+
 export async function getCommitsByBranchId(branchId: number): Promise<Commit[]> {
   const result = await client.execute({
     sql: `
