@@ -62,6 +62,99 @@ interface AIFlagsTabProps {
   repoName?: string; // Optional: for display purposes
 }
 
+// Pagination component
+function Pagination({
+  currentPage,
+  totalPages,
+  totalItems,
+  itemsPerPage,
+  onPageChange
+}: {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  itemsPerPage: number;
+  onPageChange: (page: number) => void;
+}) {
+  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+
+  // Generate page numbers with ellipsis
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    const maxVisible = 5;
+
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) pages.push(i);
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
+      } else {
+        pages.push(1);
+        pages.push('...');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+    return pages;
+  };
+
+  if (totalPages <= 1) return null;
+
+  return (
+    <div className="flex items-center justify-between px-4 py-3 border-t-2 border-[var(--border)] bg-[var(--muted)]">
+      <div className="text-xs font-mono text-[var(--muted-foreground)]" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+        Showing {startItem}-{endItem} of {totalItems}
+      </div>
+      <div className="flex items-center gap-1">
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="px-2 py-1 text-xs font-mono rounded border-2 border-[var(--border)] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--card)] transition-colors"
+          style={{ fontFamily: 'JetBrains Mono, monospace' }}
+        >
+          &lt; PREV
+        </button>
+        {getPageNumbers().map((page, idx) => (
+          typeof page === 'number' ? (
+            <button
+              key={idx}
+              onClick={() => onPageChange(page)}
+              className={`px-3 py-1 text-xs font-mono rounded border-2 transition-colors ${
+                currentPage === page
+                  ? 'bg-[var(--primary)] text-[var(--primary-foreground)] border-[var(--primary)]'
+                  : 'border-[var(--border)] hover:bg-[var(--card)]'
+              }`}
+              style={{ fontFamily: 'JetBrains Mono, monospace' }}
+            >
+              {page}
+            </button>
+          ) : (
+            <span key={idx} className="px-2 text-xs font-mono text-[var(--muted-foreground)]" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+              {page}
+            </span>
+          )
+        ))}
+        <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="px-2 py-1 text-xs font-mono rounded border-2 border-[var(--border)] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--card)] transition-colors"
+          style={{ fontFamily: 'JetBrains Mono, monospace' }}
+        >
+          NEXT &gt;
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlagsTabProps) {
   const [commits, setCommits] = useState<Commit[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -538,7 +631,7 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
                   </tr>
                 </thead>
                 <tbody className="font-mono text-sm" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                  {filteredAndSortedCommits.map((commit) => (
+                  {paginatedCommits.map((commit) => (
                     <tr
                       key={commit.id}
                       className="border-b-2 border-[var(--border)] hover:bg-[var(--muted)] transition-colors cursor-pointer"
@@ -616,6 +709,16 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
               </table>
             </div>
           )}
+          {/* Commits Pagination */}
+          {filteredAndSortedCommits.length > itemsPerPage && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalCommitPages}
+              totalItems={filteredAndSortedCommits.length}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+            />
+          )}
         </div>
       )}
 
@@ -649,7 +752,7 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
                   </tr>
                 </thead>
                 <tbody className="font-mono text-sm" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                  {filteredAndSortedBranches.map((branch) => (
+                  {paginatedBranches.map((branch) => (
                     <tr key={branch.id} className="border-b-2 border-[var(--border)] hover:bg-[var(--muted)] transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
@@ -700,6 +803,16 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
                 </tbody>
               </table>
             </div>
+          )}
+          {/* Branches Pagination */}
+          {filteredAndSortedBranches.length > itemsPerPage && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalBranchPages}
+              totalItems={filteredAndSortedBranches.length}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+            />
           )}
         </div>
       )}
