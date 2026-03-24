@@ -171,7 +171,8 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
     .filter(c =>
       (c.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.repo_name.toLowerCase().includes(searchQuery.toLowerCase())) &&
+      c.repo_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.sha.toLowerCase().includes(searchQuery.toLowerCase())) &&
       matchesCodeAnalysisFilter(c.is_ai_detected)
     )
     .sort((a, b) => {
