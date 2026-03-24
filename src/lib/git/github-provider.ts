@@ -90,6 +90,49 @@ export class GitHubAPI implements GitProvider {
     return detailedCommits;
   }
 
+  async getCommitsForBranch(
+    url: string,
+    branchName: string,
+    since?: Date,
+    perPage: number = 100
+  ): Promise<GitCommit[]> {
+    const { owner, repo } = this.parseRepoUrl(url);
+    const commits: GitCommit[] = [];
+    let page = 1;
+
+    while (true) {
+      const { data } = await this.octokit.rest.repos.listCommits({
+        owner,
+        repo,
+        sha: branchName, // Filter by branch
+        since: since?.toISOString(),
+        per_page: perPage,
+        page,
+      });
+
+      if (data.length === 0) break;
+
+      for (const commit of data) {
+        if (commit.commit?.message && commit.author?.login && commit.commit.author?.date) {
+          commits.push({
+            sha: commit.sha,
+            message: commit.commit.message,
+            author: commit.author.login,
+            authorEmail: commit.commit.author?.email || null,
+            date: new Date(commit.commit.author.date),
+            additions: 0,
+            deletions: 0,
+          });
+        }
+      }
+
+      if (data.length < perPage) break;
+      page++;
+    }
+
+    return commits;
+  }
+
   async getBranches(url: string): Promise<GitBranch[]> {
     const { owner, repo } = this.parseRepoUrl(url);
     const branches: GitBranch[] = [];

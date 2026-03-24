@@ -147,6 +147,52 @@ export class BitbucketAPI implements GitProvider {
     return commits;
   }
 
+  async getCommitsForBranch(
+    url: string,
+    branchName: string,
+    since?: Date
+  ): Promise<GitCommit[]> {
+    const { workspace, repoSlug } = this.parseRepoUrl(url);
+    // Bitbucket API: filter commits by branch using the URL path
+    let apiUrl = `${BITBUCKET_API_BASE}/repositories/${workspace}/${repoSlug}/commits/${branchName}?pagelen=50`;
+
+    if (since) {
+      apiUrl += `&since=${since.toISOString()}`;
+    }
+
+    console.log('[BitbucketAPI] Fetching commits for branch', branchName, 'from:', apiUrl);
+    const commits: GitCommit[] = [];
+    let pageCount = 0;
+    const MAX_PAGES = 100;
+
+    while (apiUrl && pageCount < MAX_PAGES) {
+      pageCount++;
+      const response = await fetchWithRetry(apiUrl, this.token);
+      const data: BitbucketPaginatedResponse<BitbucketCommit> = await response.json();
+
+      for (const commit of data.values) {
+        const authorMatch = commit.author.raw.match(/^([^<]+)</);
+        const authorName = commit.author.user?.display_name ||
+                          (authorMatch ? authorMatch[1].trim() : commit.author.raw);
+
+        commits.push({
+          sha: commit.hash,
+          message: commit.message,
+          author: authorName,
+          authorEmail: null,
+          date: new Date(commit.date),
+          additions: 0,
+          deletions: 0,
+        });
+      }
+
+      if (data.values.length === 0 || !data.next) break;
+      apiUrl = data.next;
+    }
+
+    return commits;
+  }
+
   async getBranches(url: string): Promise<GitBranch[]> {
     const { workspace, repoSlug } = this.parseRepoUrl(url);
     let apiUrl = `${BITBUCKET_API_BASE}/repositories/${workspace}/${repoSlug}/refs/branches?pagelen=100`;

@@ -221,6 +221,27 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
 
       setCommits(filteredCommits);
       setBranches(filteredBranches);
+
+      // Pre-populate commit analyses from API response (persists across refresh)
+      if (data.analyses && Array.isArray(data.analyses)) {
+        const analysesMap: Record<number, CodeAnalysisResult> = {};
+        for (const analysis of data.analyses) {
+          // Parse report if it's a string
+          const report = typeof analysis.report === 'string'
+            ? JSON.parse(analysis.report)
+            : analysis.report;
+          analysesMap[analysis.source_id] = {
+            id: analysis.id,
+            isAgentic: analysis.is_agentic === 1,
+            confidence: analysis.confidence,
+            report,
+            model: analysis.model,
+            durationMs: analysis.duration_ms,
+            tokensUsed: analysis.tokens_used,
+          };
+        }
+        setCommitAnalyses(analysesMap);
+      }
     } catch (error) {
       toast.error('Failed to fetch AI flags data');
     } finally {

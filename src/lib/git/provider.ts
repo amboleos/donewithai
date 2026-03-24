@@ -50,6 +50,7 @@ export interface BranchDiff {
 export interface GitProvider {
   getRepoInfo(url: string): Promise<GitRepoInfo>;
   getCommits(url: string, since?: Date): Promise<GitCommit[]>;
+  getCommitsForBranch?(url: string, branchName: string, since?: Date): Promise<GitCommit[]>;
   getBranches(url: string): Promise<GitBranch[]>;
   getBranchCommitCount?(url: string, branchName: string): Promise<number>;
   getCommitDiffstat?(url: string, sha: string): Promise<{ additions: number; deletions: number }>;

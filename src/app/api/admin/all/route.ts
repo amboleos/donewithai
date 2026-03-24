@@ -64,9 +64,30 @@ export async function GET(req: NextRequest) {
       args: [AI_CUTOFF_DATE],
     });
 
+    // Fetch all code analyses for commits (to show line counts without opening popup)
+    const analysesResult = await client.execute({
+      sql: `
+        SELECT
+          ca.id,
+          ca.repo_id,
+          ca.source_type,
+          ca.source_id,
+          ca.is_agentic,
+          ca.confidence,
+          ca.report,
+          ca.model,
+          ca.duration_ms,
+          ca.tokens_used
+        FROM code_analyses ca
+        WHERE ca.source_type = 'commit'
+      `,
+      args: [],
+    });
+
     return NextResponse.json({
       commits: commitsResult.rows,
       branches: branchesResult.rows,
+      analyses: analysesResult.rows,
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
