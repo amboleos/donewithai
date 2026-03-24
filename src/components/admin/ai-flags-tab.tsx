@@ -300,6 +300,20 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
       return 0;
     });
 
+  // Calculate total line changes from filtered commits
+  const totalLineChanges = filteredAndSortedCommits.reduce(
+    (acc, commit) => ({
+      added: acc.added + (commit.lines_added || 0),
+      removed: acc.removed + (commit.lines_removed || 0),
+    }),
+    { added: 0, removed: 0 }
+  );
+
+  // Check if any commit has line data (to show "calculating" state)
+  const hasLineData = filteredAndSortedCommits.some(
+    (c) => c.lines_added > 0 || c.lines_removed > 0
+  );
+
   const filteredAndSortedBranches = [...branches]
     .filter(b =>
       (b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -593,6 +607,32 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
           </button>
         )}
       </div>
+
+      {/* Total Line Changes Summary */}
+      {activeTab === 'commits' && filteredAndSortedCommits.length > 0 && (
+        <div className="px-4 py-3 border-b-2 border-[var(--border)] bg-[var(--card)] flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <span className="text-xs font-mono text-[var(--muted-foreground)]" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+              TOTAL CHANGES ({filteredAndSortedCommits.length} commits):
+            </span>
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1 text-sm font-mono font-bold text-green-600 dark:text-green-400">
+                <Plus className="h-4 w-4" />
+                {totalLineChanges.added.toLocaleString()}
+              </span>
+              <span className="flex items-center gap-1 text-sm font-mono font-bold text-red-600 dark:text-red-400">
+                <Minus className="h-4 w-4" />
+                {totalLineChanges.removed.toLocaleString()}
+              </span>
+            </div>
+          </div>
+          {!hasLineData && (
+            <span className="text-xs font-mono text-[var(--muted-foreground)] italic" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+              (diffstat pending - run sync to calculate)
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Commits Table */}
       {activeTab === 'commits' && (
