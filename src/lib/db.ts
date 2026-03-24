@@ -638,6 +638,22 @@ export async function getBranchNamesByRepo(repoId: number): Promise<string[]> {
   return result.rows.map((row: any) => row.name) as string[];
 }
 
+// Get commits for a specific branch
+export async function getCommitsForBranch(branchId: number): Promise<(Commit & { repo_name: string })[]> {
+  const result = await client.execute({
+    sql: `
+      SELECT c.*, r.name as repo_name
+      FROM commits c
+      JOIN branch_commits bc ON c.id = bc.commit_id
+      JOIN repos r ON c.repo_id = r.id
+      WHERE bc.branch_id = ?
+      ORDER BY c.date DESC
+    `,
+    args: [branchId],
+  });
+  return result.rows as unknown as (Commit & { repo_name: string })[];
+}
+
 export async function updateBranchAIDetection(branchId: number, isAI: boolean) {
   await client.execute({
     sql: `UPDATE branches SET is_ai_detected = ? WHERE id = ?`,

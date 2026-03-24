@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { GitBranch, RefreshCw, GitCommit, ChevronDown, ChevronUp, Search, Sparkles, Loader2, Code2, User, Plus, Minus, XCircle, Brain, FileText, TrendingUp, CheckCircle, AlertCircle } from 'lucide-react';
+import { GitBranch, RefreshCw, GitCommit, ChevronDown, ChevronUp, ChevronRight, Search, Sparkles, Loader2, Code2, User, Plus, Minus, XCircle, Brain, FileText, TrendingUp, CheckCircle, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface CodeAnalysisResult {
@@ -167,6 +167,14 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
   const [commitAnalyses, setCommitAnalyses] = useState<Record<number, CodeAnalysisResult>>({});
   const [selectedCommit, setSelectedCommit] = useState<Commit | null>(null);
   const [loadingAnalysis, setLoadingAnalysis] = useState<number | null>(null);
+  // Branch expansion state
+  const [expandedBranches, setExpandedBranches] = useState<Set<number>>(new Set());
+  const [branchCommits, setBranchCommits] = useState<Record<number, Commit[]>>({});
+  const [loadingBranchCommits, setLoadingBranchCommits] = useState<number | null>(null);
+  // Branch analysis modal state
+  const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
+  const [branchAnalyses, setBranchAnalyses] = useState<Record<number, CodeAnalysisResult>>({});
+  const [loadingBranchAnalysis, setLoadingBranchAnalysis] = useState<number | null>(null);
   // Filter states
   const [codeAnalysisFilter, setCodeAnalysisFilter] = useState<CodeAnalysisFilter>('all');
   // Pagination states
@@ -177,10 +185,13 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
     fetchData();
   }, []);
 
-  // Handle ESC key to close commit modal
+  // Handle ESC key to close modals
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setSelectedCommit(null);
+      if (e.key === 'Escape') {
+        setSelectedCommit(null);
+        setSelectedBranch(null);
+      }
     };
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
@@ -412,11 +423,23 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
           setSelectedCommit(updatedCommit);
         }
       } else if (sourceType === 'branch') {
-        setBranches(prev => prev.map(b =>
-          b.id === sourceId
-            ? { ...b, is_ai_detected: analysis.isAgentic ? 1 : 0 }
-            : b
-        ));
+        let updatedBranch: Branch | null = null;
+        setBranches(prev => prev.map(b => {
+          if (b.id === sourceId) {
+            updatedBranch = { ...b, is_ai_detected: analysis.isAgentic ? 1 : 0 };
+            return updatedBranch;
+          }
+          return b;
+        }));
+        // Cache the analysis result
+        setBranchAnalyses(prev => ({
+          ...prev,
+          [sourceId]: analysis
+        }));
+        // Open the modal with the analyzed branch (if not already open)
+        if (updatedBranch && selectedBranch?.id !== sourceId) {
+          setSelectedBranch(updatedBranch);
+        }
       }
 
       toast.success('Code analysis completed');
@@ -454,6 +477,72 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
   const handleSelectCommit = (commit: Commit) => {
     setSelectedCommit(commit);
     fetchCommitAnalysis(commit.id, commit.repo_id);
+  };
+
+  // Toggle branch expansion
+  const toggleBranchExpand = async (branch: Branch) => {
+    const branchId = branch.id;
+
+    if (expandedBranches.has(branchId)) {
+      // Collapse
+      setExpandedBranches(prev => {
+        const next = new Set(prev);
+        next.delete(branchId);
+        return next;
+      });
+    } else {
+      // Expand and fetch commits if not cached
+      setExpandedBranches(prev => new Set(prev).add(branchId));
+
+      if (!branchCommits[branchId]) {
+        setLoadingBranchCommits(branchId);
+        try {
+          const res = await fetch(`/api/repos/${branch.repo_id}/branches/${branchId}/commits`);
+          if (res.ok) {
+            const data = await res.json();
+            setBranchCommits(prev => ({
+              ...prev,
+              [branchId]: data.commits || []
+            }));
+          } else {
+            toast.error('Failed to fetch branch commits');
+          }
+        } catch (error) {
+          toast.error('Failed to fetch branch commits');
+        } finally {
+          setLoadingBranchCommits(null);
+        }
+      }
+    }
+  };
+
+  // Fetch branch analysis
+  const fetchBranchAnalysis = async (branchId: number, repoId: number) => {
+    if (branchAnalyses[branchId]) return;
+
+    setLoadingBranchAnalysis(branchId);
+    try {
+      const res = await fetch(`/api/ai/code-analysis?repoId=${repoId}&sourceType=branch&sourceId=${branchId}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.analysis) {
+          setBranchAnalyses(prev => ({
+            ...prev,
+            [branchId]: data.analysis
+          }));
+        }
+      }
+    } catch (error) {
+      // Silently fail - analysis may not exist yet
+    } finally {
+      setLoadingBranchAnalysis(null);
+    }
+  };
+
+  // Handle branch selection for modal
+  const handleSelectBranch = (branch: Branch) => {
+    setSelectedBranch(branch);
+    fetchBranchAnalysis(branch.id, branch.repo_id);
   };
 
   if (loading) {
@@ -777,6 +866,7 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
               <table className="w-full border-collapse">
                 <thead className="sticky top-0 bg-[var(--muted)]">
                   <tr className="border-b-2 border-[var(--border)]">
+                    <th className="px-2 py-3 w-10"></th>
                     <th className="px-4 py-3 text-left font-mono text-xs cursor-pointer hover:text-[var(--primary)]" onClick={() => handleSort('name')} style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>
                       <div className="flex items-center gap-1">NAME <SortIndicator field="name" /></div>
                     </th>
@@ -785,6 +875,7 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
                         <div className="flex items-center gap-1">REPO <SortIndicator field="repo" /></div>
                       </th>
                     )}
+                    <th className="px-4 py-3 text-left font-mono text-xs" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>COMMITS</th>
                     <th className="px-4 py-3 text-left font-mono text-xs" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>CODE ANALYSIS</th>
                     {isAdmin && (
                       <th className="px-4 py-3 text-right font-mono text-xs" style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--primary)' }}>ACTION</th>
@@ -792,54 +883,156 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
                   </tr>
                 </thead>
                 <tbody className="font-mono text-sm" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                  {paginatedBranches.map((branch) => (
-                    <tr key={branch.id} className="border-b-2 border-[var(--border)] hover:bg-[var(--muted)] transition-colors">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <GitBranch className="h-4 w-4" style={{ color: 'var(--accent)' }} />
-                          <span className="text-[var(--foreground)]" style={{ fontFamily: 'Sora, sans-serif' }}>{branch.name}</span>
-                        </div>
-                      </td>
-                      {!repoId && (
-                        <td className="px-4 py-3 text-[var(--muted-foreground)]">{branch.repo_name}</td>
-                      )}
-                      <td className="px-4 py-3">
-                        <AIDetectionBadge isAIDetected={branch.is_ai_detected} />
-                      </td>
-                      {isAdmin && (
-                        <td className="px-4 py-3">
-                          <div className="flex items-center justify-end gap-2">
-                            {/* Analyze Button */}
+                  {paginatedBranches.map((branch) => {
+                    const isExpanded = expandedBranches.has(branch.id);
+                    const commits = branchCommits[branch.id] || [];
+                    const isLoading = loadingBranchCommits === branch.id;
+
+                    return (
+                      <React.Fragment key={branch.id}>
+                        {/* Branch Row */}
+                        <tr
+                          className="border-b-2 border-[var(--border)] hover:bg-[var(--muted)] transition-colors cursor-pointer"
+                          onClick={() => handleSelectBranch(branch)}
+                        >
+                          {/* Expand Button */}
+                          <td className="px-2 py-3 w-10" onClick={(e) => e.stopPropagation()}>
                             <button
-                              onClick={() => analyzeCode(branch.repo_id, 'branch', branch.id)}
-                              disabled={analyzingId === branch.id}
-                              title="Analyze code for AI patterns"
-                              className={`
-                                px-3 py-1 rounded font-mono text-xs transition-colors flex items-center gap-1 border-2
-                                ${analyzingId === branch.id
-                                  ? 'bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)] cursor-wait'
-                                  : 'bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)] hover:bg-[var(--warning)]/20'
-                                }
-                              `}
-                              style={{ fontFamily: 'JetBrains Mono, monospace' }}
+                              onClick={() => toggleBranchExpand(branch)}
+                              className="p-1 hover:bg-[var(--muted)] rounded transition-colors"
                             >
-                              {analyzingId === branch.id ? (
-                                <>
-                                  <Loader2 className="h-3 w-3 animate-spin" />
-                                  ANALYZING
-                                </>
+                              {isLoading ? (
+                                <Loader2 className="h-4 w-4 animate-spin text-[var(--muted-foreground)]" />
+                              ) : isExpanded ? (
+                                <ChevronDown className="h-4 w-4 text-[var(--primary)]" />
                               ) : (
-                                <>
-                                  <Sparkles className="h-3 w-3" />
-                                  ANALYZE
-                                </>
+                                <ChevronRight className="h-4 w-4 text-[var(--muted-foreground)]" />
                               )}
                             </button>
-                          </div>
-                        </td>
-                      )}
-                    </tr>
-                  ))}
+                          </td>
+                          {/* Branch Name */}
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <GitBranch className="h-4 w-4" style={{ color: 'var(--accent)' }} />
+                              <span className="text-[var(--foreground)]" style={{ fontFamily: 'Sora, sans-serif' }}>{branch.name}</span>
+                            </div>
+                          </td>
+                          {/* Repo */}
+                          {!repoId && (
+                            <td className="px-4 py-3 text-[var(--muted-foreground)]">{branch.repo_name}</td>
+                          )}
+                          {/* Commits Count */}
+                          <td className="px-4 py-3 text-[var(--muted-foreground)] font-mono text-xs">
+                            {isLoading ? '...' : commits.length > 0 ? `${commits.length}` : '-'}
+                          </td>
+                          {/* Code Analysis Badge */}
+                          <td className="px-4 py-3">
+                            <AIDetectionBadge isAIDetected={branch.is_ai_detected} />
+                          </td>
+                          {/* Actions */}
+                          {isAdmin && (
+                            <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex items-center justify-end gap-2">
+                                {/* View Analysis Button (if exists) */}
+                                {branchAnalyses[branch.id] && (
+                                  <button
+                                    onClick={() => handleSelectBranch(branch)}
+                                    title="View analysis report"
+                                    className="px-2 py-1 rounded font-mono text-xs transition-colors flex items-center gap-1 border-2 bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)] hover:bg-[var(--primary)]/20"
+                                    style={{ fontFamily: 'JetBrains Mono, monospace' }}
+                                  >
+                                    <FileText className="h-3 w-3" />
+                                    VIEW
+                                  </button>
+                                )}
+                                {/* Analyze Button */}
+                                <button
+                                  onClick={() => analyzeCode(branch.repo_id, 'branch', branch.id)}
+                                  disabled={analyzingId === branch.id}
+                                  title="Analyze code for AI patterns"
+                                  className={`
+                                    px-3 py-1 rounded font-mono text-xs transition-colors flex items-center gap-1 border-2
+                                    ${analyzingId === branch.id
+                                      ? 'bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)] cursor-wait'
+                                      : 'bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)] hover:bg-[var(--warning)]/20'
+                                    }
+                                  `}
+                                  style={{ fontFamily: 'JetBrains Mono, monospace' }}
+                                >
+                                  {analyzingId === branch.id ? (
+                                    <>
+                                      <Loader2 className="h-3 w-3 animate-spin" />
+                                      ANALYZING
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Sparkles className="h-3 w-3" />
+                                      ANALYZE
+                                    </>
+                                  )}
+                                </button>
+                              </div>
+                            </td>
+                          )}
+                        </tr>
+                        {/* Expanded Commits Row */}
+                        {isExpanded && (
+                          <tr className="bg-[var(--muted)]/30">
+                            <td colSpan={isAdmin ? 6 : 5} className="p-0">
+                              <div className="p-3 pl-12 border-t-2 border-[var(--border)]">
+                                {isLoading ? (
+                                  <div className="flex items-center gap-2 py-4 text-[var(--muted-foreground)]">
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    <span className="font-mono text-sm">Loading commits...</span>
+                                  </div>
+                                ) : commits.length === 0 ? (
+                                  <div className="py-4 text-center text-[var(--muted-foreground)] font-mono text-sm">
+                                    No commits found for this branch
+                                  </div>
+                                ) : (
+                                  <>
+                                    <div className="text-xs font-mono text-[var(--muted-foreground)] mb-2" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+                                      COMMITS IN THIS BRANCH ({commits.length})
+                                    </div>
+                                    <div className="space-y-1 max-h-64 overflow-y-auto">
+                                      {commits.map((commit) => (
+                                        <div
+                                          key={commit.id}
+                                          className="flex items-center justify-between p-2 border-2 border-[var(--border)] bg-[var(--card)] [box-shadow:var(--shadow-brutal-sm)] hover:bg-[var(--muted)] transition-colors cursor-pointer"
+                                          onClick={() => handleSelectCommit(commit)}
+                                        >
+                                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                                            <div className="flex items-center gap-1 shrink-0">
+                                              <GitCommit className="h-3 w-3 text-[var(--muted-foreground)]" />
+                                              <span className="font-mono text-xs text-[var(--muted-foreground)]">{commit.sha.substring(0, 7)}</span>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                              <p className="text-sm text-[var(--foreground)] truncate" style={{ fontFamily: 'Sora, sans-serif' }}>{commit.message.split('\n')[0]}</p>
+                                            </div>
+                                            <div className="flex items-center gap-2 shrink-0">
+                                              <span className="text-xs text-[var(--muted-foreground)]">{commit.author}</span>
+                                              <span className="text-xs font-mono text-[var(--muted-foreground)]">
+                                                {commit.date ? new Date(commit.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'N/A'}
+                                              </span>
+                                            </div>
+                                          </div>
+                                          <div className="flex items-center gap-2 shrink-0">
+                                            <span className="text-xs font-mono text-green-600 dark:text-green-400">+{commit.lines_added || 0}</span>
+                                            <span className="text-xs font-mono text-red-600 dark:text-red-400">-{commit.lines_removed || 0}</span>
+                                            <AIDetectionBadge isAIDetected={commit.is_ai_detected} />
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -1077,6 +1270,159 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
                     </h4>
                     <p className="text-[var(--foreground)] text-sm leading-relaxed whitespace-pre-wrap" style={{ fontFamily: 'Sora, sans-serif' }}>
                       {commitAnalyses[selectedCommit.id].report.reasoning}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Branch Analysis Modal */}
+      {selectedBranch && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setSelectedBranch(null)}
+        >
+          <div
+            className="bg-[var(--card)] border-2 border-[var(--border)] [box-shadow:var(--shadow-brutal)] rounded-lg max-w-3xl w-full max-h-[85vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b-2 border-[var(--border)] bg-[var(--muted)]">
+              <div className="flex items-center gap-3">
+                <GitBranch className="h-5 w-5" style={{ color: 'var(--accent)' }} />
+                <span className="font-mono text-sm" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+                  {selectedBranch.name}
+                </span>
+              </div>
+              <button
+                onClick={() => setSelectedBranch(null)}
+                className="p-1 hover:bg-[var(--muted)] rounded transition-colors"
+              >
+                <XCircle className="h-5 w-5 text-[var(--muted-foreground)]" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4 overflow-y-auto max-h-[calc(85vh-60px)]">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-mono text-[var(--muted-foreground)]" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+                    BRANCH NAME
+                  </label>
+                  <p className="mt-1 text-[var(--foreground)]" style={{ fontFamily: 'Sora, sans-serif' }}>{selectedBranch.name}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-mono text-[var(--muted-foreground)]" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+                    REPO
+                  </label>
+                  <p className="mt-1 text-[var(--muted-foreground)]">{selectedBranch.repo_name}</p>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-mono text-[var(--muted-foreground)]" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+                  CODE ANALYSIS
+                </label>
+                <div className="mt-1">
+                  <AIDetectionBadge isAIDetected={selectedBranch.is_ai_detected} />
+                </div>
+              </div>
+
+              {/* Loading Analysis */}
+              {loadingBranchAnalysis === selectedBranch.id && (
+                <div className="flex items-center gap-2 text-[var(--muted-foreground)] py-4">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="font-mono text-sm">Loading analysis...</span>
+                </div>
+              )}
+
+              {/* Analysis Details */}
+              {branchAnalyses[selectedBranch.id] && (
+                <div className="border-t-2 border-[var(--border)] pt-4 mt-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {branchAnalyses[selectedBranch.id].isAgentic ? (
+                        <div className="p-2 border-2 border-[var(--destructive)] bg-[var(--destructive)]/10 [box-shadow:var(--shadow-brutal-sm)]">
+                          <Brain className="h-4 w-4 text-[var(--destructive)]" />
+                        </div>
+                      ) : (
+                        <div className="p-2 border-2 border-[var(--success)] bg-[var(--success)]/10 [box-shadow:var(--shadow-brutal-sm)]">
+                          <User className="h-4 w-4 text-[var(--success)]" />
+                        </div>
+                      )}
+                      <div>
+                        <h3 className="text-sm font-bold text-[var(--foreground)]" style={{ fontFamily: 'Sora, sans-serif' }}>
+                          {branchAnalyses[selectedBranch.id].isAgentic ? 'AGENTIC AI DETECTED' : 'HUMAN'}
+                        </h3>
+                        <p className="text-xs text-[var(--muted-foreground)] font-mono">
+                          {branchAnalyses[selectedBranch.id].model} - {branchAnalyses[selectedBranch.id].durationMs ? `${(branchAnalyses[selectedBranch.id].durationMs! / 1000).toFixed(1)}s` : 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xl font-bold font-mono text-[var(--foreground)]">{Math.round(branchAnalyses[selectedBranch.id].confidence * 100)}%</div>
+                      <div className="text-xs text-[var(--muted-foreground)] font-mono">confidence</div>
+                    </div>
+                  </div>
+
+                  {/* Summary */}
+                  <div className="p-3 border-2 border-[var(--border)] bg-[var(--muted)] [box-shadow:var(--shadow-brutal-sm)]">
+                    <h4 className="text-xs font-bold text-[var(--primary)] font-mono mb-1 flex items-center gap-2" style={{ fontFamily: 'Sora, sans-serif' }}>
+                      <FileText className="h-3 w-3" />
+                      SUMMARY
+                    </h4>
+                    <p className="text-[var(--foreground)] text-sm leading-relaxed" style={{ fontFamily: 'Sora, sans-serif' }}>
+                      {branchAnalyses[selectedBranch.id].report.summary}
+                    </p>
+                  </div>
+
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-4 gap-2">
+                    <div className="p-2 border-2 border-[var(--border)] bg-[var(--muted)] [box-shadow:var(--shadow-brutal-sm)] text-center">
+                      <div className="text-lg font-bold font-mono text-[var(--foreground)]">{branchAnalyses[selectedBranch.id].report.filesAnalyzed}</div>
+                      <div className="text-xs text-[var(--muted-foreground)] font-mono">files</div>
+                    </div>
+                    <div className="p-2 border-2 border-[var(--border)] bg-[var(--muted)] [box-shadow:var(--shadow-brutal-sm)] text-center">
+                      <div className="text-lg font-bold font-mono text-[var(--success)]">+{branchAnalyses[selectedBranch.id].report.linesAdded}</div>
+                      <div className="text-xs text-[var(--muted-foreground)] font-mono">added</div>
+                    </div>
+                    <div className="p-2 border-2 border-[var(--border)] bg-[var(--muted)] [box-shadow:var(--shadow-brutal-sm)] text-center">
+                      <div className="text-lg font-bold font-mono text-[var(--destructive)]">-{branchAnalyses[selectedBranch.id].report.linesRemoved}</div>
+                      <div className="text-xs text-[var(--muted-foreground)] font-mono">removed</div>
+                    </div>
+                    <div className="p-2 border-2 border-[var(--border)] bg-[var(--muted)] [box-shadow:var(--shadow-brutal-sm)] text-center">
+                      <div className="text-lg font-bold font-mono text-[var(--warning)]">{branchAnalyses[selectedBranch.id].tokensUsed || 'N/A'}</div>
+                      <div className="text-xs text-[var(--muted-foreground)] font-mono">tokens</div>
+                    </div>
+                  </div>
+
+                  {/* Patterns Found */}
+                  {branchAnalyses[selectedBranch.id].report.patternsFound.length > 0 && (
+                    <div>
+                      <h4 className="text-xs font-bold text-[var(--primary)] font-mono mb-2 flex items-center gap-2" style={{ fontFamily: 'Sora, sans-serif' }}>
+                        <TrendingUp className="h-3 w-3" />
+                        PATTERNS FOUND
+                      </h4>
+                      <div className="flex flex-wrap gap-1">
+                        {branchAnalyses[selectedBranch.id].report.patternsFound.map((pattern, i) => (
+                          <span
+                            key={i}
+                            className="px-2 py-0.5 border-2 border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)] font-mono text-xs font-bold uppercase tracking-wider"
+                          >
+                            {pattern}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Reasoning */}
+                  <div className="p-3 border-2 border-[var(--border)] bg-[var(--muted)] [box-shadow:var(--shadow-brutal-sm)]">
+                    <h4 className="text-xs font-bold text-[var(--primary)] font-mono mb-1 flex items-center gap-2" style={{ fontFamily: 'Sora, sans-serif' }}>
+                      <Brain className="h-3 w-3" />
+                      REASONING
+                    </h4>
+                    <p className="text-[var(--foreground)] text-sm leading-relaxed whitespace-pre-wrap" style={{ fontFamily: 'Sora, sans-serif' }}>
+                      {branchAnalyses[selectedBranch.id].report.reasoning}
                     </p>
                   </div>
                 </div>
