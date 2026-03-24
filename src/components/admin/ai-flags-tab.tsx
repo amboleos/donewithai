@@ -93,6 +93,11 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
     return () => window.removeEventListener('keydown', handleEsc);
   }, []);
 
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, codeAnalysisFilter, activeTab]);
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -226,6 +231,20 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
       if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
       return 0;
     });
+
+  // Pagination calculations
+  const totalCommitPages = Math.ceil(filteredAndSortedCommits.length / itemsPerPage);
+  const totalBranchPages = Math.ceil(filteredAndSortedBranches.length / itemsPerPage);
+
+  const paginatedCommits = filteredAndSortedCommits.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const paginatedBranches = filteredAndSortedBranches.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const toggleAI = async (type: 'commit' | 'branch', id: number, currentValue: boolean | null) => {
     try {
