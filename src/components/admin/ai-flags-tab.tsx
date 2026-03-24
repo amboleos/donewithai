@@ -67,8 +67,8 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'commits' | 'branches'>('commits');
-  const [sortField, setSortField] = useState<SortField>('name');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+  const [sortField, setSortField] = useState<SortField>('date');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [searchQuery, setSearchQuery] = useState('');
   const [analyzingId, setAnalyzingId] = useState<number | null>(null);
   const [commitAnalyses, setCommitAnalyses] = useState<Record<number, CodeAnalysisResult>>({});
@@ -76,6 +76,9 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
   const [loadingAnalysis, setLoadingAnalysis] = useState<number | null>(null);
   // Filter states
   const [codeAnalysisFilter, setCodeAnalysisFilter] = useState<CodeAnalysisFilter>('all');
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 50;
 
   useEffect(() => {
     fetchData();
