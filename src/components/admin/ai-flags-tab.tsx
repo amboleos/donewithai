@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { GitBranch, RefreshCw, GitCommit, ChevronDown, ChevronUp, ChevronRight, Search, Sparkles, Loader2, Code2, User, Plus, Minus, XCircle, Brain, FileText, TrendingUp, CheckCircle, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -311,19 +311,38 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
       return 0;
     });
 
-  // Calculate total line changes from filtered commits
+  // Helper to get line changes from commit or analysis (analysis takes precedence)
+  const getLineChanges = (commit: Commit) => {
+    const analysis = commitAnalyses[commit.id];
+    if (analysis?.report) {
+      return {
+        added: analysis.report.linesAdded || 0,
+        removed: analysis.report.linesRemoved || 0,
+      };
+    }
+    return {
+      added: commit.lines_added || 0,
+      removed: commit.lines_removed || 0,
+    };
+  };
+
+  // Calculate total line changes from filtered commits (using analysis data when available)
   const totalLineChanges = filteredAndSortedCommits.reduce(
-    (acc, commit) => ({
-      added: acc.added + (commit.lines_added || 0),
-      removed: acc.removed + (commit.lines_removed || 0),
-    }),
+    (acc, commit) => {
+      const changes = getLineChanges(commit);
+      return {
+        added: acc.added + changes.added,
+        removed: acc.removed + changes.removed,
+      };
+    },
     { added: 0, removed: 0 }
   );
 
-  // Check if any commit has line data (to show "calculating" state)
-  const hasLineData = filteredAndSortedCommits.some(
-    (c) => c.lines_added > 0 || c.lines_removed > 0
-  );
+  // Check if any commit has line data (from commit or analysis)
+  const hasLineData = filteredAndSortedCommits.some((c) => {
+    const changes = getLineChanges(c);
+    return changes.added > 0 || changes.removed > 0;
+  });
 
   const filteredAndSortedBranches = [...branches]
     .filter(b =>
@@ -717,7 +736,7 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
           </div>
           {!hasLineData && (
             <span className="text-xs font-mono text-[var(--muted-foreground)] italic" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-              (diffstat pending - run sync to calculate)
+              (run sync or analyze to calculate)
             </span>
           )}
         </div>
@@ -789,11 +808,11 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
                         <div className="flex items-center gap-2 text-xs font-mono">
                           <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
                             <Plus className="h-3 w-3" />
-                            {commit.lines_added || 0}
+                            {getLineChanges(commit).added}
                           </span>
                           <span className="flex items-center gap-1 text-red-600 dark:text-red-400">
                             <Minus className="h-3 w-3" />
-                            {commit.lines_removed || 0}
+                            {getLineChanges(commit).removed}
                           </span>
                         </div>
                       </td>
@@ -1017,8 +1036,8 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
                                             </div>
                                           </div>
                                           <div className="flex items-center gap-2 shrink-0">
-                                            <span className="text-xs font-mono text-green-600 dark:text-green-400">+{commit.lines_added || 0}</span>
-                                            <span className="text-xs font-mono text-red-600 dark:text-red-400">-{commit.lines_removed || 0}</span>
+                                            <span className="text-xs font-mono text-green-600 dark:text-green-400">+{getLineChanges(commit).added}</span>
+                                            <span className="text-xs font-mono text-red-600 dark:text-red-400">-{getLineChanges(commit).removed}</span>
                                             <AIDetectionBadge isAIDetected={commit.is_ai_detected} />
                                           </div>
                                         </div>
@@ -1110,13 +1129,13 @@ export default function AIFlagsTab({ isAdmin = false, repoId, repoName }: AIFlag
                   <label className="text-xs font-mono text-[var(--muted-foreground)]" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
                     LINES ADDED
                   </label>
-                  <p className="mt-1 text-green-600 dark:text-green-400 font-mono">+{selectedCommit.lines_added || 0}</p>
+                  <p className="mt-1 text-green-600 dark:text-green-400 font-mono">+{getLineChanges(selectedCommit).added}</p>
                 </div>
                 <div>
                   <label className="text-xs font-mono text-[var(--muted-foreground)]" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
                     LINES REMOVED
                   </label>
-                  <p className="mt-1 text-red-600 dark:text-red-400 font-mono">-{selectedCommit.lines_removed || 0}</p>
+                  <p className="mt-1 text-red-600 dark:text-red-400 font-mono">-{getLineChanges(selectedCommit).removed}</p>
                 </div>
                 <div>
                   <label className="text-xs font-mono text-[var(--muted-foreground)]" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
