@@ -117,7 +117,7 @@ export class AIQueueProcessor {
 
     try {
       const response = await this.client.chat.completions.create({
-        model: 'glm-4.6',
+        model: 'glm-4.5-air',
         messages: [
           {
             role: 'system',
@@ -132,9 +132,8 @@ export class AIQueueProcessor {
         max_tokens: 2000,
       });
 
-      // GLM-4.6 uses reasoning_content field for reasoning models
-      const message = response.choices[0]?.message as any;
-      const content = message?.content || message?.reasoning_content || '';
+      const message = response.choices[0]?.message;
+      const content = message?.content || '';
 
       if (content) {
         // Look for our specific JSON format - avoids incomplete JSON from reasoning

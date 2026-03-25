@@ -269,7 +269,7 @@ Reply ONLY with valid JSON in this exact format:
     try {
       console.log('[AIDetector] Calling LLM for', type, 'detection...');
       const response = await this.client.chat.completions.create({
-        model: 'glm-4.6',
+        model: 'glm-4.5-air',
         messages: [
           {
             role: 'system',
@@ -284,8 +284,9 @@ Reply ONLY with valid JSON in this exact format:
         max_tokens: 500,
       });
 
-      const responseMessage = response.choices[0]?.message;
-      let content = responseMessage?.content || '';
+      // Get content from response message
+      const responseMessage = response.choices[0]?.message as any;
+      let content = responseMessage?.content || responseMessage?.reasoning_content || '';
 
       // Log raw response for debugging
       console.log('[AIDetector] Raw LLM response:', {
