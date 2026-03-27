@@ -4,13 +4,13 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
 import { Plus, Trash2, GitBranch, BarChart3, Brain, RefreshCw, Shield, LogOut, GitFork, Database, Activity, Zap } from 'lucide-react';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import RepoList from '@/components/dashboard/repo-list';
 import AddRepoDialog from '@/components/dashboard/add-repo-dialog';
 import { SyncProgressModal, useSyncProgress } from '@/components/sync-progress-modal';
 import { Button } from '@/components/ui/button';
+import { AppHeader } from '@/components/app-header';
 
 interface Repo {
   id: number;
@@ -294,61 +294,17 @@ export default function DashboardPage() {
 
         {/* Content */}
         <div className="relative z-10">
-          {/* Header */}
-          <header className="border-b-2 border-[var(--border)] bg-[var(--card)] sticky top-0 z-40">
-            <div className="max-w-7xl mx-auto px-6 py-4">
-              <div className="flex items-center justify-between">
-                {/* Logo */}
-                <Link href="/" className="flex items-center gap-3 group">
-                  <div className="p-2 border-2 border-[var(--border)] bg-[var(--primary)] [box-shadow:var(--shadow-brutal-sm)]">
-                    <Brain className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-xl font-bold tracking-tight text-[var(--foreground)]" style={{ fontFamily: 'Sora, sans-serif' }}>
-                      DoneWithAI
-                    </span>
-                    <span className="text-[10px] uppercase tracking-widest text-[var(--muted-foreground)] font-mono">Code Detection System</span>
-                  </div>
-                </Link>
+          <AppHeader
+            title="Dashboard"
+            showBrand
+            hideTitle
+            actions={null}
+          />
 
-                {/* Nav */}
-                <div className="flex items-center gap-3">
-                  {isAdmin && (
-                    <Link href="/admin">
-                      <button className="flex items-center gap-2 px-4 py-2 border-2 border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] text-sm font-medium hover:bg-[var(--muted)] transition-all duration-150 [box-shadow:var(--shadow-brutal)] hover:translate-x-[2px] hover:translate-y-[2px] hover:[box-shadow:var(--shadow-brutal-sm)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none">
-                        <Shield className="h-4 w-4" />
-                        <span>Admin</span>
-                      </button>
-                    </Link>
-                  )}
-                  <ThemeToggle />
-                  <button
-                    onClick={logout}
-                    className="flex items-center gap-2 px-4 py-2 border-2 border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] text-sm font-medium hover:bg-[var(--muted)] transition-all duration-150 [box-shadow:var(--shadow-brutal)] hover:translate-x-[2px] hover:translate-y-[2px] hover:[box-shadow:var(--shadow-brutal-sm)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    <span className="hidden sm:inline">Logout</span>
-                  </button>
-                  <div className="px-3 py-1.5 border border-[var(--border)] bg-transparent">
-                    <span className="text-xs uppercase tracking-widest font-mono text-[var(--muted-foreground)]">
-                      {user && user.name ? user.name : <span className="italic text-[var(--muted-foreground)]">No user</span>}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </header>
-
-          <main className="max-w-7xl mx-auto px-6 py-8">
-            {/* Page Header */}
-            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8 pb-6 border-b-2 border-[var(--border)]">
-              <div>
-                <h1 className="text-4xl font-bold tracking-tight text-[var(--foreground)] mb-2" style={{ fontFamily: 'Sora, sans-serif' }}>
-                  Dashboard
-                </h1>
-                <p className="text-[var(--muted-foreground)] font-mono text-sm feather-scrim" style={{ fontFamily: 'Sora, sans-serif' }}>
-                  Tracking AI-generated code across your repositories
-                </p>
+          <div className="max-w-7xl mx-auto px-6 pt-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="text-xl text-[var(--muted-foreground)] font-mono feather-scrim" style={{ fontFamily: 'Sora, sans-serif' }}>
+                Tracking AI-generated code across your repositories
               </div>
               {isAdmin && (
                 <Button onClick={() => setAddDialogOpen(true)} variant="default" size="lg" style={{ fontFamily: 'Sora, sans-serif' }}>
@@ -357,7 +313,9 @@ export default function DashboardPage() {
                 </Button>
               )}
             </div>
+          </div>
 
+          <main className="max-w-7xl mx-auto px-6 py-8">
             {/* Stats Grid */}
             {repos.length > 0 && (
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

@@ -25,9 +25,9 @@ import {
   Flag
 } from 'lucide-react';
 import Link from 'next/link';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { toast } from 'sonner';
 import AIFlagsTab from '@/components/admin/ai-flags-tab';
+import { AppHeader } from '@/components/app-header';
 
 interface Commit {
   id: number;
@@ -487,28 +487,7 @@ function RepoDetailContent() {
     await fetchData();
   };
 
-  const handleAIRecheck = async () => {
-    setIsAIRechecking(true);
-    try {
-      const res = await fetch('/api/sync/recheck-ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ repoId: repo.id }),
-      });
-
-      if (!res.ok) throw new Error('Failed to recheck AI');
-
-      const data = await res.json();
-      toast.success('AI recheck complete');
-      // Refresh data to show updated AI flags
-      await fetchData();
-    } catch (error) {
-      console.error('AI recheck failed:', error);
-      toast.error('Failed to recheck AI');
-    } finally {
-      setIsAIRechecking(false);
-    }
-  };
+  // Note: per request, we keep repo detail header clean (no sync / AI recheck actions).
 
   if (loading || !data) {
     return <LoadingSkeleton />;
@@ -544,7 +523,7 @@ function RepoDetailContent() {
 
       <div className="min-h-screen relative overflow-hidden bg-[var(--background)]">
         {/* Dot Pattern Background */}
-        <div className="absolute inset-0 bg-dots opacity-50" />
+        <div className="absolute inset-0 bg-dots opacity-20" />
 
         {/* Decorative Elements */}
         <div className="absolute top-20 right-20 w-32 h-32 border-2 border-[var(--accent)] opacity-20 rotate-12" />
@@ -552,56 +531,17 @@ function RepoDetailContent() {
 
         {/* Content */}
         <div className="relative z-10">
-          {/* Header */}
-          <header className="border-b-2 border-[var(--border)] bg-[var(--card)] sticky top-0 z-50">
-            <div className="container mx-auto px-6 py-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <Link href="/dashboard">
-                    <Button variant="ghost" size="sm" className="gap-2">
-                      <ArrowLeft className="h-4 w-4" />
-                      Back
-                    </Button>
-                  </Link>
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 border-2 border-[var(--border)] bg-[var(--primary)] [box-shadow:var(--shadow-brutal-sm)]">
-                      <GitBranch className="h-6 w-6 text-white" />
-                    </div>
-                    <div>
-                      <h1 className="text-xl font-bold text-[var(--foreground)]" style={{ fontFamily: 'Sora, sans-serif' }}>{repo.name}</h1>
-                      <p className="text-sm text-[var(--muted-foreground)] font-mono">{repo.owner}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <ThemeToggle />
-                  {isAdmin && (
-                    <Button
-                      onClick={handleAIRecheck}
-                      variant="outline"
-                      size="sm"
-                      className="gap-2"
-                      disabled={isAIRechecking}
-                      title="Recheck AI for all commits"
-                    >
-                      <Brain className={`h-4 w-4 ${isAIRechecking ? 'animate-pulse' : ''}`} />
-                      AI Recheck
-                    </Button>
-                  )}
-                  <Button
-                    onClick={handleRefresh}
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    disabled={isRefreshing}
-                  >
-                    <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                    Sync
-                  </Button>
-                </div>
+          <AppHeader
+            title={repo.owner}
+            subtitle={repo.name}
+            backHref="/dashboard"
+            actions={null}
+            leading={
+              <div className="p-2 border-2 border-[var(--border)] bg-[var(--primary)] [box-shadow:var(--shadow-brutal-sm)]">
+                <GitBranch className="h-5 w-5 text-white" />
               </div>
-            </div>
-          </header>
+            }
+          />
 
           <main className="container mx-auto px-4 py-8">
             {/* Hero Stats */}
@@ -687,7 +627,7 @@ function RepoDetailContent() {
               <Button
                 variant={activeTab === 'overview' ? 'default' : 'outline'}
                 onClick={() => setActiveTab('overview')}
-                className="gap-2"
+                className="gap-2 whitespace-nowrap [box-shadow:var(--shadow-brutal)] hover:translate-x-[2px] hover:translate-y-[2px] hover:[box-shadow:var(--shadow-brutal-sm)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
               >
                 <BarChart3 className="h-4 w-4" />
                 Overview
@@ -695,7 +635,7 @@ function RepoDetailContent() {
               <Button
                 variant={activeTab === 'commits' ? 'default' : 'outline'}
                 onClick={() => setActiveTab('commits')}
-                className="gap-2"
+                className="gap-2 whitespace-nowrap [box-shadow:var(--shadow-brutal)] hover:translate-x-[2px] hover:translate-y-[2px] hover:[box-shadow:var(--shadow-brutal-sm)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
               >
                 <GitBranch className="h-4 w-4" />
                 Commits ({allCommitsCount})
@@ -703,7 +643,7 @@ function RepoDetailContent() {
               <Button
                 variant={activeTab === 'branches' ? 'default' : 'outline'}
                 onClick={() => setActiveTab('branches')}
-                className="gap-2"
+                className="gap-2 whitespace-nowrap [box-shadow:var(--shadow-brutal)] hover:translate-x-[2px] hover:translate-y-[2px] hover:[box-shadow:var(--shadow-brutal-sm)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
               >
                 <GitBranch className="h-4 w-4" />
                 Branches ({branches.length})
@@ -711,7 +651,7 @@ function RepoDetailContent() {
               <Button
                 variant={activeTab === 'analytics' ? 'default' : 'outline'}
                 onClick={() => setActiveTab('analytics')}
-                className="gap-2"
+                className="gap-2 whitespace-nowrap [box-shadow:var(--shadow-brutal)] hover:translate-x-[2px] hover:translate-y-[2px] hover:[box-shadow:var(--shadow-brutal-sm)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
               >
                 <Users className="h-4 w-4" />
                 Developer Stats
@@ -719,7 +659,7 @@ function RepoDetailContent() {
               <Button
                 variant={activeTab === 'ai-flags' ? 'default' : 'outline'}
                 onClick={() => setActiveTab('ai-flags')}
-                className="gap-2"
+                className="gap-2 whitespace-nowrap [box-shadow:var(--shadow-brutal)] hover:translate-x-[2px] hover:translate-y-[2px] hover:[box-shadow:var(--shadow-brutal-sm)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
               >
                 <Flag className="h-4 w-4" />
                 AI Flags
