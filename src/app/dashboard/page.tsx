@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import RepoList from '@/components/dashboard/repo-list';
 import AddRepoDialog from '@/components/dashboard/add-repo-dialog';
 import { SyncProgressModal, useSyncProgress } from '@/components/sync-progress-modal';
+import { Button } from '@/components/ui/button';
 
 interface Repo {
   id: number;
@@ -82,7 +83,7 @@ function DashboardSkeleton() {
   return (
     <div className="min-h-screen relative overflow-hidden bg-[var(--background)]">
       {/* Dot Pattern Background */}
-      <div className="absolute inset-0 bg-dots opacity-50" />
+      <div className="absolute inset-0 bg-dots opacity-20" />
 
       <div className="relative z-10">
         <header className="border-b-2 border-[var(--border)] bg-[var(--card)]">
@@ -284,7 +285,7 @@ export default function DashboardPage() {
 
       <div className="min-h-screen relative overflow-hidden bg-[var(--background)]">
         {/* Dot Pattern Background */}
-        <div className="absolute inset-0 bg-dots opacity-50" />
+        <div className="absolute inset-0 bg-dots opacity-20" />
 
         {/* Decorative Elements */}
         <div className="absolute top-20 right-20 w-32 h-32 border-2 border-[var(--accent)] opacity-20 rotate-12" />
@@ -314,7 +315,7 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-3">
                   {isAdmin && (
                     <Link href="/admin">
-                      <button className="flex items-center gap-2 px-4 py-2 border-2 border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] text-sm font-medium hover:bg-[var(--muted)] transition-all [box-shadow:var(--shadow-brutal-sm)]">
+                      <button className="flex items-center gap-2 px-4 py-2 border-2 border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] text-sm font-medium hover:bg-[var(--muted)] transition-all duration-150 [box-shadow:var(--shadow-brutal)] hover:translate-x-[2px] hover:translate-y-[2px] hover:[box-shadow:var(--shadow-brutal-sm)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none">
                         <Shield className="h-4 w-4" />
                         <span>Admin</span>
                       </button>
@@ -323,13 +324,13 @@ export default function DashboardPage() {
                   <ThemeToggle />
                   <button
                     onClick={logout}
-                    className="flex items-center gap-2 px-4 py-2 border-2 border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] text-sm font-medium hover:bg-[var(--muted)] transition-all [box-shadow:var(--shadow-brutal-sm)]"
+                    className="flex items-center gap-2 px-4 py-2 border-2 border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] text-sm font-medium hover:bg-[var(--muted)] transition-all duration-150 [box-shadow:var(--shadow-brutal)] hover:translate-x-[2px] hover:translate-y-[2px] hover:[box-shadow:var(--shadow-brutal-sm)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
                   >
                     <LogOut className="h-4 w-4" />
                     <span className="hidden sm:inline">Logout</span>
                   </button>
-                  <div className="px-4 py-2 border-2 border-[var(--border)] bg-[var(--card)] [box-shadow:var(--shadow-brutal-sm)]">
-                    <span className="text-sm font-mono text-[var(--foreground)]">
+                  <div className="px-3 py-1.5 border border-[var(--border)] bg-transparent">
+                    <span className="text-xs uppercase tracking-widest font-mono text-[var(--muted-foreground)]">
                       {user && user.name ? user.name : <span className="italic text-[var(--muted-foreground)]">No user</span>}
                     </span>
                   </div>
@@ -345,19 +346,15 @@ export default function DashboardPage() {
                 <h1 className="text-4xl font-bold tracking-tight text-[var(--foreground)] mb-2" style={{ fontFamily: 'Sora, sans-serif' }}>
                   Dashboard
                 </h1>
-                <p className="text-[var(--muted-foreground)] font-mono text-sm" style={{ fontFamily: 'Sora, sans-serif' }}>
+                <p className="text-[var(--muted-foreground)] font-mono text-sm feather-scrim" style={{ fontFamily: 'Sora, sans-serif' }}>
                   Tracking AI-generated code across your repositories
                 </p>
               </div>
               {isAdmin && (
-                <button
-                  onClick={() => setAddDialogOpen(true)}
-                  className="flex items-center gap-2 px-6 py-3 bg-[var(--primary)] text-white text-sm font-bold uppercase tracking-wider hover:bg-[var(--primary)]/90 hover:scale-[1.02] active:scale-[0.98] transition-all self-start [box-shadow:var(--shadow-brutal)]"
-                  style={{ fontFamily: 'Sora, sans-serif' }}
-                >
+                <Button onClick={() => setAddDialogOpen(true)} variant="default" size="lg" style={{ fontFamily: 'Sora, sans-serif' }}>
                   <Plus className="h-4 w-4" />
                   Add Repository
-                </button>
+                </Button>
               )}
             </div>
 

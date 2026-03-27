@@ -21,7 +21,7 @@ const buttonVariants = cva(
           "bg-[var(--secondary)] text-[var(--secondary-foreground)] border-[var(--border)] [box-shadow:var(--shadow-brutal)] hover:translate-x-[2px] hover:translate-y-[2px] hover:[box-shadow:var(--shadow-brutal-sm)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none",
         // Outline - No fill
         outline:
-          "bg-transparent text-[var(--foreground)] border-[var(--border)] [box-shadow:var(--shadow-brutal-sm)] hover:bg-[var(--muted)] hover:translate-x-[1px] hover:translate-y-[1px] active:shadow-none",
+          "bg-[var(--card)] text-[var(--foreground)] border-[var(--border)] [box-shadow:var(--shadow-brutal-sm)] hover:bg-[var(--muted)] hover:translate-x-[1px] hover:translate-y-[1px] active:shadow-none",
         // Ghost - No border or shadow
         ghost:
           "bg-transparent text-[var(--foreground)] border-transparent hover:bg-[var(--muted)] hover:border-[var(--border)]",
@@ -43,7 +43,8 @@ const buttonVariants = cva(
         sm: "h-9 px-3.5 text-xs",
         lg: "h-12 px-8 text-base",
         xl: "h-14 px-10 text-lg",
-        icon: "h-10 w-10",
+        icon:
+          "h-10 w-10 p-0 [box-shadow:var(--shadow-brutal)] hover:translate-x-[2px] hover:translate-y-[2px] hover:[box-shadow:var(--shadow-brutal-sm)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none",
       },
     },
     defaultVariants: {

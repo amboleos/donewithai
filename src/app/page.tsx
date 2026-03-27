@@ -16,7 +16,7 @@ export default function HomePage() {
 
       <div className="min-h-screen relative overflow-hidden bg-[var(--background)]">
         {/* Dot Pattern Background */}
-        <div className="absolute inset-0 bg-dots opacity-50" />
+        <div className="absolute inset-0 bg-dots opacity-20" />
 
         {/* Decorative Elements */}
         <div className="absolute top-20 right-20 w-32 h-32 border-2 border-[var(--accent)] opacity-20 rotate-12" />
@@ -68,11 +68,11 @@ export default function HomePage() {
                 {/* Main Headline */}
                 <h1 className="text-5xl md:text-7xl font-extrabold mb-6 leading-[1.1] text-[var(--foreground)]" style={{ fontFamily: 'Sora, sans-serif' }}>
                   <span className="block">Track AI Code</span>
-                  <span className="block text-[var(--primary)]">In Your Repos</span>
+                  <span className="block text-[var(--primary)] feather-scrim">In Your Repos</span>
                 </h1>
 
                 {/* Subheadline */}
-                <p className="text-lg md:text-xl text-[var(--muted-foreground)] max-w-2xl mb-10" style={{ fontFamily: 'Sora, sans-serif' }}>
+                <p className="text-lg md:text-xl text-[var(--muted-foreground)] max-w-2xl mb-10 feather-scrim" style={{ fontFamily: 'Sora, sans-serif' }}>
                   Gain visibility into AI-generated code entering your codebase.
                   Track team patterns, analyze commits, and understand your AI adoption.
                 </p>

@@ -485,10 +485,34 @@
    PATTERNS & BACKGROUNDS
    ============================================ */
 
+/* Feather scrim - improves text readability on patterns */
+.feather-scrim {
+  position: relative;
+  display: inline-block;
+  padding: 0.1em 0.4em;
+  margin: -0.1em -0.4em;
+}
+
+.feather-scrim::before {
+  content: "";
+  position: absolute;
+  inset: -0.35em -0.55em;
+  z-index: -1;
+  background: color-mix(in oklab, var(--background) 86%, transparent);
+  filter: blur(12px);
+  border-radius: 9999px;
+  -webkit-mask-image: radial-gradient(closest-side, rgba(0, 0, 0, 1) 62%, rgba(0, 0, 0, 0) 100%);
+  mask-image: radial-gradient(closest-side, rgba(0, 0, 0, 1) 62%, rgba(0, 0, 0, 0) 100%);
+}
+
 /* Dot pattern */
 .bg-dots {
-  background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
-  background-size: 20px 20px;
+  background-image: radial-gradient(
+    circle,
+    color-mix(in oklab, var(--muted-foreground) 35%, transparent) 1px,
+    transparent 1px
+  );
+  background-size: 28px 28px;
 }
 
 /* Grid pattern */

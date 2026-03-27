@@ -36,7 +36,7 @@ export function ThemeToggle() {
       variant="ghost"
       size="icon"
       onClick={cycleTheme}
-      className="relative overflow-hidden"
+      className="relative overflow-hidden border-[var(--border)] bg-[var(--card)] hover:bg-[var(--muted)]"
       title={`Theme: ${getLabel()} (click to cycle)`}
     >
       <span className="relative z-10 transition-transform duration-300 hover:rotate-12">
